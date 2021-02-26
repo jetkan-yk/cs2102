@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS Courses CASCADE;
+
+CREATE TABLE Courses(cid integer, PRIMARY KEY (cid));
