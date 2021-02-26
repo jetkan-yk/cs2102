@@ -2,7 +2,9 @@
 <div id="header">
 <h1>CS2102 Project (28 marks)</h1>
 </div>
+  
 ![image](https://user-images.githubusercontent.com/36299141/109276997-ade3be80-7851-11eb-804d-6237ad6303b5.png)
+  
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
