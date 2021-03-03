@@ -5,5 +5,3 @@ CREATE TABLE Courses(
   title text,
   PRIMARY KEY (course_id)
 );
-
-// test;
