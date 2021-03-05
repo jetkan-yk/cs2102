@@ -7,12 +7,19 @@ Belongs,
 Consists,
 Conducts;
 
-/* duration refers to number of hours */
+/* 
+ duration
+ - refers to number of hours
+ - can only be conducted from 9am to 6pm
+ - cannot be conducted during 12pm to 2pm */
 CREATE TABLE Courses (
   course_id integer,
-  title text,
-  description text,
-  duration integer,
+  title text NOT NULL,
+  description text NOT NULL,
+  duration smallint CHECK(
+    0 < duration
+    AND duration <= 7
+  ),
   PRIMARY KEY (course_id)
 );
 
@@ -50,8 +57,8 @@ CREATE TABLE Belongs (
   course_id integer,
   area_name text,
   PRIMARY KEY (course_id, area_name),
-  FOREIGN KEY (course_id) REFERENCES Courses,
-  FOREIGN KEY (area_name) REFERENCES Course_areas
+  FOREIGN KEY (course_id) REFERENCES Courses ON DELETE CASCADE,
+  FOREIGN KEY (area_name) REFERENCES Course_areas ON DELETE CASCADE
 );
 
 CREATE TABLE Consists (
@@ -66,7 +73,7 @@ CREATE TABLE Consists (
 CREATE TABLE Conducts (
   sid integer,
   rid integer,
-  /* eid integer, */
+  /* TODO: eid integer, */
   PRIMARY KEY(sid, rid),
   FOREIGN KEY(sid) REFERENCES Sessions,
   FOREIGN KEY(rid) REFERENCES Rooms
