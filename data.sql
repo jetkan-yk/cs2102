@@ -36,6 +36,12 @@ VALUES (
     3
   ),
   (
+    4218,
+    'Software Testing',
+    'This module covers the concepts and practice of software testing including unit testing, integration testing, and regression testing.',
+    4
+  ),
+  (
     4225,
     'Big Data Systems for Data Science',
     'Data science incorporates varying elements and builds on techniques and theories from many fields with the goal of extracting meaning from big data and creating data products.',
@@ -64,7 +70,8 @@ INSERT INTO Course_areas (area_name)
 VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
   ('Computer Security'),
-  ('Database Systems');
+  ('Database Systems'),
+  ('Software Engineering');
 
 INSERT INTO Belongs (course_id, area_name)
 VALUES (2102, 'Database Systems'),
@@ -72,6 +79,7 @@ VALUES (2102, 'Database Systems'),
   (3235, 'Computer Security'),
   (3242, 'Computer Graphics and Games'),
   (3244, 'Artificial Intelligence'),
+  (4218, 'Software Engineering'),
   (4225, 'Database Systems'),
   (4236, 'Computer Security'),
   (4248, 'Artificial Intelligence'),
