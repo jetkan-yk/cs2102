@@ -4,6 +4,8 @@ DELETE FROM Courses;
 
 DELETE FROM Rooms;
 
+DELETE FROM Sessions;
+
 INSERT INTO Course_areas (area_name)
 VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
@@ -100,3 +102,8 @@ VALUES(1, '1F-01', 20),
   (8, '2F-04', 25),
   (9, '3F-01', 100),
   (10, '3F-02', 100);
+
+INSERT INTO Sessions (sid, date, start_time, end_time)
+VALUES (1, '2021-03-06', '09:00', '12:00'),
+  (2, '2021-03-13', '14:00', '18:00'),
+  (3, '2021-03-24', '15:00', '16:00');

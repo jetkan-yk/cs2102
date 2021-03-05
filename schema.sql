@@ -10,7 +10,7 @@ CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
 
 /* 
  duration
- - refers to number of hours
+ - refers to number of hours, (0, 7]
  - can only be conducted from 9am to 6pm
  - cannot be conducted during 12pm to 2pm */
 CREATE TABLE Courses (
@@ -33,6 +33,37 @@ CREATE TABLE Rooms (
   PRIMARY KEY (rid)
 );
 
+/* TODO: sid for an offering starts from 1 */
+/* TODO: end_time = start_time + duration */
+/* TODO: no session between 12pm to 2pm -- can sessions take lunch break? */
+/* date & time: ISO 8601 */
+CREATE TABLE Sessions (
+  sid integer,
+  date date NOT NULL,
+  start_time time CHECK(
+    (
+      start_time >= '09:00'
+      AND start_time < '18:00'
+    )
+    AND (
+      start_time < '12:00'
+      OR start_time >= '14:00'
+    )
+  ) NOT NULL,
+  end_time time CHECK(
+    (
+      end_time > '09:00'
+      AND end_time <= '18:00'
+    )
+    AND (
+      end_time <= '12:00'
+      OR end_time > '14:00'
+    )
+    AND (start_time < end_time)
+  ) NOT NULL,
+  PRIMARY KEY (sid)
+);
+
 CREATE TABLE Offerings (
   course_id integer,
   launch_date date,
@@ -44,14 +75,6 @@ CREATE TABLE Offerings (
   target_number_registrations integer,
   PRIMARY KEY (course_id, launch_date),
   FOREIGN KEY (course_id) REFERENCES Courses ON DELETE CASCADE
-);
-
-CREATE TABLE Sessions (
-  sid integer,
-  date date,
-  start_time time,
-  end_time time,
-  PRIMARY KEY (sid)
 );
 
 CREATE TABLE Consists (
