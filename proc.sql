@@ -1,3 +1,13 @@
-DROP FUNCTION IF EXISTS get_all_course_titles();
+DROP FUNCTION IF EXISTS f1();
 
-CREATE FUNCTION get_all_course_titles() RETURNS TABLE(title text) AS 'select title from Courses;' LANGUAGE SQL;
+CREATE FUNCTION f1() RETURNS TABLE(course_area text, course_id integer, title text) AS $$
+SELECT area_name,
+  course_id,
+  title
+FROM Courses
+  NATURAL JOIN Course_areas
+  NATURAL JOIN Belongs
+ORDER BY area_name,
+  course_id;
+
+$$ LANGUAGE SQL;
