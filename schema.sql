@@ -3,9 +3,10 @@ Course_areas,
 Offerings,
 Sessions,
 Rooms,
-Belongs,
 Consists,
 Conducts;
+
+CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
 
 /* 
  duration
@@ -14,16 +15,16 @@ Conducts;
  - cannot be conducted during 12pm to 2pm */
 CREATE TABLE Courses (
   course_id integer,
+  area_name text NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
   duration smallint CHECK(
     0 < duration
     AND duration <= 7
   ),
-  PRIMARY KEY (course_id)
+  PRIMARY KEY (course_id),
+  FOREIGN KEY (area_name) REFERENCES Course_areas ON DELETE CASCADE
 );
-
-CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
 
 CREATE TABLE Offerings (
   course_id integer,
@@ -51,14 +52,6 @@ CREATE TABLE Rooms (
   location text,
   seating_capacity integer,
   PRIMARY KEY (rid)
-);
-
-CREATE TABLE Belongs (
-  course_id integer,
-  area_name text,
-  PRIMARY KEY (course_id, area_name),
-  FOREIGN KEY (course_id) REFERENCES Courses ON DELETE CASCADE,
-  FOREIGN KEY (area_name) REFERENCES Course_areas ON DELETE CASCADE
 );
 
 CREATE TABLE Consists (
