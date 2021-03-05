@@ -4,7 +4,6 @@ Offerings,
 Sessions,
 Rooms,
 Belongs,
-Offers,
 Consists,
 Conducts;
 
@@ -20,6 +19,7 @@ CREATE TABLE Courses (
 CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
 
 CREATE TABLE Offerings (
+  course_id integer,
   launch_date date,
   start_date date,
   end_date date,
@@ -27,7 +27,8 @@ CREATE TABLE Offerings (
   fees integer,
   seating_capacity integer,
   target_number_registrations integer,
-  PRIMARY KEY (launch_date)
+  PRIMARY KEY (course_id, launch_date),
+  FOREIGN KEY (course_id) REFERENCES Courses ON DELETE CASCADE
 );
 
 CREATE TABLE Sessions (
@@ -53,21 +54,12 @@ CREATE TABLE Belongs (
   FOREIGN KEY (area_name) REFERENCES Course_areas
 );
 
-CREATE TABLE Offers (
-  course_id integer,
-  launch_date date,
-  PRIMARY KEY (course_id, launch_date),
-  FOREIGN KEY (course_id) REFERENCES Courses,
-  FOREIGN KEY (launch_date) REFERENCES Offerings
-);
-
 CREATE TABLE Consists (
   course_id integer,
   launch_date date,
   sid integer,
   PRIMARY KEY(course_id, launch_date, sid),
-  FOREIGN KEY(course_id) REFERENCES Courses,
-  FOREIGN KEY(launch_date) REFERENCES Offerings,
+  FOREIGN KEY(course_id, launch_date) REFERENCES Offerings,
   FOREIGN KEY(sid) REFERENCES Sessions
 );
 
