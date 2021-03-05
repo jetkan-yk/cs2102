@@ -17,7 +17,7 @@ CREATE TABLE Courses (
   PRIMARY KEY (course_id)
 );
 
-CREATE TABLE Course_areas (name text, PRIMARY KEY (name));
+CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
 
 CREATE TABLE Offerings (
   launch_date date,
@@ -47,10 +47,10 @@ CREATE TABLE Rooms (
 
 CREATE TABLE Belongs (
   course_id integer,
-  name text,
-  PRIMARY KEY (course_id, name),
+  area_name text,
+  PRIMARY KEY (course_id, area_name),
   FOREIGN KEY (course_id) REFERENCES Courses,
-  FOREIGN KEY (name) REFERENCES Course_areas
+  FOREIGN KEY (area_name) REFERENCES Course_areas
 );
 
 CREATE TABLE Offers (

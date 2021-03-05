@@ -60,13 +60,13 @@ VALUES (
     5
   );
 
-INSERT INTO Course_areas (name)
+INSERT INTO Course_areas (area_name)
 VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
   ('Computer Security'),
   ('Database Systems');
 
-INSERT INTO Belongs (course_id, name)
+INSERT INTO Belongs (course_id, area_name)
 VALUES (2102, 'Database Systems'),
   (2107, 'Computer Security'),
   (3235, 'Computer Security'),
