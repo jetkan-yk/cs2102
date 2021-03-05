@@ -2,6 +2,8 @@ DELETE FROM Course_areas;
 
 DELETE FROM Courses;
 
+DELETE FROM Rooms;
+
 INSERT INTO Course_areas (area_name)
 VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
@@ -86,3 +88,15 @@ VALUES (
     5,
     'Artificial Intelligence'
   );
+
+INSERT INTO Rooms (rid, location, seating_capacity)
+VALUES(1, '1F-01', 20),
+  (2, '1F-02', 10),
+  (3, '1F-03', 15),
+  (4, '1F-04', 25),
+  (5, '2F-01', 50),
+  (6, '2F-02', 40),
+  (7, '2F-03', 25),
+  (8, '2F-04', 25),
+  (9, '3F-01', 100),
+  (10, '3F-02', 100);

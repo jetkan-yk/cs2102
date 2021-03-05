@@ -1,10 +1,10 @@
-DROP TABLE IF EXISTS Courses,
-Course_areas,
-Offerings,
-Sessions,
-Rooms,
+DROP TABLE IF EXISTS Conducts,
 Consists,
-Conducts;
+Course_areas,
+Courses,
+Offerings,
+Rooms,
+Sessions;
 
 CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
 
@@ -16,14 +16,21 @@ CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
 CREATE TABLE Courses (
   course_id integer,
   area_name text NOT NULL,
-  title text NOT NULL,
+  title text UNIQUE NOT NULL,
   description text NOT NULL,
   duration smallint CHECK(
     0 < duration
     AND duration <= 7
-  ),
+  ) NOT NULL,
   PRIMARY KEY (course_id),
   FOREIGN KEY (area_name) REFERENCES Course_areas ON DELETE CASCADE
+);
+
+CREATE TABLE Rooms (
+  rid integer,
+  location text NOT NULL,
+  seating_capacity integer CHECK(seating_capacity >= 0) NOT NULL,
+  PRIMARY KEY (rid)
 );
 
 CREATE TABLE Offerings (
@@ -45,13 +52,6 @@ CREATE TABLE Sessions (
   start_time time,
   end_time time,
   PRIMARY KEY (sid)
-);
-
-CREATE TABLE Rooms (
-  rid integer,
-  location text,
-  seating_capacity integer,
-  PRIMARY KEY (rid)
 );
 
 CREATE TABLE Consists (
