@@ -19,7 +19,7 @@ CREATE TABLE Courses (
     area_name   text NOT NULL,
     title       text NOT NULL,
     description text,
-    duration    smallint DEFAULT 1
+    duration    smallint DEFAULT 1 NOT NULL
                 CONSTRAINT valid_duration
                 CHECK (duration BETWEEN 1 AND 7),
     PRIMARY KEY (course_id),
@@ -31,7 +31,7 @@ CREATE TABLE Courses (
 CREATE TABLE Rooms (
     rid              integer,
     location         text,
-    seating_capacity integer DEFAULT 0
+    seating_capacity integer NOT NULL
                      CONSTRAINT non_negative_seating_capacity
                      CHECK (seating_capacity >= 0),
     PRIMARY KEY (rid)
@@ -49,9 +49,11 @@ CREATE TABLE Offerings (
     start_date       date,
     end_date         date,
     reg_deadline     date    NOT NULL,
-    fees             integer NOT NULL,
+    fees             integer NOT NULL
+                     CONSTRAINT non_negative_fees
+                     CHECK (target_num_reg >= 0),
     seating_capacity integer,
-    target_num_reg   integer DEFAULT 0
+    target_num_reg   integer NOT NULL
                      CONSTRAINT non_negative_target_num_reg
                      CHECK (target_num_reg >= 0),
     PRIMARY KEY (offering_id),
