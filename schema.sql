@@ -19,7 +19,7 @@ CREATE TABLE Courses (
     area_name   text NOT NULL,
     title       text NOT NULL,
     description text,
-    duration    smallint DEFAULT 1 NOT NULL
+    duration    smallint NOT NULL
                 CONSTRAINT valid_duration
                 CHECK (duration BETWEEN 1 AND 7),
     PRIMARY KEY (course_id),
@@ -48,7 +48,9 @@ CREATE TABLE Offerings (
     launch_date      date    NOT NULL,
     start_date       date,
     end_date         date,
-    reg_deadline     date    NOT NULL,
+    reg_deadline     date    NOT NULL
+                     CONSTRAINT valid_reg_deadline
+                     CHECK (launch_date < reg_deadline),
     fees             integer NOT NULL
                      CONSTRAINT non_negative_fees
                      CHECK (target_num_reg >= 0),
@@ -67,17 +69,17 @@ CREATE TABLE Offerings (
 /* Sessions can take lunch break, e.g. 4 hour session from 10am to 4pm */
 /* date & time in ISO 8601 format */
 CREATE TABLE Sessions (
-    offering_id integer,
-    session_id  integer,
-    date        date NOT NULL,
-    start_time  time
-                CONSTRAINT valid_start_time
-                CHECK(start_time BETWEEN '09:00' AND '11:00'
-                   OR start_time BETWEEN '14:00' AND '17:00'),
-    end_time    time
-                CONSTRAINT valid_end_time
-                CHECK(end_time BETWEEN '10:00' AND '12:00'
-                   OR end_time BETWEEN '15:00' AND '18:00'),
+    offering_id  integer,
+    session_id   integer,
+    session_date date NOT NULL,
+    start_time   time
+                 CONSTRAINT valid_start_time
+                 CHECK(start_time BETWEEN '09:00' AND '11:00'
+                    OR start_time BETWEEN '14:00' AND '17:00'),
+    end_time     time
+                 CONSTRAINT valid_end_time
+                 CHECK(end_time BETWEEN '10:00' AND '12:00'
+                    OR end_time BETWEEN '15:00' AND '18:00'),
     PRIMARY KEY (offering_id, session_id),
     FOREIGN KEY (offering_id) REFERENCES Offerings
         ON DELETE CASCADE
