@@ -20,7 +20,7 @@ CREATE TABLE Courses (
     title       text NOT NULL,
     description text,
     duration    smallint NOT NULL
-                CONSTRAINT valid_duration
+                CONSTRAINT duration_between_1_and_7
                 CHECK (duration BETWEEN 1 AND 7),
     PRIMARY KEY (course_id),
     FOREIGN KEY (area_name) REFERENCES Course_areas
@@ -49,7 +49,7 @@ CREATE TABLE Offerings (
     start_date       date,
     end_date         date,
     reg_deadline     date    NOT NULL
-                     CONSTRAINT valid_reg_deadline
+                     CONSTRAINT launch_date_before_reg_deadline
                      CHECK (launch_date < reg_deadline),
     fees             integer NOT NULL
                      CONSTRAINT non_negative_fees
