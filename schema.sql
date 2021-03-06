@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS Course_areas,
 Courses,
+Instructors,
 Offerings,
 Rooms,
 Sessions;
@@ -26,15 +27,6 @@ CREATE TABLE Courses (
     FOREIGN KEY (area_name) REFERENCES Course_areas
         ON DELETE CASCADE
         ON UPDATE CASCADE
-);
-
-CREATE TABLE Rooms (
-    rid              integer,
-    location         text,
-    seating_capacity integer NOT NULL
-                     CONSTRAINT non_negative_seating_capacity
-                     CHECK (seating_capacity >= 0),
-    PRIMARY KEY (rid)
 );
 
 /* TODO: routine update start_date and end_date */
@@ -64,23 +56,42 @@ CREATE TABLE Offerings (
     UNIQUE (course_id, launch_date)
 );
 
+CREATE TABLE Instructors (
+    eid integer,
+    PRIMARY KEY (eid)
+);
+
+CREATE TABLE Rooms (
+    rid              integer,
+    location         text,
+    seating_capacity integer NOT NULL
+                     CONSTRAINT non_negative_seating_capacity
+                     CHECK (seating_capacity >= 0),
+    PRIMARY KEY (rid)
+);
+
 /* TODO: auto assign session_id for an offering starts from 1 */
-/* TODO: CHECK end_time = start_time + duration */
+/* TODO: check end_time = start_time + duration */
 /* Sessions can take lunch break, e.g. 4 hour session from 10am to 4pm */
 /* date & time in ISO 8601 format */
+/* eid is the instructor id */
 CREATE TABLE Sessions (
     offering_id  integer,
     session_id   integer,
     session_date date NOT NULL,
     start_time   time
                  CONSTRAINT valid_start_time
-                 CHECK(start_time BETWEEN '09:00' AND '11:00'
-                    OR start_time BETWEEN '14:00' AND '17:00'),
+                 CHECK (start_time BETWEEN '09:00' AND '11:00'
+                     OR start_time BETWEEN '14:00' AND '17:00'),
     end_time     time
                  CONSTRAINT valid_end_time
-                 CHECK(end_time BETWEEN '10:00' AND '12:00'
-                    OR end_time BETWEEN '15:00' AND '18:00'),
+                 CHECK (end_time BETWEEN '10:00' AND '12:00'
+                     OR end_time BETWEEN '15:00' AND '18:00'),
+    eid          integer,
+    rid          integer,
     PRIMARY KEY (offering_id, session_id),
     FOREIGN KEY (offering_id) REFERENCES Offerings
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    FOREIGN KEY (eid) REFERENCES Instructors,
+    FOREIGN KEY (rid) REFERENCES Rooms
 );
