@@ -1,96 +1,78 @@
-DROP TABLE IF EXISTS Conducts,
-Consists,
-Course_areas,
+DROP TABLE IF EXISTS Course_areas,
 Courses,
 Offerings,
 Rooms,
 Sessions;
 
-CREATE TABLE Course_areas (area_name text, PRIMARY KEY (area_name));
+CREATE TABLE Course_areas (
+    area_name text,
+    PRIMARY KEY (area_name)
+);
 
-/* 
+/*
  duration
  - refers to number of hours, (0, 7]
  - can only be conducted from 9am to 6pm
  - cannot be conducted during 12pm to 2pm */
 CREATE TABLE Courses (
-  course_id integer,
-  area_name text NOT NULL,
-  title text UNIQUE NOT NULL,
-  description text NOT NULL,
-  duration smallint CHECK(
-    0 < duration
-    AND duration <= 7
-  ) NOT NULL,
-  PRIMARY KEY (course_id),
-  FOREIGN KEY (area_name) REFERENCES Course_areas ON DELETE CASCADE
+    course_id   integer,
+    area_name   text NOT NULL,
+    title       text NOT NULL,
+    description text,
+    duration    smallint DEFAULT 1
+                CONSTRAINT valid_duration
+                CHECK (duration BETWEEN 1 AND 7),
+    PRIMARY KEY (course_id),
+    FOREIGN KEY (area_name) REFERENCES Course_areas
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Rooms (
-  rid integer,
-  location text NOT NULL,
-  seating_capacity integer CHECK(seating_capacity >= 0) NOT NULL,
-  PRIMARY KEY (rid)
+    rid              integer,
+    location         text,
+    seating_capacity integer DEFAULT 0
+                     CONSTRAINT non_negative_seating_capacity
+                     CHECK (seating_capacity >= 0),
+    PRIMARY KEY (rid)
 );
 
-/* TODO: sid for an offering starts from 1 */
-/* TODO: end_time = start_time + duration */
-/* TODO: no session between 12pm to 2pm -- can sessions take lunch break? */
-/* date & time: ISO 8601 */
-CREATE TABLE Sessions (
-  sid integer,
-  date date NOT NULL,
-  start_time time CHECK(
-    (
-      start_time >= '09:00'
-      AND start_time < '18:00'
-    )
-    AND (
-      start_time < '12:00'
-      OR start_time >= '14:00'
-    )
-  ) NOT NULL,
-  end_time time CHECK(
-    (
-      end_time > '09:00'
-      AND end_time <= '18:00'
-    )
-    AND (
-      end_time <= '12:00'
-      OR end_time > '14:00'
-    )
-    AND (start_time < end_time)
-  ) NOT NULL,
-  PRIMARY KEY (sid)
-);
-
+/* TODO: routine update start_date and end_date */
+/* TODO: routine update seating_capacity, must be >= target_num_reg */
+/* TODO: trigger CHECK offering total participation in sessions */
 CREATE TABLE Offerings (
-  course_id integer,
-  launch_date date,
-  start_date date,
-  end_date date,
-  registration_deadline date,
-  fees integer,
-  seating_capacity integer,
-  target_number_registrations integer,
-  PRIMARY KEY (course_id, launch_date),
-  FOREIGN KEY (course_id) REFERENCES Courses ON DELETE CASCADE
+    offering_id      integer,
+    course_id        integer,
+    launch_date      date    NOT NULL,
+    start_date       date,
+    end_date         date,
+    reg_deadline     date    NOT NULL,
+    fees             integer NOT NULL,
+    seating_capacity integer,
+    target_num_reg   integer NOT NULL,
+    PRIMARY KEY (offering_id),
+    FOREIGN KEY (course_id) REFERENCES Courses
+        ON DELETE CASCADE,
+    UNIQUE (course_id, launch_date)
 );
 
-CREATE TABLE Consists (
-  course_id integer,
-  launch_date date,
-  sid integer,
-  PRIMARY KEY(course_id, launch_date, sid),
-  FOREIGN KEY(course_id, launch_date) REFERENCES Offerings,
-  FOREIGN KEY(sid) REFERENCES Sessions
-);
-
-CREATE TABLE Conducts (
-  sid integer,
-  rid integer,
-  /* TODO: eid integer, */
-  PRIMARY KEY(sid, rid),
-  FOREIGN KEY(sid) REFERENCES Sessions,
-  FOREIGN KEY(rid) REFERENCES Rooms
+/* TODO: auto assign session_id for an offering starts from 1 */
+/* TODO: CHECK end_time = start_time + duration */
+/* Sessions can take lunch break, e.g. 4 hour session from 10am to 4pm */
+/* date & time in ISO 8601 format */
+CREATE TABLE Sessions (
+    offering_id integer,
+    session_id  integer,
+    date        date NOT NULL,
+    start_time  time
+                CONSTRAINT valid_start_time
+                CHECK(start_time BETWEEN '09:00' AND '11:00'
+                   OR start_time BETWEEN '14:00' AND '17:00'),
+    end_time    time
+                CONSTRAINT valid_end_time
+                CHECK(end_time BETWEEN '10:00' AND '12:00'
+                   OR end_time BETWEEN '15:00' AND '18:00'),
+    PRIMARY KEY (offering_id, session_id),
+    FOREIGN KEY (offering_id) REFERENCES Offerings
+        ON DELETE CASCADE
 );
