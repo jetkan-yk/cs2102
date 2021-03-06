@@ -38,8 +38,10 @@ CREATE TABLE Rooms (
 );
 
 /* TODO: routine update start_date and end_date */
-/* TODO: routine update seating_capacity, must be >= target_num_reg */
-/* TODO: trigger CHECK offering total participation in sessions */
+/* TODO: routine update seating_capacity */
+/* TODO: trigger check reg_deadline <= start_date + 10 */
+/* TODO: trigger check seating_capacity >= target_num_reg */
+/* TODO: trigger check Offerings has total participation in Sessions */
 CREATE TABLE Offerings (
     offering_id      integer,
     course_id        integer,
@@ -49,7 +51,9 @@ CREATE TABLE Offerings (
     reg_deadline     date    NOT NULL,
     fees             integer NOT NULL,
     seating_capacity integer,
-    target_num_reg   integer NOT NULL,
+    target_num_reg   integer DEFAULT 0
+                     CONSTRAINT non_negative_target_num_reg
+                     CHECK (target_num_reg >= 0),
     PRIMARY KEY (offering_id),
     FOREIGN KEY (course_id) REFERENCES Courses
         ON DELETE CASCADE,
