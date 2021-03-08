@@ -1,9 +1,10 @@
-DROP TABLE IF EXISTS Course_areas,
+DROP TABLE IF EXISTS Administrators,
+Course_areas,
 Courses,
 Instructors,
 Offerings,
 Rooms,
-Sessions;
+Sessions CASCADE;
 
 CREATE TABLE Course_areas (
     area_name TEXT,
@@ -29,41 +30,41 @@ CREATE TABLE Courses (
         ON UPDATE CASCADE
 );
 
+CREATE TABLE Administrators (
+    eid INTEGER,
+    PRIMARY KEY (eid)
+);
+
 /* TODO: trigger update start_date and end_date */
-/* TODO: trigger update seating_capacity */
-/* TODO: trigger abort Offerings if no Sessions created
-    If implemented correctly, the NOT NULL constraints should
-    detect Offerings with no Sessions */
+/* TODO: trigger update seating_capacity, abort Offerings if
+    seating_capacity < target_num_reg */
+/* TODO: trigger abort Offerings if no Sessions created */
+/* eid is the administrator id */
 CREATE TABLE Offerings (
     offering_id      INTEGER,
     course_id        INTEGER NOT NULL,
     launch_date      DATE    NOT NULL,
-    start_date       DATE, --NOT NULL
-    end_date         DATE, --NOT NULL
+    start_date       DATE,
+    end_date         DATE,
     reg_deadline     DATE    NOT NULL
                      CONSTRAINT launch_date_before_reg_deadline
                      CHECK (launch_date < reg_deadline),
     fees             INTEGER NOT NULL
                      CONSTRAINT non_negative_fees
                      CHECK (target_num_reg >= 0),
-    seating_capacity INTEGER, --NOT NULL
+    seating_capacity INTEGER,
     target_num_reg   INTEGER NOT NULL
                      CONSTRAINT non_negative_target_num_reg
                      CHECK (target_num_reg >= 0),
+    eid              INTEGER NOT NULL,
     PRIMARY KEY (offering_id),
     FOREIGN KEY (course_id) REFERENCES Courses
         ON DELETE CASCADE,
+    FOREIGN KEY (eid) REFERENCES Administrators,
     CONSTRAINT offerings_cand_key
     UNIQUE (course_id, launch_date),
     CONSTRAINT valid_reg_deadline
-    CHECK (reg_deadline <= start_date + 10),
-    CONSTRAINT sufficient_seating_capacity
-    CHECK (seating_capacity >= target_num_reg)
-);
-
-CREATE TABLE Instructors (
-    eid INTEGER,
-    PRIMARY KEY (eid)
+    CHECK (reg_deadline <= start_date + 10)
 );
 
 CREATE TABLE Rooms (
@@ -75,11 +76,16 @@ CREATE TABLE Rooms (
     PRIMARY KEY (rid)
 );
 
+CREATE TABLE Instructors (
+    eid INTEGER,
+    PRIMARY KEY (eid)
+);
+
 /* TODO: trigger check room availability */
 /* TODO: trigger system generate session_id for an offering starts from 1, see:
     https://stackoverflow.com/questions/29996639/autoincrement-attribute-based-on-another-attribute */
 /* TODO: trigger auto assign eid */
-/* TODO: trigger auto assign end_time = start_time + duration + lunch break */
+/* TODO: trigger auto assign & check validity of end_time = start_time + duration + lunch break */
 /* Sessions can take lunch break, e.g. 4 hour session from 10am to 4pm */
 /* date & time in ISO 8601 format */
 /* eid is the instructor id */
@@ -91,11 +97,8 @@ CREATE TABLE Sessions (
                  CONSTRAINT valid_start_time
                  CHECK (start_time BETWEEN '09:00' AND '11:00'
                      OR start_time BETWEEN '14:00' AND '17:00'),
-    end_time     TIME --NOT NULL
-                 CONSTRAINT valid_end_time
-                 CHECK (end_time BETWEEN '10:00' AND '12:00'
-                     OR end_time BETWEEN '15:00' AND '18:00'),
-    eid          INTEGER, --NOT NULL
+    end_time     TIME,
+    eid          INTEGER,
     rid          INTEGER NOT NULL,
     PRIMARY KEY (offering_id, session_id),
     FOREIGN KEY (offering_id) REFERENCES Offerings
