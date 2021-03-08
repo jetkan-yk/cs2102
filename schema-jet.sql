@@ -31,20 +31,22 @@ CREATE TABLE Courses (
 
 /* TODO: trigger update start_date and end_date */
 /* TODO: trigger update seating_capacity */
-/* TODO: trigger abort Offerings if no Sessions created */
+/* TODO: trigger abort Offerings if no Sessions created
+    If implemented correctly, the NOT NULL constraints should
+    detect Offerings with no Sessions */
 CREATE TABLE Offerings (
     offering_id      INTEGER,
     course_id        INTEGER NOT NULL,
     launch_date      DATE    NOT NULL,
-    start_date       DATE,
-    end_date         DATE,
+    start_date       DATE, --NOT NULL
+    end_date         DATE, --NOT NULL
     reg_deadline     DATE    NOT NULL
                      CONSTRAINT launch_date_before_reg_deadline
                      CHECK (launch_date < reg_deadline),
     fees             INTEGER NOT NULL
                      CONSTRAINT non_negative_fees
                      CHECK (target_num_reg >= 0),
-    seating_capacity INTEGER,
+    seating_capacity INTEGER, --NOT NULL
     target_num_reg   INTEGER NOT NULL
                      CONSTRAINT non_negative_target_num_reg
                      CHECK (target_num_reg >= 0),
