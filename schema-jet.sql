@@ -18,8 +18,8 @@ CREATE TABLE Course_areas (
  - cannot be conducted during 12pm to 2pm */
 CREATE TABLE Courses (
     course_id   SERIAL,
-    area_name   TEXT NOT NULL,
-    title       TEXT NOT NULL,
+    area_name   TEXT     NOT NULL,
+    title       TEXT     NOT NULL,
     description TEXT,
     duration    SMALLINT NOT NULL
                 CONSTRAINT duration_between_1_and_7
@@ -92,8 +92,8 @@ CREATE TABLE Instructors (
 CREATE TABLE Sessions (
     offering_id  INTEGER,
     session_id   SERIAL, --INTEGER
-    session_date DATE NOT NULL,
-    start_time   TIME NOT NULL
+    session_date DATE    NOT NULL,
+    start_time   TIME    NOT NULL
                  CONSTRAINT valid_start_time
                  CHECK (start_time BETWEEN '09:00' AND '11:00'
                      OR start_time BETWEEN '14:00' AND '17:00'),
