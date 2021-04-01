@@ -1,0 +1,34 @@
+Not Implemented:
+
+add_employee                    - 
+remove_employee                 - 
+add_customer                    - 
+update_credit_card              - 
+add_course                      - jet
+find_instructors                - 
+get_available_instructors       - 
+find_rooms                      - jet
+get_available_rooms             - jet
+add_course_offering             - jet
+add_course_package              - jet
+get_available_course_packages   - 
+buy_course_package              - 
+get_my_course_package           - 
+get_available_course_offerings  - 
+get_available_course_sessions   - 
+register_session                -
+get_my_registrations            - 
+update_course_session           - 
+cancel_registration             - 
+update_instructor               - 
+update_room                     - jet
+remove_session                  - 
+add_session                     - jet
+pay_salary                      - 
+promote_courses                 - jet
+top_packages                    - 
+popular_courses                 - jet
+view_summary_report             - 
+view_manager_report             - 
+
+Implemented:
