@@ -1,0 +1,25 @@
+Buys
+package_id (cource_packages) | cc_number (Owns) | date | num_remaining_redemptions
+1                            | 1                | d1   | 2
+1                            | 1                | d2   | 0
+1                            | 1                | d3   | 0
+
+Redeems
+package_id (cource_packages) | cc_number (Owns) | buy_date | sid | redeeem_date
+1                            | 1                | d2       | 123 | d4
+1                            | 1                | d2       | 123 | d5
+1                            | 5                | d3       | 123 | d6
+1                            | 5                | d3       | 123 | d7
+
+Owns
+cc_number | cust_id | from_date
+1         | 1       | d2
+4         | 2       | d1
+5         | 1       | d3
+
+Credit_card
+cc_number | ....
+1
+2
+3
+4
