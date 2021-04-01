@@ -84,6 +84,6 @@ CREATE TABLE Manages (
 
 CREATE TABLE Specializes (
     eid             INTEGER,  /*instructor id*/
-    cname           char(20),
+    area_name       char(20),
     PRIMARY KEY (cname, eid)
 );
