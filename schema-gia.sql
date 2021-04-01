@@ -29,8 +29,9 @@ CREATE TABLE Cancels (
 
 CREATE TABLE Owns (
     number INTEGER,
+    cust_id INTEGER REFERENCES Customers,
     from_date DATE,
-    PRIMARY KEY (number)
+    PRIMARY KEY (number) REFERENCES Credit_cards
 );
 
 CREATE TABLE Registers (
@@ -43,7 +44,7 @@ CREATE TABLE Credit_cards (
     CVV INTEGER,
     expiry_date DATE,
     PRIMARY KEY (number)
-    FOREIGN KEY (number) REFERENCES Owns
+    FOREIGN KEY (number) REFERENCES Owns /*is this correct*/
 );
 
 CREATE TABLE Course_packages (
