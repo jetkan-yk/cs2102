@@ -14,7 +14,9 @@ CREATE TABLE Customers (
     phone   INTEGER NOT NULL,
     email   VARCHAR NOT NULL,
 
-    PRIMARY KEY (cust_id)
+    PRIMARY KEY (cust_id),
+    CONSTRAINT cust_total_participation
+        CHECK (cust_id IN Owns(cust_id))
     /* constraint total participation of
     Customers in Owns */
 );
