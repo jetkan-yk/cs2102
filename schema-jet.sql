@@ -8,6 +8,7 @@ Sessions CASCADE;
 
 CREATE TABLE Course_areas (
     area_name TEXT,
+
     PRIMARY KEY (area_name)
 );
 
@@ -24,6 +25,7 @@ CREATE TABLE Courses (
     duration    SMALLINT NOT NULL
                 CONSTRAINT duration_between_1_and_7
                 CHECK (duration BETWEEN 1 AND 7),
+
     PRIMARY KEY (course_id),
     FOREIGN KEY (area_name) REFERENCES Course_areas
         ON DELETE CASCADE
@@ -32,6 +34,7 @@ CREATE TABLE Courses (
 
 CREATE TABLE Administrators (
     eid INTEGER,
+
     PRIMARY KEY (eid)
 );
 
@@ -41,30 +44,33 @@ CREATE TABLE Administrators (
 /* TODO: trigger abort Offerings if no Sessions created */
 /* eid is the administrator id */
 CREATE TABLE Offerings (
+    course_id        INTEGER,
     offering_id      INTEGER,
-    course_id        INTEGER NOT NULL,
     launch_date      DATE    NOT NULL,
     start_date       DATE,
     end_date         DATE,
     reg_deadline     DATE    NOT NULL
                      CONSTRAINT launch_date_before_reg_deadline
-                     CHECK (launch_date < reg_deadline),
+                          CHECK (launch_date < reg_deadline),
     fees             INTEGER NOT NULL
                      CONSTRAINT non_negative_fees
-                     CHECK (target_num_reg >= 0),
+                          CHECK (fees >= 0),
     seating_capacity INTEGER,
     target_num_reg   INTEGER NOT NULL
                      CONSTRAINT non_negative_target_num_reg
-                     CHECK (target_num_reg >= 0),
+                          CHECK (target_num_reg >= 0),
     eid              INTEGER NOT NULL,
-    PRIMARY KEY (offering_id),
+
+    PRIMARY KEY (course_id, offering_id),
     FOREIGN KEY (course_id) REFERENCES Courses
-        ON DELETE CASCADE,
-    FOREIGN KEY (eid) REFERENCES Administrators,
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (eid)       REFERENCES Administrators,
+
     CONSTRAINT offerings_cand_key
-    UNIQUE (course_id, launch_date),
+        UNIQUE (course_id, launch_date),
     CONSTRAINT valid_reg_deadline
-    CHECK (reg_deadline <= start_date + 10)
+         CHECK (reg_deadline <= start_date + 10)
 );
 
 CREATE TABLE Rooms (
@@ -72,12 +78,14 @@ CREATE TABLE Rooms (
     location         TEXT,
     seating_capacity INTEGER NOT NULL
                      CONSTRAINT non_negative_seating_capacity
-                     CHECK (seating_capacity >= 0),
+                          CHECK (seating_capacity >= 0),
+
     PRIMARY KEY (rid)
 );
 
 CREATE TABLE Instructors (
     eid INTEGER,
+
     PRIMARY KEY (eid)
 );
 
@@ -90,21 +98,25 @@ CREATE TABLE Instructors (
 /* date & time in ISO 8601 format */
 /* eid is the instructor id */
 CREATE TABLE Sessions (
+    course_id    INTEGER,
     offering_id  INTEGER,
-    session_id   SERIAL, --INTEGER
+    session_id   SERIAL,
     session_date DATE    NOT NULL,
     start_time   TIME    NOT NULL
                  CONSTRAINT valid_start_time
-                 CHECK (start_time BETWEEN '09:00' AND '11:00'
-                     OR start_time BETWEEN '14:00' AND '17:00'),
+                      CHECK (start_time BETWEEN '09:00' AND '11:00'
+                         OR  start_time BETWEEN '14:00' AND '17:00'),
     end_time     TIME,
     eid          INTEGER,
     rid          INTEGER NOT NULL,
-    PRIMARY KEY (offering_id, session_id),
-    FOREIGN KEY (offering_id) REFERENCES Offerings
-        ON DELETE CASCADE,
-    FOREIGN KEY (eid) REFERENCES Instructors,
-    FOREIGN KEY (rid) REFERENCES Rooms,
+
+    PRIMARY KEY (course_id, offering_id, session_id),
+    FOREIGN KEY (course_id, offering_id) REFERENCES Offerings
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (eid)                    REFERENCES Instructors,
+    FOREIGN KEY (rid)                    REFERENCES Rooms,
+
     CONSTRAINT sessions_cand_key
-    UNIQUE (offering_id, session_date, start_time)
+        UNIQUE (course_id, offering_id, session_id, session_date, start_time)
 );
