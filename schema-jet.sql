@@ -90,8 +90,6 @@ CREATE TABLE Instructors (
 );
 
 /* TODO: trigger check room availability */
-/* TODO: trigger system generate session_id for an offering starts from 1, see:
-    https://stackoverflow.com/questions/29996639/autoincrement-attribute-based-on-another-attribute */
 /* TODO: trigger auto assign eid */
 /* TODO: trigger auto assign & check validity of end_time = start_time + duration + lunch break */
 /* Sessions can take lunch break, e.g. 4 hour session from 10am to 4pm */
@@ -100,7 +98,7 @@ CREATE TABLE Instructors (
 CREATE TABLE Sessions (
     course_id    INTEGER,
     offering_id  INTEGER,
-    session_id   SERIAL,
+    session_id   INTEGER,
     session_date DATE    NOT NULL,
     start_time   TIME    NOT NULL
                  CONSTRAINT valid_start_time

@@ -1,11 +1,19 @@
-DROP FUNCTION IF EXISTS course_info();
+/* Sessions Triggers */
 
-CREATE FUNCTION course_info() RETURNS TABLE(course_area text, course_id integer, title text) AS $$
-SELECT area_name,
-  course_id,
-  title
-FROM Courses
-ORDER BY area_name,
-  course_id;
+CREATE TRIGGER set_session_id
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION set_session_id_func();
 
-$$ LANGUAGE SQL;
+CREATE OR REPLACE FUNCTION set_session_id_func()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  SELECT COALESCE(max(session_id) + 1, 1) INTO NEW.session_id
+    FROM Sessions
+   WHERE course_id = NEW.course_id
+         AND offering_id = NEW.offering_id;
+
+  RETURN NEW;
+END;
+$$
+LANGUAGE PLPGSQL;
