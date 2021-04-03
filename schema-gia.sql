@@ -10,15 +10,11 @@ Redeems;
 CREATE TABLE Customers (
     cust_id INTEGER,
     name    TEXT NOT NULL,
-    address VARCHAR NOT NULL,
+    address TEXT NOT NULL,
     phone   INTEGER NOT NULL,
-    email   VARCHAR NOT NULL,
+    email   TEXT NOT NULL,
 
     PRIMARY KEY (cust_id),
-    CONSTRAINT cust_total_participation
-        CHECK (cust_id IN Owns(cust_id))
-    /* constraint total participation of
-    Customers in Owns */
 );
 
 CREATE TABLE Cancels (
@@ -39,30 +35,37 @@ CREATE TABLE Owns (
     from_date   DATE,
 
     PRIMARY KEY (cc_number),
+    FOREIGN KEY (cc_number) REFERENCES Customers
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (cust_id) REFERENCES Customers
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 
 CREATE TABLE Registers (
-    reg_date DATE,
+    reg_date        DATE,
+    cc_number       INTEGER,
+    course_id       INTEGER,
+    offering_id     INTEGER,
+    session_id      INTEGER,
 
-    PRIMARY KEY (reg_date)
-    /* unsure how to link this to Owns
-    and Sessions */
+    PRIMARY KEY (reg_date),
+    FOREIGN KEY (cc_number) REFERENCES Owns
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (course_id, offering_id, session_id) REFERENCES Sessions
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 
-)
+);
 
 CREATE TABLE Credit_cards (
     cc_number       INTEGER,
     CVV             INTEGER,
     expiry_date     DATE,
 
-    PRIMARY KEY (cc_number),
-    FOREIGN KEY (cc_number) REFERENCES Owns
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-    /*is this correct*/
+    PRIMARY KEY (cc_number)
 );
 
 CREATE TABLE Course_packages (
@@ -84,9 +87,15 @@ CREATE TABLE Buys (
     cc_number                   INTEGER,
 
     PRIMARY KEY (buy_date),
-    FOREIGN KEY (package_id) REFERENCES Course_packages,
-    FOREIGN KEY (num_free_registrations) REFERENCES Course_packages,
+    FOREIGN KEY (package_id) REFERENCES Course_packages
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (num_free_registrations) REFERENCES Course_packages
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (cc_number) REFERENCES Owns
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE Redeems (
@@ -94,13 +103,19 @@ CREATE TABLE Redeems (
     package_id      INTEGER,
     cc_number       INTEGER,
     buy_date        DATE,
-    session_id      SERIAL, /* why is it yellow */
+    course_id       INTEGER,
+    offering_id     INTEGER,
+    session_id      INTEGER,
 
     PRIMARY KEY (redeem_date)
-    FOREIGN KEY (package_id) REFERENCES Course_packages,
-    FOREIGN KEY (cc_number) REFERENCES Owns,
-    FOREIGN KEY (session_id) REFERENCES Sessions       
-
-    
+    FOREIGN KEY (package_id) REFERENCES Course_packages
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (cc_number) REFERENCES Owns
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (course_id, offering_id, session_id) REFERENCES Sessions
+        ON DELETE CASCADE
+        ON UPDATE CASCADE           
 );
 
