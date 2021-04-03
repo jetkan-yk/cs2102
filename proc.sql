@@ -1,5 +1,4 @@
-/* -------------- Offerings Triggers -------------- */
-/* -------------- Offerings Triggers -------------- */
+/* ============== START OF TRIGGERS ============== */
 
 /* -------------- Sessions Triggers -------------- */
 
@@ -22,7 +21,6 @@ LANGUAGE PLPGSQL;
 CREATE TRIGGER set_session_id
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_session_id_func();
-
 
 /* Assigns end_time and removes sessions that ends after 6pm */
 CREATE OR REPLACE FUNCTION set_end_time_func()
@@ -56,7 +54,6 @@ LANGUAGE PLPGSQL;
 CREATE TRIGGER set_end_time
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
-
 
 /* Updates Offering's start_date and end_date */
 CREATE OR REPLACE FUNCTION update_start_end_dates_func()
@@ -97,7 +94,6 @@ CREATE TRIGGER update_start_end_dates
 AFTER INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 
-
 /* Updates Offering's seating_capacity */
 CREATE OR REPLACE FUNCTION update_seating_capacity_func()
     RETURNS TRIGGER AS
@@ -125,3 +121,23 @@ AFTER INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* -------------- Sessions Triggers -------------- */
+
+/* =============== END OF TRIGGERS =============== */
+
+
+
+/* ============== START OF ROUTINES ============== */
+
+/* --------------- Courses Routines --------------- */
+
+/* add_course */
+CREATE OR REPLACE PROCEDURE add_course() AS
+$$
+BEGIN
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* --------------- Courses Routines --------------- */
+
+/* =============== END OF ROUTINES =============== */
