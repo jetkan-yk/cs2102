@@ -59,7 +59,7 @@ FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
 
 
 /* Updates Offering's start_date and end_date */
-CREATE OR REPLACE FUNCTION set_start_end_dates_func()
+CREATE OR REPLACE FUNCTION update_start_end_dates_func()
     RETURNS TRIGGER AS
 $$
 DECLARE
@@ -93,13 +93,13 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER set_start_end_dates
+CREATE TRIGGER update_start_end_dates
 AFTER INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION set_start_end_dates_func();
+FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 
 
 /* Updates Offering's seating_capacity */
-CREATE OR REPLACE FUNCTION set_seating_capacity_func()
+CREATE OR REPLACE FUNCTION update_seating_capacity_func()
     RETURNS TRIGGER AS
 $$
 DECLARE
@@ -120,8 +120,8 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER set_seating_capacity
+CREATE TRIGGER update_seating_capacity
 AFTER INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION set_seating_capacity_func();
+FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* -------------- Sessions Triggers -------------- */

@@ -38,6 +38,7 @@ CREATE TABLE Administrators (
     PRIMARY KEY (eid)
 );
 
+/* TODO: routine check reg_deadline <= start_date + 10 */
 /* eid is the administrator id */
 CREATE TABLE Offerings (
     course_id        INTEGER,
@@ -64,9 +65,7 @@ CREATE TABLE Offerings (
     FOREIGN KEY (eid)       REFERENCES Administrators,
 
     CONSTRAINT offerings_cand_key
-        UNIQUE (course_id, launch_date),
-    CONSTRAINT valid_reg_deadline
-         CHECK (reg_deadline <= start_date + 10)
+        UNIQUE (course_id, launch_date)
 );
 
 CREATE TABLE Rooms (
