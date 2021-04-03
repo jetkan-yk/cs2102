@@ -22,7 +22,7 @@ CREATE TABLE Courses (
     area_name   TEXT     NOT NULL,
     title       TEXT     NOT NULL,
     description TEXT,
-    duration    SMALLINT NOT NULL
+    duration    INTEGER NOT NULL
                 CONSTRAINT duration_between_1_and_7
                 CHECK (duration BETWEEN 1 AND 7),
 
@@ -91,8 +91,7 @@ CREATE TABLE Instructors (
 
 /* TODO: trigger check room availability */
 /* TODO: trigger auto assign eid */
-/* TODO: trigger auto assign & check validity of end_time = start_time + duration + lunch break */
-/* Sessions can take lunch break, e.g. 4 hour session from 10am to 4pm */
+/* Sessions can take lunch break, e.g. 4 hour session from 11am to 5pm */
 /* date & time in ISO 8601 format */
 /* eid is the instructor id */
 CREATE TABLE Sessions (
