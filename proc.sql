@@ -122,6 +122,19 @@ FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* -------------- Sessions Triggers -------------- */
 
+
+/* -------------- Registration Triggers -------------- */
+
+/*to check that customer registers for only
+1 session in one course before deadline */
+
+/* to check that customer has only 1 active/partially active package */
+
+/* to check for late cancellation and refund */
+
+/* -------------- Registration Triggers -------------- */
+
+
 /* =============== END OF TRIGGERS =============== */
 
 
