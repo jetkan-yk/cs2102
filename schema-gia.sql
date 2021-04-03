@@ -78,12 +78,14 @@ CREATE TABLE Course_packages (
 
 CREATE TABLE Buys (
     buy_date                    DATE,
+    num_free_registrations      INTEGER, /* this may be necessary for proc later */
     num_remaining_redemptions   INTEGER,
     package_id                  INTEGER,
     cc_number                   INTEGER,
 
     PRIMARY KEY (buy_date),
     FOREIGN KEY (package_id) REFERENCES Course_packages,
+    FOREIGN KEY (num_free_registrations) REFERENCES Course_packages,
     FOREIGN KEY (cc_number) REFERENCES Owns
 );
 
