@@ -33,13 +33,6 @@ CREATE TABLE Pay_slips (
     FOREIGN KEY (eid) REFERENCES Employees
 );
 
-CREATE TABLE EmployeePayslips (
-    eid             INTEGER,
-    payment_date    DATE,
-    PRIMARY KEY (eid, payment_date),
-    FOREIGN KEY (eid, payment_date) references Pay_slips
-);
-
 /*Instructors ISA Employees - not all instructors have to be employees - employees can be instructors and also other sub classes*/
 CREATE TABLE Instructors (
     eid             INTEGER PRIMARY KEY REFERENCES Employees ON DELETE CASCADE
