@@ -38,9 +38,6 @@ CREATE TABLE Administrators (
     PRIMARY KEY (eid)
 );
 
-/* TODO: trigger update seating_capacity */
-/* TODO: routine abort Offerings if no Sessions created or
-    seating_capacity < target_num_reg */
 /* eid is the administrator id */
 CREATE TABLE Offerings (
     course_id        INTEGER,
@@ -54,7 +51,7 @@ CREATE TABLE Offerings (
     fees             INTEGER NOT NULL
                      CONSTRAINT non_negative_fees
                           CHECK (fees >= 0),
-    seating_capacity INTEGER,
+    seating_capacity INTEGER DEFAULT 0,
     target_num_reg   INTEGER NOT NULL
                      CONSTRAINT non_negative_target_num_reg
                           CHECK (target_num_reg >= 0),
@@ -89,7 +86,6 @@ CREATE TABLE Instructors (
 );
 
 /* TODO: trigger check room availability */
-/* TODO: trigger auto assign eid */
 /* Sessions can take lunch break, e.g. 4 hour session from 11am to 5pm */
 /* date & time in ISO 8601 format */
 /* eid is the instructor id */

@@ -58,7 +58,7 @@ BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
 
 
-/* Updates Offering start_date and end_date */
+/* Updates Offering's start_date and end_date */
 CREATE OR REPLACE FUNCTION set_start_end_dates_func()
     RETURNS TRIGGER AS
 $$
@@ -96,5 +96,32 @@ LANGUAGE PLPGSQL;
 CREATE TRIGGER set_start_end_dates
 AFTER INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_start_end_dates_func();
+
+
+/* Updates Offering's seating_capacity */
+CREATE OR REPLACE FUNCTION set_seating_capacity_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    room_capacity INTEGER;
+BEGIN
+    SELECT seating_capacity
+      INTO room_capacity
+      FROM Rooms
+     WHERE rid = NEW.rid;
+
+    UPDATE Offerings
+       SET seating_capacity = seating_capacity + room_capacity
+     WHERE course_id = NEW.course_id
+           AND offering_id = NEW.offering_id;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER set_seating_capacity
+AFTER INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION set_seating_capacity_func();
 
 /* -------------- Sessions Triggers -------------- */
