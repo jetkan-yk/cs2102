@@ -38,10 +38,9 @@ CREATE TABLE Administrators (
     PRIMARY KEY (eid)
 );
 
-/* TODO: trigger update start_date and end_date */
-/* TODO: trigger update seating_capacity, abort Offerings if
+/* TODO: trigger update seating_capacity */
+/* TODO: routine abort Offerings if no Sessions created or
     seating_capacity < target_num_reg */
-/* TODO: trigger abort Offerings if no Sessions created */
 /* eid is the administrator id */
 CREATE TABLE Offerings (
     course_id        INTEGER,
