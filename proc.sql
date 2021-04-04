@@ -38,8 +38,7 @@ BEGIN
 
       IF deadline + 10 <= NEW.session_date
     THEN RETURN NEW;
-    ELSE RAISE NOTICE
-            'Session dates must be at least 10 days (inclusive) after %, skipping',
+    ELSE RAISE NOTICE 'Session dates must be at least 10 days (inclusive) after %, skipping',
             deadline;
          RETURN NULL;
      END IF;
@@ -174,10 +173,28 @@ FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* ============== START OF ROUTINES ============== */
 
+/* --------------- Rooms Routines --------------- */
+
+/* 8. find_rooms
+    This routine is used to find all the rooms that could be used for a course session.
+    RETURNS: a table of room identifiers */
+CREATE OR REPLACE FUNCTION find_rooms(
+    _date DATE,
+    _start_time TIME,
+    _duration INTEGER)
+    RETURNS TABLE(rid INTEGER) AS
+$$
+    SELECT rid FROM Rooms WHERE rid NOT IN (2, 4, 6, 8, 10);
+$$
+LANGUAGE SQL;
+
+/* --------------- Rooms Routines --------------- */
+
 /* --------------- Courses Routines --------------- */
 
 /* 5. add_course
-   Returns the result of the new Course after successful INSERT */
+    This routine is used to add a new course.
+    RETURNS: the result of the new Course after successful INSERT */
 CREATE OR REPLACE FUNCTION add_course(
     _title TEXT,
     _description TEXT,
@@ -185,26 +202,20 @@ CREATE OR REPLACE FUNCTION add_course(
     _duration INTEGER)
     RETURNS Courses AS
 $$
-DECLARE
-    new_course Courses;
-BEGIN
     INSERT INTO Courses(title, description, area_name, duration)
     VALUES (_title, _description, _area_name, _duration)
-    RETURNING * INTO new_course;
-
-    RETURN new_course;
-END;
+    RETURNING *;
 $$
-LANGUAGE PLPGSQL;
+LANGUAGE SQL;
 
 /* --------------- Courses Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
 
 /* 24. add_session
-   Returns the result of the new Session after successful INSERT
-   NOTE: Parameters slightly different from the project description
-   TODO: Implement assign_instructor() trigger */
+    This routine is used to add a new session to a course offering.
+    RETURNS: the result of the new Session after successful INSERT
+    TODO: Implement assign_instructor() trigger */
 CREATE OR REPLACE FUNCTION add_session(
     _course_id INTEGER,
     _offering_id INTEGER,
@@ -213,17 +224,11 @@ CREATE OR REPLACE FUNCTION add_session(
     _rid INTEGER)
     RETURNS Sessions AS
 $$
-DECLARE
-    new_session Sessions;
-BEGIN
     INSERT INTO Sessions(course_id, offering_id, session_date, start_time, rid)
     VALUES (_course_id, _offering_id, _session_date, _start_time, _rid)
-    RETURNING * INTO new_session;
-
-    RETURN new_session;
-END;
+    RETURNING *;
 $$
-LANGUAGE PLPGSQL;
+LANGUAGE SQL;
 
 /* --------------- Sessions Routines --------------- */
 
