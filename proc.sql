@@ -22,6 +22,35 @@ CREATE TRIGGER set_session_id
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_session_id_func();
 
+/* Checks whether session_date is at least 10 days (inclusive)
+   after registration deadline */
+CREATE OR REPLACE FUNCTION check_session_date_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    deadline DATE;
+BEGIN
+    SELECT reg_deadline
+      INTO deadline
+      FROM Offerings
+     WHERE course_id = NEW.course_id
+           AND offering_id = NEW.offering_id;
+
+      IF deadline + 10 <= NEW.session_date
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE
+            'Session dates must be at least 10 days (inclusive) after %, skipping',
+            deadline;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_session_date
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION check_session_date_func();
+
 /* Assigns end_time and removes sessions that ends after 6pm */
 CREATE OR REPLACE FUNCTION set_end_time_func()
     RETURNS TRIGGER AS
@@ -46,9 +75,12 @@ BEGIN
     NEW.end_time := NEW.start_time + duration + lunch_break;
 
     /* Sessions must end before 6pm */
-      IF NEW.end_time > '18:00'
-    THEN RETURN NULL;
-    ELSE RETURN NEW;
+      IF NEW.end_time <= '18:00'
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE 'Sessions (%, %, %:00, % hours) must end before 6pm, skipping',
+             NEW.course_id, NEW.offering_id,
+             EXTRACT(HOURS from NEW.start_time), EXTRACT(HOURS from duration);
+         RETURN NULL;
      END IF;
 END;
 $$
@@ -154,7 +186,7 @@ CREATE OR REPLACE FUNCTION add_course(
     RETURNS Courses AS
 $$
 DECLARE
-new_course Courses;
+    new_course Courses;
 BEGIN
     INSERT INTO Courses(title, description, area_name, duration)
     VALUES (_title, _description, _area_name, _duration)
@@ -182,7 +214,7 @@ CREATE OR REPLACE FUNCTION add_session(
     RETURNS Sessions AS
 $$
 DECLARE
-new_session Sessions;
+    new_session Sessions;
 BEGIN
     INSERT INTO Sessions(course_id, offering_id, session_date, start_time, rid)
     VALUES (_course_id, _offering_id, _session_date, _start_time, _rid)
