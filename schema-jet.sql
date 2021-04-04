@@ -19,8 +19,8 @@ CREATE TABLE Course_areas (
  - cannot be conducted during 12pm to 2pm */
 CREATE TABLE Courses (
     course_id   SERIAL,
-    area_name   TEXT     NOT NULL,
-    title       TEXT     NOT NULL,
+    area_name   TEXT    NOT NULL,
+    title       TEXT    NOT NULL,
     description TEXT,
     duration    INTEGER NOT NULL
                 CONSTRAINT duration_between_1_and_7
@@ -38,7 +38,6 @@ CREATE TABLE Administrators (
     PRIMARY KEY (eid)
 );
 
-/* TODO: routine check reg_deadline <= start_date + 10 */
 /* eid is the administrator id */
 CREATE TABLE Offerings (
     course_id        INTEGER,

@@ -1,15 +1,3 @@
-DELETE FROM Sessions;
-
-DELETE FROM Offerings;
-
-DELETE FROM Courses;
-
-DELETE FROM Course_areas;
-
-DELETE FROM Administrators;
-
-DELETE FROM Rooms;
-
 INSERT INTO Course_areas (area_name)
 VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
@@ -181,3 +169,53 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
   (10, 6585, '2021-08-12', '17:00', 3),
   (10, 6585, '2021-08-27', '15:00', 9),
   (10, 6585, '2021-09-13', '17:00', 1);
+
+/*
+Commenting away the empty INSERT queries to
+suppress errors when running \i data.sql
+
+INSERT INTO Customers (
+  cust_id,
+  name,
+  address,
+  phone,
+  email
+)
+VALUES ("04533","Faith Graves","P.O. Box 146, 6550 Gravida St.","16900205 8742","porta.elit@Crasvulputatevelit.ca"),
+("64715","Martha Guy","2841 Ultrices. Road","16540218 1753","mollis.Phasellus.libero@hymenaeosMaurisut.org"),
+("95258","Hall Savage","903-4888 Proin Ave","16830401 9113","in.felis.Nulla@Sed.net"),
+("84828","Holly Day","Ap #214-8751 Nec Ave","16150328 6989","diam@rutrumurnanec.net"),
+("25027","Angie Carlson","Ap #915-3742 Ipsum Avenue","16850507 0535","nisi@sapienAenean.edu"),
+("54068","Bernard Pate","530-193 Sapien. Road","16150311 4694","scelerisque@pedeCumsociis.com"),
+("90051","Indira Mckee","9415 Orci Rd.","16970612 5912","felis.Nulla.tempor@arcuimperdiet.edu"),
+("88106","Uma Weeks","P.O. Box 793, 1381 Sit Road","16080720 2395","imperdiet@egetnisi.co.uk"),
+("60405","Ariana Spencer","Ap #871-1904 Lobortis Avenue","16110924 2626","vel.turpis.Aliquam@acturpisegestas.edu"),
+("78734","Levi Avery","4394 Adipiscing Av.","16361127 2794","est.ac@Donecest.com");
+
+INSERT INTO Credit_cards (
+  cc_number,
+  CVV,
+  expiry_date
+)
+VALUES ("5309 0123 1332 6128","264","07/22"),
+("510246 0096023660","504","02/25"),
+("524 00812 89296 120","334","06/23"),
+("552728 810123 2605","523","04/25"),
+("5303 5686 3428 9291","279","10/21"),
+("545980 516590 7962","552","10/26"),
+("5274 9609 1394 7548","424","05/26"),
+("522479 841599 3862","927","01/23"),
+("537 27426 83829 820","492","01/26"),
+("5464354259731163","254","07/22");
+
+INSERT INTO Course_packages (
+  package_id,
+  num_free_registrations,
+  sale_start_date,
+  sale_end_date,
+  name,
+  price
+)
+VALUES ();
+
+*/
