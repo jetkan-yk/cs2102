@@ -32,7 +32,7 @@ CREATE TABLE Cancels (
 CREATE TABLE Owns (
     cc_number   INTEGER,
     cust_id     INTEGER,
-    from_date   DATE,
+    from_date   DATE DEFAULT NOW,
 
     PRIMARY KEY (cc_number),
     FOREIGN KEY (cc_number) REFERENCES Customers
@@ -44,7 +44,7 @@ CREATE TABLE Owns (
 );
 
 CREATE TABLE Registers (
-    reg_date        DATE,
+    reg_date        DATE DEFAULT NOW,
     cc_number       INTEGER,
     course_id       INTEGER,
     offering_id     INTEGER,
@@ -80,7 +80,7 @@ CREATE TABLE Course_packages (
 );
 
 CREATE TABLE Buys (
-    buy_date                    DATE,
+    buy_date                    DATE DEFAULT NOW,
     num_free_registrations      INTEGER, /* this may be necessary for proc later */
     num_remaining_redemptions   INTEGER,
     package_id                  INTEGER,
@@ -99,7 +99,7 @@ CREATE TABLE Buys (
 );
 
 CREATE TABLE Redeems (
-    redeem_date     DATE,
+    redeem_date     DATE DEFAULT NOW,
     package_id      INTEGER,
     cc_number       INTEGER,
     buy_date        DATE,
