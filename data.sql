@@ -10,6 +10,22 @@ DELETE FROM Administrators;
 
 DELETE FROM Rooms;
 
+DELETE FROM Customers;
+
+DELETE FROM Credit_cards;
+
+DELETE FROM Owns;
+
+DELETE FROM Registers;
+
+DELETE FROM Cancels;
+
+DELETE FROM Buys;
+
+DELETE FROM Course_packages;
+
+DELETE FROM Redeems;
+
 INSERT INTO Course_areas (area_name)
 VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
@@ -181,3 +197,76 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
   (10, 6585, '2021-08-12', '17:00', 3),
   (10, 6585, '2021-08-27', '15:00', 9),
   (10, 6585, '2021-09-13', '17:00', 1);
+
+
+INSERT INTO Customers (
+  cust_id,
+  name,
+  address,
+  phone,
+  email
+)
+VALUES ();
+
+INSERT INTO Credit_cards (
+  cc_number,
+  CVV,
+  expiry_date
+)
+VALUES ();
+
+INSERT INTO Owns (
+  cc_number,
+  cust-id,
+  from_date
+)
+VALUES ();
+
+INSERT INTO Registers (
+  reg_date,
+  cc_number,
+  course_id,
+  offering_id,
+  session_id
+)
+VALUES ();
+
+INSERT INTO Cancels (
+  cancel_date,
+  refund_amt,
+  package_credit,
+  cust_id
+)
+VALUES ();
+
+INSERT INTO Buys (
+  buy_date,
+  num_free_registrations,
+  num_remaining_redemptions,
+  package_id,
+  cc_number
+)
+VALUES ();
+
+INSERT INTO Course_packages (
+  package_id,
+  num_free_registrations,
+  sale_start_date,
+  sale_end_date,
+  name,
+  price
+)
+VALUES ();
+
+INSERT INTO Redeems (
+  redeem_date,
+  package_id,
+  cc_number,
+  buy_date,
+  course_id,
+  offering_id,
+  session_id
+)
+VALUES ();
+
+
