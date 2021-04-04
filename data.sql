@@ -1,31 +1,3 @@
-DELETE FROM Sessions;
-
-DELETE FROM Offerings;
-
-DELETE FROM Courses;
-
-DELETE FROM Course_areas;
-
-DELETE FROM Administrators;
-
-DELETE FROM Rooms;
-
-DELETE FROM Customers;
-
-DELETE FROM Credit_cards;
-
-DELETE FROM Owns;
-
-DELETE FROM Registers;
-
-DELETE FROM Cancels;
-
-DELETE FROM Buys;
-
-DELETE FROM Course_packages;
-
-DELETE FROM Redeems;
-
 INSERT INTO Course_areas (area_name)
 VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
