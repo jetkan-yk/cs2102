@@ -198,6 +198,9 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
   (10, 6585, '2021-08-27', '15:00', 9),
   (10, 6585, '2021-09-13', '17:00', 1);
 
+/*
+Commenting away the empty INSERT queries to
+suppress errors when running \i data.sql
 
 INSERT INTO Customers (
   cust_id,
@@ -278,4 +281,4 @@ INSERT INTO Redeems (
 )
 VALUES ();
 
-
+*/

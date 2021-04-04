@@ -30,11 +30,13 @@ DECLARE
     duration    INTERVAL;
     lunch_break INTERVAL;
 BEGIN
+    /* Get Session's duration from Courses */
     SELECT MAKE_INTERVAL(HOURS => Courses.duration)
       INTO duration
       FROM Courses
      WHERE course_id = NEW.course_id;
 
+    /* Add lunch break if applicable */
       IF NEW.start_time < '12:00'
          AND (NEW.start_time + duration) > '12:00'
     THEN lunch_break := '2 hours';
@@ -43,6 +45,7 @@ BEGIN
 
     NEW.end_time := NEW.start_time + duration + lunch_break;
 
+    /* Sessions must end before 6pm */
       IF NEW.end_time > '18:00'
     THEN RETURN NULL;
     ELSE RETURN NEW;
@@ -63,12 +66,14 @@ DECLARE
     cur_start_date DATE;
     cur_end_date   DATE;
 BEGIN
+    /* Get current Offering's start_date and end_date */
     SELECT start_date, end_date
       INTO cur_start_date, cur_end_date
       FROM Offerings
      WHERE course_id = NEW.course_id
            AND offering_id = NEW.offering_id;
 
+    /* Update start_date if applicable */
       IF cur_start_date IS NULL
          OR cur_start_date > NEW.session_date
     THEN UPDATE Offerings
@@ -77,6 +82,7 @@ BEGIN
                 AND offering_id = NEW.offering_id;
      END IF;
 
+    /* Update end_date if applicable */
       IF cur_end_date IS NULL
          OR cur_end_date < NEW.session_date
     THEN UPDATE Offerings
@@ -98,16 +104,11 @@ FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 CREATE OR REPLACE FUNCTION update_seating_capacity_func()
     RETURNS TRIGGER AS
 $$
-DECLARE
-    room_capacity INTEGER;
 BEGIN
-    SELECT seating_capacity
-      INTO room_capacity
-      FROM Rooms
-     WHERE rid = NEW.rid;
-
+    /* Sum of all Sessions' room capacity */
     UPDATE Offerings
-       SET seating_capacity = seating_capacity + room_capacity
+       SET seating_capacity = seating_capacity +
+           (SELECT seating_capacity FROM Rooms WHERE rid = NEW.rid)
      WHERE course_id = NEW.course_id
            AND offering_id = NEW.offering_id;
 
