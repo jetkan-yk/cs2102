@@ -38,7 +38,6 @@ CREATE TABLE Administrators (
     PRIMARY KEY (eid)
 );
 
-/* TODO: routine check reg_deadline <= start_date + 10 */
 /* eid is the administrator id */
 CREATE TABLE Offerings (
     course_id        INTEGER,
@@ -84,6 +83,7 @@ CREATE TABLE Instructors (
     PRIMARY KEY (eid)
 );
 
+/* TODO: trigger check reg_deadline <= session_date + 10 */
 /* TODO: trigger check room availability (prereq -> get_available_rooms) */
 /* Sessions can take lunch break, e.g. 4 hour session from 11am to 5pm */
 /* date & time in ISO 8601 format */
