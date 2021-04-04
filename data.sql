@@ -208,32 +208,6 @@ VALUES ("5309 0123 1332 6128","264","07/22"),
 ("537 27426 83829 820","492","01/26"),
 ("5464354259731163","254","07/22");
 
-INSERT INTO Registers (
-  reg_date,
-  cc_number,
-  course_id,
-  offering_id,
-  session_id
-)
-VALUES ();
-
-INSERT INTO Cancels (
-  cancel_date,
-  refund_amt,
-  package_credit,
-  cust_id
-)
-VALUES ();
-
-INSERT INTO Buys (
-  buy_date,
-  num_free_registrations,
-  num_remaining_redemptions,
-  package_id,
-  cc_number
-)
-VALUES ();
-
 INSERT INTO Course_packages (
   package_id,
   num_free_registrations,
@@ -241,17 +215,6 @@ INSERT INTO Course_packages (
   sale_end_date,
   name,
   price
-)
-VALUES ();
-
-INSERT INTO Redeems (
-  redeem_date,
-  package_id,
-  cc_number,
-  buy_date,
-  course_id,
-  offering_id,
-  session_id
 )
 VALUES ();
 
