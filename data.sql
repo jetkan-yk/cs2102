@@ -213,7 +213,16 @@ INSERT INTO Owns (
   cust-id,
   from_date
 )
-VALUES ();
+VALUES ("5309 0123 1332 6128", "Faith Graves", ),
+("510246 0096023660", "Martha Guy", ),
+("524 00812 89296 120", "Hall Savage", ),
+("552728 810123 2605", "Holly Day", ),
+("5303 5686 3428 9291", "Angie Carlson", ),
+("545980 516590 7962", "Bernard Pate", ),
+("5274 9609 1394 7548", "Indira Mckee", ),
+("522479 841599 3862", "Uma Weeks", ),
+("537 27426 83829 820", "Ariana Spencer", ),
+("5464354259731163", "Levi Avery", );
 
 INSERT INTO Registers (
   reg_date,
