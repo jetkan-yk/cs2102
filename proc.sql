@@ -144,10 +144,23 @@ FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* --------------- Courses Routines --------------- */
 
-/* add_course */
-CREATE OR REPLACE PROCEDURE add_course() AS
+/* 5. add_course
+   Returns the result of the new Course after successful INSERT */
+CREATE OR REPLACE FUNCTION add_course(
+    _title TEXT,
+    _description TEXT,
+    _area_name TEXT,
+    _duration INTEGER)
+    RETURNS Courses AS
 $$
+DECLARE
+new_course Courses;
 BEGIN
+    INSERT INTO Courses(title, description, area_name, duration)
+    VALUES (_title, _description, _area_name, _duration)
+    RETURNING * INTO new_course;
+
+    RETURN new_course;
 END;
 $$
 LANGUAGE PLPGSQL;
