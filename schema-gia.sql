@@ -70,12 +70,14 @@ CREATE TABLE Credit_cards (
 
 CREATE TABLE Course_packages (
     package_id              SERIAL, /*system generated*/
-    num_free_registrations  INTEGER,
+    name                    TEXT,
+    num_free_registrations  INTEGER NOT NULL,
+                            CONSTRAINT non_negative_reg
+                                CHECK (num_free_registrations >= 0),
     sale_start_date         DATE,
     sale_end_date           DATE
                             CONSTRAINT startdate_before_enddate
                                 CHECK (sale_start_date < sale_end_date),
-    name                    TEXT,
     price                   INTEGER NOT NULL
                             CONSTRAINT non_negative_price
                                 CHECK (price >= 0),
@@ -85,7 +87,7 @@ CREATE TABLE Course_packages (
 
 CREATE TABLE Buys (
     buy_date                    DATE DEFAULT NOW,
-    num_free_registrations      INTEGER, /* this may be necessary for proc later */
+    num_free_registrations      INTEGER, /* this may be necessary for proc later?*/
     num_remaining_redemptions   INTEGER,
     package_id                  INTEGER,
     cc_number                   INTEGER,
