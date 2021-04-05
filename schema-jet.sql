@@ -38,7 +38,6 @@ CREATE TABLE Administrators (
     PRIMARY KEY (eid)
 );
 
-/* TODO: routine check reg_deadline <= start_date + 10 */
 /* eid is the administrator id */
 CREATE TABLE Offerings (
     course_id        INTEGER,

@@ -22,7 +22,6 @@ cancel_registration             -
 update_instructor               - 
 update_room                     - jet
 remove_session                  - 
-add_session                     - jet
 pay_salary                      - 
 promote_courses                 - jet
 top_packages                    - 
@@ -32,3 +31,4 @@ view_manager_report             -
 
 Implemented:
 add_course                      - jet
+add_session                     - jet
