@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "intarray";
+
 /* ============== START OF TRIGGERS ============== */
 
 /* -------------- Sessions Triggers -------------- */
@@ -272,6 +274,53 @@ BEGIN
             WHERE session_date = _date
                   AND (_start_time BETWEEN start_time AND (end_time - one_hour)
                       OR _end_time BETWEEN (start_time + one_hour) AND end_time));
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* 9. get_available_rooms
+    This routine is used to retrieve the availability information of rooms for a specific duration.
+    NOTE: Using extension intarray
+    RETURNS: a table of (rid, room capacity, day, hours[]) */
+CREATE OR REPLACE FUNCTION get_available_rooms(
+    _start_date DATE,
+    _end_date DATE)
+    RETURNS TABLE (rid INTEGER, room_capacity INTEGER, day DATE, hour INTEGER ARRAY) AS
+$$
+DECLARE
+    rid_ INTEGER;
+    total_hour_ INTEGER ARRAY;
+    lunch_hour_ INTEGER ARRAY;
+    busy_hour_ INTEGER ARRAY;
+    t1 INTEGER;
+    t2 INTEGER;
+BEGIN
+    /* For each room */
+    FOR rid_ IN (SELECT R.rid FROM Rooms R) LOOP
+        rid := rid_;
+        room_capacity := (SELECT seating_capacity FROM Rooms R WHERE R.rid = rid_);
+
+        /* For each day in [start_date, end_date] */
+        FOR day IN (SELECT GENERATE_SERIES(_start_date, _end_date, '1 day')) LOOP
+            total_hour_ := ARRAY(SELECT GENERATE_SERIES(9, 17)); -- initialize free hour [9, 17]
+            lunch_hour_ := ARRAY(SELECT GENERATE_SERIES(12, 13)); -- lunch breaks
+            hour := total_hour_ - lunch_hour_; -- remove lunch breaks
+
+            /* For each (start_time, end_time) pairs in Sessions */
+            FOR t1, t2 IN
+                (SELECT EXTRACT(HOURS from start_time),
+                        EXTRACT(HOURS from end_time) - 1
+                   FROM Sessions S
+                  WHERE S.session_date = day AND S.rid = rid_) LOOP
+                busy_hour_ := ARRAY(SELECT GENERATE_SERIES(t1, t2)); -- busy hours
+                hour := hour - busy_hour_; -- remove busy hours
+            END LOOP;
+
+            hour := sort(hour);
+
+            RETURN NEXT;
+        END LOOP;
+    END LOOP;
 END;
 $$
 LANGUAGE PLPGSQL;
