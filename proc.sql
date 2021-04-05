@@ -22,8 +22,7 @@ CREATE TRIGGER set_session_id
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_session_id_func();
 
-/* Checks whether session_date is at least 10 days (inclusive)
-   after registration deadline */
+/* Checks whether session_date is at least 10 days (inclusive) after registration deadline */
 CREATE OR REPLACE FUNCTION check_session_date_func()
     RETURNS TRIGGER AS
 $$
