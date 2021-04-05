@@ -38,7 +38,7 @@ BEGIN
 
       IF deadline + 10 <= NEW.session_date
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'Session dates must be at least 10 days (inclusive) after %, skipping',
+    ELSE RAISE NOTICE 'Session date must be at least 10 days (inclusive) after %, skipping',
             deadline;
          RETURN NULL;
      END IF;
@@ -65,8 +65,7 @@ BEGIN
      WHERE course_id = NEW.course_id;
 
     /* Add lunch break if applicable */
-      IF NEW.start_time < '12:00'
-         AND (NEW.start_time + duration) > '12:00'
+      IF NEW.start_time < '12:00' AND (NEW.start_time + duration) > '12:00'
     THEN lunch_break := '2 hours';
     ELSE lunch_break := '0 hours';
      END IF;
@@ -76,8 +75,8 @@ BEGIN
     /* Sessions must end before 6pm */
       IF NEW.end_time <= '18:00'
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'Sessions (%, %, %:00, % hours) must end before 6pm, skipping',
-             NEW.course_id, NEW.offering_id,
+    ELSE RAISE NOTICE 'Session (%, %, %, %:00, % hours) must end before 6pm, skipping',
+             NEW.course_id, NEW.offering_id, NEW.session_date,
              EXTRACT(HOURS from NEW.start_time), EXTRACT(HOURS from duration);
          RETURN NULL;
      END IF;
@@ -184,9 +183,30 @@ CREATE OR REPLACE FUNCTION find_rooms(
     _duration INTEGER)
     RETURNS TABLE(rid INTEGER) AS
 $$
-    SELECT rid FROM Rooms WHERE rid NOT IN (2, 4, 6, 8, 10);
+DECLARE
+    _dur_time CONSTANT INTERVAL := MAKE_INTERVAL(HOURS => _duration);
+    one_hour CONSTANT INTERVAL := '1 hour';
+    lunch_break CONSTANT INTERVAL := '2 hours';
+    _end_time TIME;
+BEGIN
+    /* Calculate _end_time */
+      IF _start_time < '12:00' AND (_start_time + _dur_time) > '12:00'
+    THEN _end_time = _start_time + _dur_time + lunch_break;
+    ELSE _end_time = _start_time + _dur_time;
+     END IF;
+
+    RETURN QUERY
+    SELECT R1.rid
+      FROM Rooms R1
+     WHERE R1.rid NOT IN (
+           SELECT R2.rid
+             FROM Sessions NATURAL JOIN Rooms R2
+            WHERE session_date = _date
+                  AND (start_time BETWEEN _start_time AND (_end_time - one_hour)
+                      OR end_time BETWEEN (_start_time + one_hour) AND _end_time));
+END;
 $$
-LANGUAGE SQL;
+LANGUAGE PLPGSQL;
 
 /* --------------- Rooms Routines --------------- */
 
@@ -215,7 +235,8 @@ LANGUAGE SQL;
 /* 24. add_session
     This routine is used to add a new session to a course offering.
     RETURNS: the result of the new Session after successful INSERT
-    TODO: Implement assign_instructor() trigger */
+    TODO: Implement assign_instructor() trigger
+    TODO: Implement assign_room() trigger */
 CREATE OR REPLACE FUNCTION add_session(
     _course_id INTEGER,
     _offering_id INTEGER,
