@@ -50,7 +50,7 @@ CREATE TRIGGER check_session_date
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION check_session_date_func();
 
-/* Assigns end_time and removes sessions that ends after 6pm */
+/* Assigns end_time and removes Sessions that ends after 6pm */
 CREATE OR REPLACE FUNCTION set_end_time_func()
     RETURNS TRIGGER AS
 $$
@@ -87,6 +87,34 @@ LANGUAGE PLPGSQL;
 CREATE TRIGGER set_end_time
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
+
+/* Assigns rid for Sessions 
+    NOTE: Selects the first room available */
+CREATE OR REPLACE FUNCTION set_rid_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.rid := 
+        (SELECT rid
+           FROM find_rooms(
+                    NEW.session_date, 
+                    NEW.start_time, 
+                    (SELECT duration FROM Courses WHERE course_id = NEW.course_id))
+          ORDER BY rid LIMIT 1);
+
+      IF NEW.rid IS NOT NULL
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE 'No available room for Session (%, %, %, %), skipping',
+             NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER set_rid
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION set_rid_func();
 
 /* Updates Offering's start_date and end_date */
 CREATE OR REPLACE FUNCTION update_start_end_dates_func()
@@ -181,7 +209,7 @@ CREATE OR REPLACE FUNCTION find_rooms(
     _date DATE,
     _start_time TIME,
     _duration INTEGER)
-    RETURNS TABLE(rid INTEGER) AS
+    RETURNS TABLE (rid INTEGER) AS
 $$
 DECLARE
     _dur_time CONSTANT INTERVAL := MAKE_INTERVAL(HOURS => _duration);
@@ -202,8 +230,8 @@ BEGIN
            SELECT R2.rid
              FROM Sessions NATURAL JOIN Rooms R2
             WHERE session_date = _date
-                  AND (start_time BETWEEN _start_time AND (_end_time - one_hour)
-                      OR end_time BETWEEN (_start_time + one_hour) AND _end_time));
+                  AND (_start_time BETWEEN start_time AND (end_time - one_hour)
+                      OR _end_time BETWEEN (start_time + one_hour) AND end_time));
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -222,7 +250,7 @@ CREATE OR REPLACE FUNCTION add_course(
     _duration INTEGER)
     RETURNS Courses AS
 $$
-    INSERT INTO Courses(title, description, area_name, duration)
+    INSERT INTO Courses (title, description, area_name, duration)
     VALUES (_title, _description, _area_name, _duration)
     RETURNING *;
 $$
@@ -241,12 +269,11 @@ CREATE OR REPLACE FUNCTION add_session(
     _course_id INTEGER,
     _offering_id INTEGER,
     _session_date DATE,
-    _start_time TIME,
-    _rid INTEGER)
+    _start_time TIME)
     RETURNS Sessions AS
 $$
-    INSERT INTO Sessions(course_id, offering_id, session_date, start_time, rid)
-    VALUES (_course_id, _offering_id, _session_date, _start_time, _rid)
+    INSERT INTO Sessions (course_id, offering_id, session_date, start_time)
+    VALUES (_course_id, _offering_id, _session_date, _start_time)
     RETURNING *;
 $$
 LANGUAGE SQL;

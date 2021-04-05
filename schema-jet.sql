@@ -98,7 +98,7 @@ CREATE TABLE Sessions (
                          OR  start_time BETWEEN '14:00' AND '17:00'),
     end_time     TIME,
     eid          INTEGER,
-    rid          INTEGER NOT NULL,
+    rid          INTEGER,
 
     PRIMARY KEY (course_id, offering_id, session_id),
     FOREIGN KEY (course_id, offering_id) REFERENCES Offerings
@@ -108,5 +108,5 @@ CREATE TABLE Sessions (
     FOREIGN KEY (rid)                    REFERENCES Rooms,
 
     CONSTRAINT sessions_cand_key
-        UNIQUE (course_id, offering_id, session_id, session_date, start_time)
+        UNIQUE (course_id, offering_id, session_date, start_time)
 );
