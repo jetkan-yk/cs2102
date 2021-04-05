@@ -24,3 +24,23 @@ SELECT session_date, start_time, end_time, rid
 SELECT * FROM add_session(1, 1242, '2021-07-31', '09:00', 1); /* should work */
 SELECT * FROM add_session(1, 1242, '2021-07-31', '10:00', 1); /* should fail */
 SELECT * FROM add_session(1, 1242, '2021-07-01', '11:00', 3); /* should fail */
+
+SELECT * FROM add_course('CS', 'desc1', 'title1', 4); /* should work */
+SELECT * FROM add_course('CS', 'desc2', 'title2', 8); /* should fail */
+
+INSERT INTO Offerings (
+    course_id,
+    offering_id,
+    launch_date,
+    reg_deadline,
+    fees,
+    target_num_reg,
+    eid
+  )
+VALUES (1, 10410, '2021-04-10', '2021-05-10', 100, 9, 1),/* should work */
+(2, 20510, '2021-05-10', '2021-05-05', 100, 9, 1), /* should fail */
+(1, 10411, '2021-04-11', '2021-05-11', 100, 1000, 1) /* should fail */
+(1, 10412, '2021-04-12', '2021-05-12', -1, 9, 1), /* should fail */
+(2, 20411, '2021-04-11', '2021-05-11', 100, 0, 1); /* should fail */
+
+/*SELECT * FROM add_course_package(); */
