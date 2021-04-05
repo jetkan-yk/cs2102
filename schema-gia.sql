@@ -69,12 +69,16 @@ CREATE TABLE Credit_cards (
 );
 
 CREATE TABLE Course_packages (
-    package_id              INTEGER,
+    package_id              SERIAL, /*system generated*/
     num_free_registrations  INTEGER,
     sale_start_date         DATE,
-    sale_end_date           DATE,
+    sale_end_date           DATE
+                            CONSTRAINT startdate_before_enddate
+                                CHECK (sale_start_date < sale_end_date),
     name                    TEXT,
-    price                   INTEGER,
+    price                   INTEGER NOT NULL
+                            CONSTRAINT non_negative_price
+                                CHECK (price >= 0),
 
     PRIMARY KEY (package_id)
 );
