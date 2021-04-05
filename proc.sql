@@ -89,6 +89,27 @@ CREATE TRIGGER set_end_time
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
 
+/* Assigns eid for Sessions if not provided
+    TODO: Implement assign set_instructor() that returns eid and other side effects */
+CREATE OR REPLACE FUNCTION set_eid_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.eid := 1; -- TODO: NEW.eid := set_instructor(...);
+      IF NEW.eid IS NOT NULL
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE 'No available instructor for Session (%, %, %, %), skipping',
+             NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER set_eid
+BEFORE INSERT ON Sessions
+FOR EACH ROW WHEN (NEW.eid IS NULL) EXECUTE FUNCTION set_eid_func();
+
 /* Assigns rid for Sessions
     NOTE: Not in use */
 CREATE OR REPLACE FUNCTION set_rid_func()
@@ -351,19 +372,18 @@ LANGUAGE SQL;
 
 /* 24. add_session
     This routine is used to add a new session to a course offering.
-    RETURNS: the result of the new Session after successful INSERT
-    TODO: Implement assign_instructor() trigger
-    TODO: Implement assign_room() trigger */
+    RETURNS: the result of the new Session after successful INSERT */
 CREATE OR REPLACE FUNCTION add_session(
     _course_id INTEGER,
     _offering_id INTEGER,
     _session_date DATE,
     _start_time TIME,
+    _eid INTEGER,
     _rid INTEGER)
     RETURNS Sessions AS
 $$
-    INSERT INTO Sessions (course_id, offering_id, session_date, start_time, rid)
-    VALUES (_course_id, _offering_id, _session_date, _start_time, _rid)
+    INSERT INTO Sessions (course_id, offering_id, session_date, start_time, eid, rid)
+    VALUES (_course_id, _offering_id, _session_date, _start_time, _eid, _rid)
     RETURNING *;
 $$
 LANGUAGE SQL;
