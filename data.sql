@@ -75,16 +75,15 @@ VALUES (
 INSERT INTO Rooms (rid, location, seating_capacity)
 VALUES (1, '1F-01', 20),
   (2, '1F-02', 10),
-  (3, '1F-03', 15);
+  (3, '1F-03', 15),
+  (4, '1F-04', 25),
+  (5, '2F-01', 50),
+  (6, '2F-02', 40),
+  (7, '2F-03', 25),
+  (8, '2F-04', 25),
+  (9, '3F-01', 100),
+  (10, '3F-02', 100);
 
-/*
- (4, '1F-04', 25),
- (5, '2F-01', 50),
- (6, '2F-02', 40),
- (7, '2F-03', 25),
- (8, '2F-04', 25),
- (9, '3F-01', 100),
- (10, '3F-02', 100); */
 INSERT INTO Administrators (eid)
 VALUES (1),
   (2),
@@ -174,7 +173,7 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
 /*
  Commenting away the empty INSERT queries to
  suppress errors when running \i data.sql
-
+ 
  INSERT INTO Customers (
  cust_id,
  name,
@@ -192,7 +191,7 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
  ("88106","Uma Weeks","P.O. Box 793, 1381 Sit Road","16080720 2395","imperdiet@egetnisi.co.uk"),
  ("60405","Ariana Spencer","Ap #871-1904 Lobortis Avenue","16110924 2626","vel.turpis.Aliquam@acturpisegestas.edu"),
  ("78734","Levi Avery","4394 Adipiscing Av.","16361127 2794","est.ac@Donecest.com");
-
+ 
  INSERT INTO Credit_cards (
  cc_number,
  CVV,
@@ -208,7 +207,7 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
  ("522479 841599 3862","927","2023-09-11"),
  ("537 27426 83829 820","492","2022-04-25"),
  ("5464354259731163","254","2022-07-14");
-
+ 
  INSERT INTO Course_packages (
  package_id,
  num_free_registrations,
@@ -227,5 +226,5 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
  (117, 5, "2021-02-02", "2021-03-02", "Proficient 2"),
  (118, 6, "2021-01-01", "2021-02-01", "Expert 1"),
  (119, 6, "2021-02-02", "2021-03-02", "Expert 2");
-
+ 
  */
