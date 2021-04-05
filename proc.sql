@@ -88,17 +88,17 @@ CREATE TRIGGER set_end_time
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
 
-/* Assigns rid for Sessions 
-    NOTE: Selects the first room available */
+/* Assigns rid for Sessions
+    NOTE: Not in use */
 CREATE OR REPLACE FUNCTION set_rid_func()
     RETURNS TRIGGER AS
 $$
 BEGIN
-    NEW.rid := 
+    NEW.rid :=
         (SELECT rid
            FROM find_rooms(
-                    NEW.session_date, 
-                    NEW.start_time, 
+                    NEW.session_date,
+                    NEW.start_time,
                     (SELECT duration FROM Courses WHERE course_id = NEW.course_id))
           ORDER BY rid LIMIT 1);
 
@@ -112,9 +112,28 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER set_rid
+/* Checks whether the Session's room is available */
+CREATE OR REPLACE FUNCTION check_rid_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+      IF NEW.rid IN (
+             SELECT find_rooms(
+                 NEW.session_date,
+                 NEW.start_time,
+                 (SELECT duration FROM Courses WHERE course_id = NEW.course_id)))
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE 'Room % not available for Session (%, %, %, %), skipping',
+             NEW.rid, NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_rid
 BEFORE INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION set_rid_func();
+FOR EACH ROW EXECUTE FUNCTION check_rid_func();
 
 /* Updates Offering's start_date and end_date */
 CREATE OR REPLACE FUNCTION update_start_end_dates_func()
@@ -291,11 +310,12 @@ CREATE OR REPLACE FUNCTION add_session(
     _course_id INTEGER,
     _offering_id INTEGER,
     _session_date DATE,
-    _start_time TIME)
+    _start_time TIME,
+    _rid INTEGER)
     RETURNS Sessions AS
 $$
-    INSERT INTO Sessions (course_id, offering_id, session_date, start_time)
-    VALUES (_course_id, _offering_id, _session_date, _start_time)
+    INSERT INTO Sessions (course_id, offering_id, session_date, start_time, rid)
+    VALUES (_course_id, _offering_id, _session_date, _start_time, _rid)
     RETURNING *;
 $$
 LANGUAGE SQL;

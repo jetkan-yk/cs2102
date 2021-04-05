@@ -98,7 +98,7 @@ CREATE TABLE Sessions (
                          OR  start_time BETWEEN '14:00' AND '17:00'),
     end_time     TIME,
     eid          INTEGER,
-    rid          INTEGER,
+    rid          INTEGER NOT NULL,
 
     PRIMARY KEY (course_id, offering_id, session_id),
     FOREIGN KEY (course_id, offering_id) REFERENCES Offerings
