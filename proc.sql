@@ -184,12 +184,34 @@ FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* -------------- Registration Triggers -------------- */
 
-/*to check that customer registers for only
-1 session in one course before deadline */
+/* insert or update Owns based on Customers and Credit_cards */
 
-/* to check that customer has only 1 active/partially active package */
+/* check that customer registers for only 1 session in one course before deadline */
 
-/* to check for late cancellation and refund */
+/* check that customer has only 1 active/partially active package */
+/*
+CREATE OR REPLACE FUNCTION check_package_status()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    SELECT num_remaining_redemptions
+    INTO indicator
+    FROM Buys
+
+    IF indicator > 0
+
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_package_status
+BEFORE INSERT ON Buys
+FOR EACH ROW EXECUTE FUNCTION check_package_status();
+*/
+
+/* check for late cancellation and refund */
+
+
 
 /* -------------- Registration Triggers -------------- */
 
