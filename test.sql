@@ -43,4 +43,8 @@ VALUES (1, 10410, '2021-04-10', '2021-05-10', 100, 9, 1),/* should work */
 (1, 10412, '2021-04-12', '2021-05-12', -1, 9, 1), /* should fail */
 (2, 20411, '2021-04-11', '2021-05-11', 100, 0, 1); /* should fail */
 
-/*SELECT * FROM add_course_package(); */
+
+SELECT * FROM add_course_package('A', 2, '2021-02-01', '2021-03-01', 100); /* should work */
+SELECT * FROM add_course_package('B', 2, '2021-03-01', '2021-02-01', 100); /* should fail */
+SELECT * FROM add_course_package('C', -1, '2021-02-01', '2021-03-01', 100); /* should fail */
+SELECT * FROM add_course_package('D', 2, '2021-02-01', '2021-03-01', -10); /* should fail */
