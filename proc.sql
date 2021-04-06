@@ -19,7 +19,7 @@ BEGIN
       IF total_seat_cap < _target_num_reg
     THEN RAISE NOTICE
              'Offering seating_capacity (%) must be >= target_num_reg (%), skipping',
-             total_seat_cap, _target_num_reg;
+              total_seat_cap, _target_num_reg;
          DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
 END;
@@ -37,7 +37,7 @@ BEGIN
                       WHERE (course_id, offering_id) = (_course_id, _offering_id))
     THEN RAISE NOTICE
              'Offerings (%, %) must have at least 1 Sessions, skipping',
-             _course_id, _offering_id;
+              _course_id, _offering_id;
          DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
 END;
@@ -72,17 +72,14 @@ CREATE OR REPLACE FUNCTION check_session_date_func()
     RETURNS TRIGGER AS
 $$
 DECLARE
-    deadline DATE;
+    deadline CONSTANT DATE :=
+        (SELECT reg_deadline FROM Offerings
+          WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id));
 BEGIN
-    SELECT reg_deadline
-      INTO deadline
-      FROM Offerings
-     WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
-
       IF deadline + 10 <= NEW.session_date
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'Session date must be at least 10 days (inclusive) after %, skipping',
-            deadline;
+    ELSE RAISE NOTICE
+            'Session date must be at least 10 days (inclusive) after %, skipping', deadline;
          RETURN NULL;
      END IF;
 END;
@@ -118,7 +115,8 @@ BEGIN
     /* Sessions must end before 6pm */
       IF NEW.end_time <= '18:00'
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'Sessions (%, %, %, %:00, % hours) must end before 6pm, skipping',
+    ELSE RAISE NOTICE
+            'Sessions (%, %, %, %:00, % hours) must end before 6pm, skipping',
              NEW.course_id, NEW.offering_id, NEW.session_date,
              EXTRACT(HOURS from NEW.start_time), EXTRACT(HOURS from duration);
          RETURN NULL;
@@ -140,7 +138,8 @@ BEGIN
     NEW.eid := 1; -- TODO: NEW.eid := set_instructor(...);
       IF NEW.eid IS NOT NULL
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'No available instructor for Session (%, %, %, %), skipping',
+    ELSE RAISE NOTICE
+            'No available instructor for Session (%, %, %, %), skipping',
              NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -168,7 +167,8 @@ BEGIN
 
       IF NEW.rid IS NOT NULL
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'No available room for Session (%, %, %, %), skipping',
+    ELSE RAISE NOTICE
+            'No available room for Session (%, %, %, %), skipping',
              NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -187,7 +187,8 @@ BEGIN
                  NEW.start_time,
                  (SELECT duration FROM Courses WHERE course_id = NEW.course_id)))
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'Room % not available for Session (%, %, %, %), skipping',
+    ELSE RAISE NOTICE
+            'Room % not available for Session (%, %, %, %), skipping',
              NEW.rid, NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -196,7 +197,7 @@ $$
 LANGUAGE PLPGSQL;
 
 CREATE TRIGGER check_rid
-BEFORE INSERT ON Sessions
+BEFORE INSERT OR UPDATE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION check_rid_func();
 
 /* Updates Offering's start_date and end_date */
@@ -235,18 +236,20 @@ $$
 LANGUAGE PLPGSQL;
 
 CREATE TRIGGER update_start_end_dates
-AFTER INSERT ON Sessions
+AFTER INSERT OR UPDATE OR DELETE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 
 /* Updates Offering's seating_capacity */
 CREATE OR REPLACE FUNCTION update_seating_capacity_func()
     RETURNS TRIGGER AS
 $$
+DECLARE
+    room_capacity CONSTANT INTEGER :=
+        (SELECT seating_capacity FROM Rooms WHERE rid = NEW.rid);
 BEGIN
     /* Sum of all Sessions' room capacity */
     UPDATE Offerings
-       SET seating_capacity = seating_capacity +
-           (SELECT seating_capacity FROM Rooms WHERE rid = NEW.rid)
+       SET seating_capacity = seating_capacity + room_capacity
      WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
 
     RETURN NULL;
@@ -255,7 +258,7 @@ $$
 LANGUAGE PLPGSQL;
 
 CREATE TRIGGER update_seating_capacity
-AFTER INSERT ON Sessions
+AFTER INSERT OR UPDATE OR DELETE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* -------------- Sessions Triggers -------------- */
@@ -456,6 +459,51 @@ LANGUAGE PLPGSQL;
 /* --------------- Offerings Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
+
+/* 22. update_room
+    This routine is used to change the room for a course session.
+    RETURNS: the result of the new Session after successful INSERT */
+CREATE OR REPLACE FUNCTION update_room(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER,
+    _rid INTEGER)
+    RETURNS Sessions AS
+$$
+DECLARE
+    date_ DATE;
+    time_ TIME;
+    num_reg CONSTANT INTEGER := 0;
+    /* TODO: Replace with
+        (SELECT count(*) FROM Registers
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)); */
+    room_cap CONSTANT INTEGER :=
+        (SELECT seating_capacity FROM Rooms WHERE rid = _rid);
+    result Sessions;
+BEGIN
+    SELECT session_date, start_time
+      INTO date_, time_
+      FROM Sessions
+     WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
+
+      IF (date_ + time_) < now() THEN
+         RAISE NOTICE
+            'Session has already started (% %), skipping',
+             date_, time_;
+   ELSIF num_reg > room_cap THEN
+         RAISE NOTICE
+            'Session number of registrations (%) > room capacity (%), skipping',
+             num_reg, room_cap;
+    ELSE UPDATE Sessions
+            SET rid = _rid
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)
+         RETURNING * INTO result;
+     END IF;
+
+    RETURN result;
+END;
+$$
+LANGUAGE PLPGSQL;
 
 /* 24. add_session
     This routine is used to add a new session to a course offering.

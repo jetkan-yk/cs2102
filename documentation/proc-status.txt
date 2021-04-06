@@ -6,7 +6,6 @@ add_customer                    -
 update_credit_card              - 
 find_instructors                - 
 get_available_instructors       - 
-add_course_offering             - jet
 add_course_package              - 
 get_available_course_packages   - 
 buy_course_package              - 
@@ -18,7 +17,6 @@ get_my_registrations            -
 update_course_session           - 
 cancel_registration             - 
 update_instructor               - 
-update_room                     - jet
 remove_session                  - 
 pay_salary                      - 
 promote_courses                 - jet
@@ -29,6 +27,8 @@ view_manager_report             -
 
 Implemented:
 find_rooms                      - jet
+update_room                     - jet
 get_available_rooms             - jet
 add_course                      - jet
+add_course_offering             - jet
 add_session                     - jet

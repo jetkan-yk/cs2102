@@ -54,3 +54,6 @@ SELECT * FROM add_course_offering(8, 5001, '2020-12-01', '2020-12-01', 100, 50, 
                                     '{"(2021-01-01, 10:00, 1)",
                                       "(2021-01-01, 11:00, 2)",
                                       "(2021-01-03, 14:00, 3)"}');
+
+/* To test update_room routine */
+SELECT * FROM update_room(5, 4236, 2, 4);
