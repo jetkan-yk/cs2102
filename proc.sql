@@ -12,8 +12,7 @@ BEGIN
     SELECT COALESCE(MAX(session_id) + 1, 1)
       INTO NEW.session_id
       FROM Sessions
-     WHERE course_id = NEW.course_id
-           AND offering_id = NEW.offering_id;
+     WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
 
     RETURN NEW;
 END;
@@ -34,8 +33,7 @@ BEGIN
     SELECT reg_deadline
       INTO deadline
       FROM Offerings
-     WHERE course_id = NEW.course_id
-           AND offering_id = NEW.offering_id;
+     WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
 
       IF deadline + 10 <= NEW.session_date
     THEN RETURN NEW;
@@ -169,16 +167,14 @@ BEGIN
     SELECT start_date, end_date
       INTO cur_start_date, cur_end_date
       FROM Offerings
-     WHERE course_id = NEW.course_id
-           AND offering_id = NEW.offering_id;
+     WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
 
     /* Update start_date if applicable */
       IF cur_start_date IS NULL
          OR cur_start_date > NEW.session_date
     THEN UPDATE Offerings
             SET start_date = NEW.session_date
-          WHERE course_id = NEW.course_id
-                AND offering_id = NEW.offering_id;
+          WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
      END IF;
 
     /* Update end_date if applicable */
@@ -186,8 +182,7 @@ BEGIN
          OR cur_end_date < NEW.session_date
     THEN UPDATE Offerings
             SET end_date = NEW.session_date
-          WHERE course_id = NEW.course_id
-                AND offering_id = NEW.offering_id;
+          WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
      END IF;
 
     RETURN NULL;
@@ -208,8 +203,7 @@ BEGIN
     UPDATE Offerings
        SET seating_capacity = seating_capacity +
            (SELECT seating_capacity FROM Rooms WHERE rid = NEW.rid)
-     WHERE course_id = NEW.course_id
-           AND offering_id = NEW.offering_id;
+     WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
 
     RETURN NULL;
 END;
@@ -332,7 +326,8 @@ BEGIN
                 (SELECT EXTRACT(HOURS from start_time),
                         EXTRACT(HOURS from end_time) - 1
                    FROM Sessions S
-                  WHERE S.session_date = day AND S.rid = rid_) LOOP
+                  WHERE S.session_date = day
+                        AND S.rid = rid_) LOOP
                 busy_hour_ := ARRAY(SELECT GENERATE_SERIES(t1, t2)); -- busy hours
                 hour := hour - busy_hour_; -- remove busy hours
             END LOOP;
@@ -360,8 +355,9 @@ CREATE OR REPLACE FUNCTION add_course(
     _duration INTEGER)
     RETURNS Courses AS
 $$
-    INSERT INTO Courses (title, description, area_name, duration)
-    VALUES (_title, _description, _area_name, _duration)
+    INSERT INTO
+    Courses (title, description, area_name, duration) VALUES
+            (_title, _description, _area_name, _duration)
     RETURNING *;
 $$
 LANGUAGE SQL;
@@ -432,8 +428,9 @@ CREATE OR REPLACE FUNCTION add_session(
     _rid INTEGER)
     RETURNS Sessions AS
 $$
-    INSERT INTO Sessions (course_id, offering_id, session_date, start_time, eid, rid)
-    VALUES (_course_id, _offering_id, _session_date, _start_time, _eid, _rid)
+    INSERT INTO Sessions
+        (course_id, offering_id, session_date, start_time, eid, rid) VALUES
+        (_course_id, _offering_id, _session_date, _start_time, _eid, _rid)
     RETURNING *;
 $$
 LANGUAGE SQL;
