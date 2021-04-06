@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS Buys,
 Cancels,
-Course_packages,
+Packages,
 Credit_cards,
 Customers,
 Owns,
@@ -63,7 +63,7 @@ CREATE TABLE Registers (
         ON DELETE CASCADE
 );
 
-CREATE TABLE Course_packages (
+CREATE TABLE Packages (
     package_id      SERIAL,
     name            TEXT    NOT NULL,
     num_free_reg    INTEGER NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE Buys (
     num_remain_redeem INTEGER   NOT NULL,
 
     PRIMARY KEY (buys_ts),
-    FOREIGN KEY (package_id) REFERENCES Course_packages,
+    FOREIGN KEY (package_id) REFERENCES Packages,
     FOREIGN KEY (cc_number)  REFERENCES Owns
 );
 

@@ -222,7 +222,7 @@ VALUES ("5309 0123 1332 6128","264","2022-07-07"),
   ("537 27426 83829 820","492","2022-04-25"),
   ("5464354259731163","254","2022-07-14");
 
-INSERT INTO Course_packages (
+INSERT INTO Packages (
     name,
     num_free_registrations,
     sale_start_date,
