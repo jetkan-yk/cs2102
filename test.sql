@@ -1,9 +1,3 @@
-SELECT * FROM add_course('course1', 'desc1', 'Computer Security', 4);
-
-SELECT * FROM add_session(8, 4225, '2021-07-31', '9:00', 1);
-
-SELECT * FROM find_rooms('2021-07-31', '9:00', 7);
-
 /* to populate Course_Areas table) */
 INSERT INTO Course_areas (area_name)
 VALUES ('CS'),
@@ -29,14 +23,15 @@ SELECT session_date, start_time, end_time, rid
   FROM Sessions NATURAL JOIN Rooms
  ORDER BY session_date, start_time, end_time;
 
-/*to check add_session routine*/
-SELECT * FROM add_session(1, 1242, '2021-07-31', '09:00', 1); /* should work */
-SELECT * FROM add_session(1, 1242, '2021-07-31', '10:00', 1); /* should fail */
-SELECT * FROM add_session(1, 1242, '2021-07-01', '11:00', 3); /* should fail */
+/* To test find_rooms routine */
+SELECT * FROM find_rooms('2021-07-31', '9:00', 7);
+
+/* To test get_available_rooms routine */
 
 /*to check add_course routine*/
 SELECT * FROM add_course('CS', 'desc1', 'title1', 4); /* should work */
-SELECT * FROM add_course('CS', 'desc2', 'title2', 8); /* should fail */
+SELECT * FROM add_course('LS', 'desc2', 'title2', 8); /* should fail */
+SELECT * FROM add_course('course1', 'desc1', 'Computer Security', 4);
 
 /*INSERT INTO Offerings (
     course_id,
@@ -53,12 +48,6 @@ VALUES (1, 10410, '2021-04-10', '2021-05-10', 100, 9, 1), should work
 (1, 10412, '2021-04-12', '2021-05-12', -1, 9, 1), should fail
 (2, 20411, '2021-04-11', '2021-05-11', 100, 0, 1); should fail */
 
-/* to test add_course_package routine */
-SELECT * FROM add_course_package('A', 2, '2021-02-01', '2021-03-01', 100); /* should work */
-SELECT * FROM add_course_package('B', 2, '2021-03-01', '2021-02-01', 100); /* should fail */
-SELECT * FROM add_course_package('C', -1, '2021-02-01', '2021-03-01', 100); /* should fail */
-SELECT * FROM add_course_package('D', 2, '2021-02-01', '2021-03-01', -10); /* should fail */
-
 /* To test add_course_offering routine
 course offering identifier, course identifier, course fees, launch date,
 registration deadline, administrator’s identifier, and information for
@@ -71,7 +60,20 @@ SELECT * FROM add_course_offering(8, 5001, '2020-12-01', '2020-12-01', 100, 50, 
 /* To test update_room routine */
 SELECT * FROM update_room(5, 4236, 2, 4);
 
-/* To test find_rooms routine */
 
-/* To test get_available_rooms routine */
+/*to check add_session routine*/
+SELECT * FROM add_session(1, 1242, '2021-07-31', '09:00', 1); /* should work */
+SELECT * FROM add_session(1, 1242, '2021-07-31', '10:00', 1); /* should fail */
+SELECT * FROM add_session(1, 1242, '2021-07-01', '11:00', 3); /* should fail */
+SELECT * FROM add_session(8, 4225, '2021-07-31', '9:00', 1);
+
+
+
+/* to test add_course_package routine */
+SELECT * FROM add_course_package('A', 2, '2021-02-01', '2021-03-01', 100); /* should work */
+SELECT * FROM add_course_package('B', 2, '2021-03-01', '2021-02-01', 100); /* should fail */
+SELECT * FROM add_course_package('C', -1, '2021-02-01', '2021-03-01', 100); /* should fail */
+SELECT * FROM add_course_package('D', 2, '2021-02-01', '2021-03-01', -10); /* should fail */
+
+
 
