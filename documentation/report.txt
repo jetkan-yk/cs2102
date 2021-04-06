@@ -9,3 +9,4 @@
     e.g. [start_date, end_date] vs [start_time, end_time)
 9. only employees and sessions may be removed by routines, hence assuming
     no delete use case on other tables (related: on update/delete cascade)
+10. date & time in ISO 8601 format

@@ -80,7 +80,6 @@ CREATE TABLE Instructors (
 );
 
 /* Sessions can take lunch break, e.g. 4 hour session from 11am to 5pm */
-/* date & time in ISO 8601 format */
 /* eid is the instructor id */
 CREATE TABLE Sessions (
     course_id    INTEGER,
