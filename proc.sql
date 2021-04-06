@@ -52,10 +52,6 @@ FOR EACH ROW EXECUTE FUNCTION check_has_session_func();
 /* -------------- Sessions Triggers -------------- */
 
 /* Assigns session_id which starts from 1 for each Offerings */
-CREATE TRIGGER set_session_id
-BEFORE INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION set_session_id_func();
-
 CREATE OR REPLACE FUNCTION set_session_id_func()
     RETURNS TRIGGER AS
 $$
@@ -70,11 +66,11 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/* Checks whether session_date is at least 10 days (inclusive) after registration deadline */
-CREATE TRIGGER check_session_date
+CREATE TRIGGER set_session_id
 BEFORE INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION check_session_date_func();
+FOR EACH ROW EXECUTE FUNCTION set_session_id_func();
 
+/* Checks whether session_date is at least 10 days (inclusive) after registration deadline */
 CREATE OR REPLACE FUNCTION check_session_date_func()
     RETURNS TRIGGER AS
 $$
@@ -96,11 +92,11 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/* Assigns end_time and removes Sessions that ends after 6pm */
-CREATE TRIGGER set_end_time
+CREATE TRIGGER check_session_date
 BEFORE INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
+FOR EACH ROW EXECUTE FUNCTION check_session_date_func();
 
+/* Assigns end_time and removes Sessions that ends after 6pm */
 CREATE OR REPLACE FUNCTION set_end_time_func()
     RETURNS TRIGGER AS
 $$
@@ -134,12 +130,12 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+CREATE TRIGGER set_end_time
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
+
 /* Assigns eid for Sessions if not provided
     TODO: Implement assign set_instructor() that returns eid and other side effects */
-CREATE TRIGGER set_eid
-BEFORE INSERT ON Sessions
-FOR EACH ROW WHEN (NEW.eid IS NULL) EXECUTE FUNCTION set_eid_func();
-
 CREATE OR REPLACE FUNCTION set_eid_func()
     RETURNS TRIGGER AS
 $$
@@ -154,6 +150,10 @@ BEGIN
 END;
 $$
 LANGUAGE PLPGSQL;
+
+CREATE TRIGGER set_eid
+BEFORE INSERT ON Sessions
+FOR EACH ROW WHEN (NEW.eid IS NULL) EXECUTE FUNCTION set_eid_func();
 
 /* Assigns rid for Sessions
     NOTE: Not in use */
@@ -180,10 +180,6 @@ $$
 LANGUAGE PLPGSQL;
 
 /* Checks whether the Session's room is available */
-CREATE TRIGGER check_rid
-BEFORE INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION check_rid_func();
-
 CREATE OR REPLACE FUNCTION check_rid_func()
     RETURNS TRIGGER AS
 $$
@@ -202,11 +198,11 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/* Updates Offering's start_date and end_date */
-CREATE TRIGGER update_start_end_dates
-AFTER INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
+CREATE TRIGGER check_rid
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION check_rid_func();
 
+/* Updates Offering's start_date and end_date */
 CREATE OR REPLACE FUNCTION update_start_end_dates_func()
     RETURNS TRIGGER AS
 $$
@@ -241,11 +237,11 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/* Updates Offering's seating_capacity */
-CREATE TRIGGER update_seating_capacity
+CREATE TRIGGER update_start_end_dates
 AFTER INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
+FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 
+/* Updates Offering's seating_capacity */
 CREATE OR REPLACE FUNCTION update_seating_capacity_func()
     RETURNS TRIGGER AS
 $$
@@ -261,6 +257,10 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+CREATE TRIGGER update_seating_capacity
+AFTER INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
+
 /* -------------- Sessions Triggers -------------- */
 
 
@@ -272,10 +272,6 @@ LANGUAGE PLPGSQL;
 
 /* check that customer has only 1 active/partially active package */
 /*
-CREATE TRIGGER check_package_status
-BEFORE INSERT ON Buys
-FOR EACH ROW EXECUTE FUNCTION check_package_status();
-
 CREATE OR REPLACE FUNCTION check_package_status()
     RETURNS TRIGGER AS
 $$
@@ -289,6 +285,10 @@ BEGIN
 END;
 $$
 LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_package_status
+BEFORE INSERT ON Buys
+FOR EACH ROW EXECUTE FUNCTION check_package_status();
 */
 
 /* check for late cancellation and refund */
