@@ -17,7 +17,6 @@ get_my_registrations            - jet
 update_course_session           - jet
 cancel_registration             - jet
 update_instructor               - jason
-remove_session                  - jet
 pay_salary                      - jason
 promote_courses                 - jet
 top_packages                    - jet
@@ -32,3 +31,4 @@ get_available_rooms             - jet
 add_course                      - jet
 add_course_offering             - jet
 add_session                     - jet
+remove_session                  - jet

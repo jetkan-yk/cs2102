@@ -11,3 +11,4 @@
     no delete use case on other tables (related: on update/delete cascade)
 10. date & time in ISO 8601 format
 11. rename Packages -> packages
+12. routines always returns something for information
