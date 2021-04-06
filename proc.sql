@@ -2,6 +2,53 @@ CREATE EXTENSION IF NOT EXISTS "intarray";
 
 /* ============== START OF TRIGGERS ============== */
 
+/* -------------- Offerings Triggers -------------- */
+
+/* Checks whether total seating capacity >= target number of registrations */
+CREATE OR REPLACE FUNCTION check_seating_capacity_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+      IF NEW.seating_capacity < NEW.target_num_reg
+    THEN RAISE NOTICE
+             'Offering seating_capacity (%) must be >= target_num_reg (%), skipping',
+             NEW.seating_capacity, NEW.target_num_reg;
+         DELETE FROM Offerings WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
+     END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_seating_capacity
+AFTER INSERT ON Offerings
+FOR EACH ROW EXECUTE FUNCTION check_seating_capacity_func();
+
+/* Checks whether Offering has at least 1 Sessions */
+CREATE OR REPLACE FUNCTION check_has_session_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+      IF NOT EXISTS (SELECT 1 FROM Sessions
+                      WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id))
+    THEN RAISE NOTICE
+             'Offerings (%, %) must have at least 1 Sessions, skipping',
+             NEW.course_id, NEW.offering_id;
+         DELETE FROM Offerings WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
+     END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_has_session
+AFTER INSERT ON Offerings
+FOR EACH ROW EXECUTE FUNCTION check_has_session_func();
+
+/* -------------- Offerings Triggers -------------- */
+
 /* -------------- Sessions Triggers -------------- */
 
 /* Assigns session_id which starts from 1 for each Offerings */
@@ -78,7 +125,7 @@ BEGIN
     /* Sessions must end before 6pm */
       IF NEW.end_time <= '18:00'
     THEN RETURN NEW;
-    ELSE RAISE NOTICE 'Session (%, %, %, %:00, % hours) must end before 6pm, skipping',
+    ELSE RAISE NOTICE 'Sessions (%, %, %, %:00, % hours) must end before 6pm, skipping',
              NEW.course_id, NEW.offering_id, NEW.session_date,
              EXTRACT(HOURS from NEW.start_time), EXTRACT(HOURS from duration);
          RETURN NULL;
@@ -387,7 +434,6 @@ DECLARE
     input SessionInput;
     result Offerings;
 BEGIN
-    -- TODO: check seating capacity trigger
     INSERT INTO Offerings
         (course_id, offering_id, launch_date, reg_deadline, fees, target_num_reg, eid) VALUES
         (_course_id, _offering_id, _launch_date, _reg_deadline, _fees, _target_num_reg, _eid);
@@ -399,15 +445,7 @@ BEGIN
 
     /* Store the inserted Offering into result */
     SELECT * INTO result FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
-    /* Remove Offering if no Session added successfully */
-    -- TODO: replace with session not null trigger
-      IF EXISTS (SELECT 1 FROM Sessions WHERE (course_id, offering_id) = (_course_id, _offering_id))
-    THEN RETURN result;
-    ELSE DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
-         RAISE NOTICE 'Offering (%, %) has no Session successfully created, skipping',
-             _course_id, _offering_id;
-         RETURN NULL;
-     END IF;
+    RETURN result;
 END;
 $$
 LANGUAGE PLPGSQL;
