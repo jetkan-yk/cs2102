@@ -3,7 +3,13 @@ VALUES ('Artificial Intelligence'),
   ('Computer Graphics and Games'),
   ('Computer Security'),
   ('Database Systems'),
-  ('Software Engineering');
+  ('Software Engineering'),
+  ('Life Sciences'),
+  ('Physics'),
+  ('Statistics'),
+  ('Chemistry'),
+  ('Bioinformatics');
+
 
 INSERT INTO Courses (
     title,
@@ -182,60 +188,54 @@ VALUES (1, 1242, '2021-08-04', '10:00', 1),
   (10, 6585, '2021-08-27', '15:00', 9),
   (10, 6585, '2021-09-13', '17:00', 1);
 
-/*
- Commenting away the empty INSERT queries to
- suppress errors when running \i data.sql
+INSERT INTO Customers (
+    cust_id,
+    name,
+    address,
+    phone,
+    email
+)
+VALUES ("04533","Faith Graves","P.O. Box 146, 6550 Gravida St.","16900205 8742","porta.elit@Crasvulputatevelit.ca"),
+  ("64715","Martha Guy","2841 Ultrices. Road","16540218 1753","mollis.Phasellus.libero@hymenaeosMaurisut.org"),
+  ("95258","Hall Savage","903-4888 Proin Ave","16830401 9113","in.felis.Nulla@Sed.net"),
+  ("84828","Holly Day","Ap #214-8751 Nec Ave","16150328 6989","diam@rutrumurnanec.net"),
+  ("25027","Angie Carlson","Ap #915-3742 Ipsum Avenue","16850507 0535","nisi@sapienAenean.edu"),
+  ("54068","Bernard Pate","530-193 Sapien. Road","16150311 4694","scelerisque@pedeCumsociis.com"),
+  ("90051","Indira Mckee","9415 Orci Rd.","16970612 5912","felis.Nulla.tempor@arcuimperdiet.edu"),
+  ("88106","Uma Weeks","P.O. Box 793, 1381 Sit Road","16080720 2395","imperdiet@egetnisi.co.uk"),
+  ("60405","Ariana Spencer","Ap #871-1904 Lobortis Avenue","16110924 2626","vel.turpis.Aliquam@acturpisegestas.edu"),
+  ("78734","Levi Avery","4394 Adipiscing Av.","16361127 2794","est.ac@Donecest.com");
 
- INSERT INTO Customers (
- cust_id,
- name,
- address,
- phone,
- email
- )
- VALUES ("04533","Faith Graves","P.O. Box 146, 6550 Gravida St.","16900205 8742","porta.elit@Crasvulputatevelit.ca"),
- ("64715","Martha Guy","2841 Ultrices. Road","16540218 1753","mollis.Phasellus.libero@hymenaeosMaurisut.org"),
- ("95258","Hall Savage","903-4888 Proin Ave","16830401 9113","in.felis.Nulla@Sed.net"),
- ("84828","Holly Day","Ap #214-8751 Nec Ave","16150328 6989","diam@rutrumurnanec.net"),
- ("25027","Angie Carlson","Ap #915-3742 Ipsum Avenue","16850507 0535","nisi@sapienAenean.edu"),
- ("54068","Bernard Pate","530-193 Sapien. Road","16150311 4694","scelerisque@pedeCumsociis.com"),
- ("90051","Indira Mckee","9415 Orci Rd.","16970612 5912","felis.Nulla.tempor@arcuimperdiet.edu"),
- ("88106","Uma Weeks","P.O. Box 793, 1381 Sit Road","16080720 2395","imperdiet@egetnisi.co.uk"),
- ("60405","Ariana Spencer","Ap #871-1904 Lobortis Avenue","16110924 2626","vel.turpis.Aliquam@acturpisegestas.edu"),
- ("78734","Levi Avery","4394 Adipiscing Av.","16361127 2794","est.ac@Donecest.com");
+INSERT INTO Credit_cards (
+    cc_number,
+    CVV,
+    expiry_date
+)
+VALUES ("5309 0123 1332 6128","264","2022-07-07"),
+  ("510246 0096023660","504","2025-04-12"),
+  ("524 00812 89296 120","334","2023-06-02"),
+  ("552728 810123 2605","523","2025-02-21"),
+  ("5303 5686 3428 9291","279","2021-11-08"),
+  ("545980 516590 7962","552","2024-03-05"),
+  ("5274 9609 1394 7548","424","2022-02-23"),
+  ("522479 841599 3862","927","2023-09-11"),
+  ("537 27426 83829 820","492","2022-04-25"),
+  ("5464354259731163","254","2022-07-14");
 
- INSERT INTO Credit_cards (
- cc_number,
- CVV,
- expiry_date
- )
- VALUES ("5309 0123 1332 6128","264","2022-07-07"),
- ("510246 0096023660","504","2025-04-12"),
- ("524 00812 89296 120","334","2023-06-02"),
- ("552728 810123 2605","523","2025-02-21"),
- ("5303 5686 3428 9291","279","2021-11-08"),
- ("545980 516590 7962","552","2024-03-05"),
- ("5274 9609 1394 7548","424","2022-02-23"),
- ("522479 841599 3862","927","2023-09-11"),
- ("537 27426 83829 820","492","2022-04-25"),
- ("5464354259731163","254","2022-07-14");
-
- INSERT INTO Course_packages (
- name,
- num_free_registrations,
- sale_start_date,
- sale_end_date,
- price
- )
- VALUES ("Beginner 1", 2, "2021-01-01", "2021-02-01", 200)
- ("Beginner 2", 2, "2021-02-02", "2021-03-02", 200),
- ("Familiar 1", 3, "2021-01-01", "2021-02-01", 300),
- ("Familiar 2", 3, "2021-02-02", "2021-03-02", 300),
- ("Adept 1", 4, "2021-01-01", "2021-02-01", 400),
- ("Adept 2", 4, "2021-02-02", "2021-03-02", 400),
- ("Proficient 1", 5, "2021-01-01", "2021-02-01", 500),
- ("Proficient 2", 5, "2021-02-02", "2021-03-02", 500),
- ("Expert 1", 6, "2021-01-01", "2021-02-01", 600),
- ("Expert 2", 6, "2021-02-02", "2021-03-02", 600);
-
- */
+INSERT INTO Course_packages (
+    name,
+    num_free_registrations,
+    sale_start_date,
+    sale_end_date,
+    price
+)
+VALUES ("Beginner 1", 2, "2021-01-01", "2021-02-01", 200)
+  ("Beginner 2", 2, "2021-02-02", "2021-03-02", 200),
+  ("Familiar 1", 3, "2021-01-01", "2021-02-01", 300),
+  ("Familiar 2", 3, "2021-02-02", "2021-03-02", 300),
+  ("Adept 1", 4, "2021-01-01", "2021-02-01", 400),
+  ("Adept 2", 4, "2021-02-02", "2021-03-02", 400),
+  ("Proficient 1", 5, "2021-01-01", "2021-02-01", 500),
+  ("Proficient 2", 5, "2021-02-02", "2021-03-02", 500),
+  ("Expert 1", 6, "2021-01-01", "2021-02-01", 600),
+  ("Expert 2", 6, "2021-02-02", "2021-03-02", 600);
