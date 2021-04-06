@@ -201,7 +201,8 @@ CREATE TRIGGER check_rid
 BEFORE INSERT OR UPDATE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION check_rid_func();
 
-/* Updates Offering's start_date and end_date */
+/* Updates Offering's start_date and end_date
+    TODO: change to STATEMENT level, loop through all sessions */
 CREATE OR REPLACE FUNCTION update_start_end_dates_func()
     RETURNS TRIGGER AS
 $$
@@ -237,10 +238,11 @@ $$
 LANGUAGE PLPGSQL;
 
 CREATE TRIGGER update_start_end_dates
-AFTER INSERT OR UPDATE ON Sessions
+AFTER INSERT OR UPDATE OR DELETE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 
-/* Updates Offering's seating_capacity */
+/* Updates Offering's seating_capacity
+    TODO: change to STATEMENT level, loop through all sessions */
 CREATE OR REPLACE FUNCTION update_seating_capacity_func()
     RETURNS TRIGGER AS
 $$
