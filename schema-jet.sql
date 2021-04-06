@@ -28,8 +28,6 @@ CREATE TABLE Courses (
 
     PRIMARY KEY (course_id),
     FOREIGN KEY (area_name) REFERENCES Course_areas
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
 );
 
 CREATE TABLE Administrators (
@@ -58,9 +56,7 @@ CREATE TABLE Offerings (
     eid              INTEGER NOT NULL,
 
     PRIMARY KEY (course_id, offering_id),
-    FOREIGN KEY (course_id) REFERENCES Courses
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES Courses,
     FOREIGN KEY (eid)       REFERENCES Administrators,
 
     CONSTRAINT offerings_cand_key
@@ -101,8 +97,7 @@ CREATE TABLE Sessions (
 
     PRIMARY KEY (course_id, offering_id, session_id),
     FOREIGN KEY (course_id, offering_id) REFERENCES Offerings
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
+        ON DELETE CASCADE,
     FOREIGN KEY (eid)                    REFERENCES Instructors,
     FOREIGN KEY (rid)                    REFERENCES Rooms,
 

@@ -1,127 +1,105 @@
-DROP TABLE IF EXISTS Customers,
-Credit_cards,
-Owns,
-Registers,
+DROP TABLE IF EXISTS Buys,
 Cancels,
-Buys,
 Course_packages,
-Redeems;
+Credit_cards,
+Customers,
+Owns,
+Redeems,
+Registers CASCADE;
 
 CREATE TABLE Customers (
     cust_id INTEGER,
-    name    TEXT NOT NULL,
-    address TEXT NOT NULL,
+    name    TEXT    NOT NULL,
+    address TEXT    NOT NULL,
+    email   TEXT    NOT NULL,
     phone   INTEGER NOT NULL,
-    email   TEXT NOT NULL,
 
-    PRIMARY KEY (cust_id),
+    PRIMARY KEY (cust_id)
 );
 
 CREATE TABLE Cancels (
-    cancel_date     DATE,
-    refund_amt      INTEGER,
-    package_credit  INTEGER,
-    cust_id         INTEGER,
+    cancel_ts      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cust_id        INTEGER   NOT NULL,
+    course_id      INTEGER   NOT NULL,
+    offering_id    INTEGER   NOT NULL,
+    session_id     INTEGER   NOT NULL,
+    refund_amt     INTEGER,
+    package_credit BOOLEAN,
 
-    PRIMARY KEY (cancel_date),
-    FOREIGN KEY (cust_id) REFERENCES Customers
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
-CREATE TABLE Owns (
-    cc_number   INTEGER,
-    cust_id     INTEGER,
-    from_date   DATE DEFAULT NOW,
-
-    PRIMARY KEY (cc_number),
-    FOREIGN KEY (cc_number) REFERENCES Customers
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (cust_id) REFERENCES Customers
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
-CREATE TABLE Registers (
-    reg_date        DATE DEFAULT NOW,
-    cc_number       INTEGER,
-    course_id       INTEGER,
-    offering_id     INTEGER,
-    session_id      INTEGER,
-
-    PRIMARY KEY (reg_date),
-    FOREIGN KEY (cc_number) REFERENCES Owns
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
+    PRIMARY KEY (cancel_ts),
+    FOREIGN KEY (cust_id)                            REFERENCES Customers,
     FOREIGN KEY (course_id, offering_id, session_id) REFERENCES Sessions
         ON DELETE CASCADE
-        ON UPDATE CASCADE
-
 );
 
 CREATE TABLE Credit_cards (
-    cc_number       INTEGER,
-    CVV             INTEGER,
-    expiry_date     DATE,
+    cc_number   INTEGER,
+    cvv         INTEGER NOT NULL,
+    expiry_date DATE    NOT NULL,
 
     PRIMARY KEY (cc_number)
 );
 
+CREATE TABLE Owns (
+    cc_number INTEGER,
+    cust_id   INTEGER   NOT NULL,
+    owns_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (cc_number),
+    FOREIGN KEY (cc_number) REFERENCES Credit_cards,
+    FOREIGN KEY (cust_id)   REFERENCES Customers
+);
+
+CREATE TABLE Registers (
+    registers_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cc_number    INTEGER   NOT NULL,
+    course_id    INTEGER   NOT NULL,
+    offering_id  INTEGER   NOT NULL,
+    session_id   INTEGER   NOT NULL,
+
+    PRIMARY KEY (registers_ts),
+    FOREIGN KEY (cc_number)                          REFERENCES Owns,
+    FOREIGN KEY (course_id, offering_id, session_id) REFERENCES Sessions
+        ON DELETE CASCADE
+);
+
 CREATE TABLE Course_packages (
-    package_id              SERIAL, /*system generated*/
-    name                    TEXT,
-    num_free_registrations  INTEGER NOT NULL,
-                            CONSTRAINT non_negative_reg
-                                CHECK (num_free_registrations >= 0),
-    sale_start_date         DATE,
-    sale_end_date           DATE
-                            CONSTRAINT startdate_before_enddate
-                                CHECK (sale_start_date < sale_end_date),
-    price                   INTEGER NOT NULL
-                            CONSTRAINT non_negative_price
-                                CHECK (price >= 0),
+    package_id      SERIAL,
+    name            TEXT    NOT NULL,
+    num_free_reg    INTEGER NOT NULL,
+                    CONSTRAINT non_negative_num_free_reg
+                         CHECK (num_free_reg >= 0),
+    price           INTEGER NOT NULL
+                    CONSTRAINT non_negative_price
+                         CHECK (price >= 0),
+    sale_start_date DATE    NOT NULL,
+    sale_end_date   DATE    NOT NULL
+                    CONSTRAINT start_date_before_end_date
+                         CHECK (sale_start_date <= sale_end_date),
 
     PRIMARY KEY (package_id)
 );
 
 CREATE TABLE Buys (
-    buy_date                    DATE DEFAULT NOW,
-    num_free_registrations      INTEGER, /* this may be necessary for proc later?*/
-    num_remaining_redemptions   INTEGER,
-    package_id                  INTEGER,
-    cc_number                   INTEGER,
+    buys_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    package_id        INTEGER   NOT NULL,
+    cc_number         INTEGER   NOT NULL,
+    num_remain_redeem INTEGER   NOT NULL,
 
-    PRIMARY KEY (buy_date),
-    FOREIGN KEY (package_id) REFERENCES Course_packages
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (num_free_registrations) REFERENCES Course_packages
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (cc_number) REFERENCES Owns
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
+    PRIMARY KEY (buys_ts),
+    FOREIGN KEY (package_id) REFERENCES Course_packages,
+    FOREIGN KEY (cc_number)  REFERENCES Owns
 );
 
 CREATE TABLE Redeems (
-    redeem_date     DATE DEFAULT NOW,
-    package_id      INTEGER,
-    cc_number       INTEGER,
-    buy_date        DATE,
-    course_id       INTEGER,
-    offering_id     INTEGER,
-    session_id      INTEGER,
+    redeems_ts  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    buys_ts     TIMESTAMP NOT NULL,
+    course_id   INTEGER   NOT NULL,
+    offering_id INTEGER   NOT NULL,
+    session_id  INTEGER   NOT NULL,
 
-    PRIMARY KEY (redeem_date)
-    FOREIGN KEY (package_id) REFERENCES Course_packages
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (cc_number) REFERENCES Owns
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
+    PRIMARY KEY (redeems_ts),
+    FOREIGN KEY (buys_ts)                            REFERENCES Buys,
     FOREIGN KEY (course_id, offering_id, session_id) REFERENCES Sessions
         ON DELETE CASCADE
-        ON UPDATE CASCADE           
 );
-
