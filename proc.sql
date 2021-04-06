@@ -79,7 +79,8 @@ BEGIN
       IF deadline + 10 <= NEW.session_date
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'Session date must be at least 10 days (inclusive) after %, skipping', deadline;
+            'Session date must be at least 10 days (inclusive) after %, skipping',
+             deadline;
          RETURN NULL;
      END IF;
 END;
@@ -236,7 +237,7 @@ $$
 LANGUAGE PLPGSQL;
 
 CREATE TRIGGER update_start_end_dates
-AFTER INSERT OR UPDATE OR DELETE ON Sessions
+AFTER INSERT OR UPDATE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 
 /* Updates Offering's seating_capacity */
@@ -496,6 +497,48 @@ BEGIN
              num_reg, room_cap;
     ELSE UPDATE Sessions
             SET rid = _rid
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)
+         RETURNING * INTO result;
+     END IF;
+
+    RETURN result;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* 23. remove_session
+    This routine is used to remove a course session.
+    RETURNS: the session that has been successfully removed
+    TODO: Implement update session start_date and end_date */
+CREATE OR REPLACE FUNCTION remove_session(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS Sessions AS
+$$
+DECLARE
+    date_ DATE;
+    time_ TIME;
+    num_reg CONSTANT INTEGER := 0;
+    /* TODO: Replace with
+        (SELECT count(*) FROM Registers
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)); */
+    result Sessions;
+BEGIN
+    SELECT session_date, start_time
+      INTO date_, time_
+      FROM Sessions
+     WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
+
+      IF (date_ + time_) < now() THEN
+         RAISE NOTICE
+            'Session has already started (% %), skipping',
+             date_, time_;
+   ELSIF num_reg > 0 THEN
+         RAISE NOTICE
+            'Number of registrations (%) > 0, skipping',
+             num_reg;
+    ELSE DELETE FROM Sessions
           WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)
          RETURNING * INTO result;
      END IF;
