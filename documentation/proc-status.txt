@@ -1,29 +1,29 @@
 Not Implemented:
 
-add_employee                    - 
-remove_employee                 - 
-add_customer                    - 
-update_credit_card              - 
-find_instructors                - 
-get_available_instructors       - 
-add_course_package              - 
-get_available_course_packages   - 
-buy_course_package              - 
-get_my_course_package           - 
-get_available_course_offerings  - 
-get_available_course_sessions   - 
-register_session                -
-get_my_registrations            - 
-update_course_session           - 
-cancel_registration             - 
-update_instructor               - 
-remove_session                  - 
-pay_salary                      - 
+add_employee                    - jason
+remove_employee                 - jason
+add_customer                    - gia
+update_credit_card              - jet
+find_instructors                - jason
+get_available_instructors       - jason
+add_course_package              - jet
+get_available_course_packages   - jet
+buy_course_package              - jet
+get_my_course_package           - jet
+get_available_course_offerings  - jet
+get_available_course_sessions   - jet
+register_session                - jet
+get_my_registrations            - jet
+update_course_session           - jet
+cancel_registration             - jet
+update_instructor               - jason
+remove_session                  - jet
+pay_salary                      - jason
 promote_courses                 - jet
-top_packages                    - 
+top_packages                    - jet
 popular_courses                 - jet
-view_summary_report             - 
-view_manager_report             - 
+view_summary_report             - jason
+view_manager_report             - jason
 
 Implemented:
 find_rooms                      - jet
