@@ -48,3 +48,9 @@ SELECT * FROM add_course_package('A', 2, '2021-02-01', '2021-03-01', 100); /* sh
 SELECT * FROM add_course_package('B', 2, '2021-03-01', '2021-02-01', 100); /* should fail */
 SELECT * FROM add_course_package('C', -1, '2021-02-01', '2021-03-01', 100); /* should fail */
 SELECT * FROM add_course_package('D', 2, '2021-02-01', '2021-03-01', -10); /* should fail */
+
+/* To test add_course_offering routine */
+SELECT * FROM add_course_offering(8, 5001, '2020-12-01', '2020-12-01', 100, 50, 1,
+                                    '{"(2021-01-01, 10:00, 1)",
+                                      "(2021-01-01, 11:00, 2)",
+                                      "(2021-01-03, 14:00, 3)"}');

@@ -368,6 +368,56 @@ LANGUAGE SQL;
 
 /* --------------- Courses Routines --------------- */
 
+/* --------------- Offerings Routines --------------- */
+
+/* 10. add_course_offering
+    This routine is used to add a new offering of an existing course.
+    RETURNS: the result of the new Offering after successful INSERT */
+DROP TYPE IF EXISTS SessionInput CASCADE;
+CREATE TYPE SessionInput AS (session_date DATE, start_time TIME, rid INTEGER);
+
+CREATE OR REPLACE FUNCTION add_course_offering(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _launch_date DATE,
+    _reg_deadline DATE,
+    _fees INTEGER,
+    _target_num_reg INTEGER,
+    _eid INTEGER,
+    _session_array SessionInput ARRAY)
+    RETURNS Offerings AS
+$$
+DECLARE
+    input SessionInput;
+    result Offerings;
+BEGIN
+    -- TODO: check seating capacity trigger
+    INSERT INTO Offerings
+        (course_id, offering_id, launch_date, reg_deadline, fees, target_num_reg, eid) VALUES
+        (_course_id, _offering_id, _launch_date, _reg_deadline, _fees, _target_num_reg, _eid);
+
+    FOREACH input IN ARRAY _session_array LOOP
+        PERFORM add_session(_course_id, _offering_id,
+                    input.session_date, input.start_time, NULL, input.rid);
+    END LOOP;
+
+    /* Store the inserted Offering into result */
+    SELECT * INTO result FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
+    /* Remove Offering if no Session added successfully */
+    -- TODO: replace with session not null trigger
+      IF EXISTS (SELECT 1 FROM Sessions WHERE (course_id, offering_id) = (_course_id, _offering_id))
+    THEN RETURN result;
+    ELSE DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
+         RAISE NOTICE 'Offering (%, %) has no Session successfully created, skipping',
+             _course_id, _offering_id;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* --------------- Offerings Routines --------------- */
+
 /* --------------- Sessions Routines --------------- */
 
 /* 24. add_session

@@ -47,7 +47,7 @@ CREATE TABLE Offerings (
     end_date         DATE,
     reg_deadline     DATE    NOT NULL
                      CONSTRAINT launch_date_before_reg_deadline
-                          CHECK (launch_date < reg_deadline),
+                          CHECK (launch_date <= reg_deadline),
     fees             INTEGER NOT NULL
                      CONSTRAINT non_negative_fees
                           CHECK (fees >= 0),
