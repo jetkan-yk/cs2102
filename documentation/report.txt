@@ -1,3 +1,11 @@
 1. Abort offering if 0 session added successfully
 2. Skip inputs that violates any constraints
 3. courses, offerings, sessions pkeys
+4. session lunch breaks
+5. interesting: add_course_offering (custom type)
+6. interesting: get_available_room (array operations)
+7. if have time: implement credit card cvv encryption
+8. all end dates are inclusive, but end times are not inclusive
+    e.g. [start_date, end_date] vs [start_time, end_time)
+9. only employees and sessions may be removed by routines, hence assuming
+    no delete use case on other tables (related: on update/delete cascade)
