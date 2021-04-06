@@ -192,19 +192,19 @@ INSERT INTO Customers (
     cust_id,
     name,
     address,
-    phone,
-    email
+    email,
+    phone
 )
-VALUES ("04533","Faith Graves","P.O. Box 146, 6550 Gravida St.","16900205 8742","porta.elit@Crasvulputatevelit.ca"),
-  ("64715","Martha Guy","2841 Ultrices. Road","16540218 1753","mollis.Phasellus.libero@hymenaeosMaurisut.org"),
-  ("95258","Hall Savage","903-4888 Proin Ave","16830401 9113","in.felis.Nulla@Sed.net"),
-  ("84828","Holly Day","Ap #214-8751 Nec Ave","16150328 6989","diam@rutrumurnanec.net"),
-  ("25027","Angie Carlson","Ap #915-3742 Ipsum Avenue","16850507 0535","nisi@sapienAenean.edu"),
-  ("54068","Bernard Pate","530-193 Sapien. Road","16150311 4694","scelerisque@pedeCumsociis.com"),
-  ("90051","Indira Mckee","9415 Orci Rd.","16970612 5912","felis.Nulla.tempor@arcuimperdiet.edu"),
-  ("88106","Uma Weeks","P.O. Box 793, 1381 Sit Road","16080720 2395","imperdiet@egetnisi.co.uk"),
-  ("60405","Ariana Spencer","Ap #871-1904 Lobortis Avenue","16110924 2626","vel.turpis.Aliquam@acturpisegestas.edu"),
-  ("78734","Levi Avery","4394 Adipiscing Av.","16361127 2794","est.ac@Donecest.com");
+VALUES ("04533","Faith Graves","P.O. Box 146, 6550 Gravida St.","porta.elit@Crasvulputatevelit.ca","16900205 8742"),
+  ("64715","Martha Guy","2841 Ultrices. Road","mollis.Phasellus.libero@hymenaeosMaurisut.org","16540218 1753"),
+  ("95258","Hall Savage","903-4888 Proin Ave","in.felis.Nulla@Sed.net","16830401 9113"),
+  ("84828","Holly Day","Ap #214-8751 Nec Ave","diam@rutrumurnanec.net","16150328 6989"),
+  ("25027","Angie Carlson","Ap #915-3742 Ipsum Avenue","nisi@sapienAenean.edu","16850507 0535"),
+  ("54068","Bernard Pate","530-193 Sapien. Road","scelerisque@pedeCumsociis.com","16150311 4694"),
+  ("90051","Indira Mckee","9415 Orci Rd.","felis.Nulla.tempor@arcuimperdiet.edu","16970612 5912"),
+  ("88106","Uma Weeks","P.O. Box 793, 1381 Sit Road","imperdiet@egetnisi.co.uk","16080720 2395"),
+  ("60405","Ariana Spencer","Ap #871-1904 Lobortis Avenue","vel.turpis.Aliquam@acturpisegestas.edu","16110924 2626"),
+  ("78734","Levi Avery","4394 Adipiscing Av.","est.ac@Donecest.com","16361127 2794");
 
 INSERT INTO Credit_cards (
     cc_number,
@@ -224,18 +224,18 @@ VALUES ("5309 0123 1332 6128","264","2022-07-07"),
 
 INSERT INTO Packages (
     name,
-    num_free_registrations,
+    num_free_reg,
+    price,
     sale_start_date,
-    sale_end_date,
-    price
+    sale_end_date
 )
-VALUES ("Beginner 1", 2, "2021-01-01", "2021-02-01", 200)
-  ("Beginner 2", 2, "2021-02-02", "2021-03-02", 200),
-  ("Familiar 1", 3, "2021-01-01", "2021-02-01", 300),
-  ("Familiar 2", 3, "2021-02-02", "2021-03-02", 300),
-  ("Adept 1", 4, "2021-01-01", "2021-02-01", 400),
-  ("Adept 2", 4, "2021-02-02", "2021-03-02", 400),
-  ("Proficient 1", 5, "2021-01-01", "2021-02-01", 500),
-  ("Proficient 2", 5, "2021-02-02", "2021-03-02", 500),
-  ("Expert 1", 6, "2021-01-01", "2021-02-01", 600),
-  ("Expert 2", 6, "2021-02-02", "2021-03-02", 600);
+VALUES ("Beginner 1", 2, 200, "2021-01-01", "2021-02-01")
+  ("Beginner 2", 2, 200, "2021-02-02", "2021-03-02"),
+  ("Familiar 1", 3, 300, "2021-01-01", "2021-02-01"),
+  ("Familiar 2", 3, 300, "2021-02-02", "2021-03-02"),
+  ("Adept 1", 4, 400, "2021-01-01", "2021-02-01"),
+  ("Adept 2", 4, 400, "2021-02-02", "2021-03-02"),
+  ("Proficient 1", 5, 500, "2021-01-01", "2021-02-01"),
+  ("Proficient 2", 5, 500, "2021-02-02", "2021-03-02"),
+  ("Expert 1", 6, 600, "2021-01-01", "2021-02-01"),
+  ("Expert 2", 6, 600, "2021-02-02", "2021-03-02");
