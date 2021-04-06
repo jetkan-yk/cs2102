@@ -4,48 +4,45 @@ CREATE EXTENSION IF NOT EXISTS "intarray";
 
 /* -------------- Offerings Triggers -------------- */
 
-/* Checks whether total seating capacity >= target number of registrations */
-CREATE OR REPLACE FUNCTION check_seating_capacity_func()
-    RETURNS TRIGGER AS
+/* Removes Offering if total seating capacity < target number of registrations */
+CREATE OR REPLACE FUNCTION check_seating_capacity_func(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _target_num_reg INTEGER)
+    RETURNS VOID AS
 $$
+DECLARE
+    total_seat_cap CONSTANT INTEGER :=
+        (SELECT seating_capacity FROM Offerings
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
 BEGIN
-      IF NEW.seating_capacity < NEW.target_num_reg
+      IF total_seat_cap < _target_num_reg
     THEN RAISE NOTICE
              'Offering seating_capacity (%) must be >= target_num_reg (%), skipping',
-             NEW.seating_capacity, NEW.target_num_reg;
-         DELETE FROM Offerings WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
+             total_seat_cap, _target_num_reg;
+         DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
-
-    RETURN NULL;
 END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER check_seating_capacity
-AFTER INSERT ON Offerings
-FOR EACH ROW EXECUTE FUNCTION check_seating_capacity_func();
-
-/* Checks whether Offering has at least 1 Sessions */
-CREATE OR REPLACE FUNCTION check_has_session_func()
-    RETURNS TRIGGER AS
+/* Removes Offering if does not have any Sessions */
+CREATE OR REPLACE FUNCTION check_has_session_func(
+    _course_id INTEGER,
+    _offering_id INTEGER)
+    RETURNS VOID AS
 $$
 BEGIN
       IF NOT EXISTS (SELECT 1 FROM Sessions
-                      WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id))
+                      WHERE (course_id, offering_id) = (_course_id, _offering_id))
     THEN RAISE NOTICE
              'Offerings (%, %) must have at least 1 Sessions, skipping',
-             NEW.course_id, NEW.offering_id;
-         DELETE FROM Offerings WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id);
+             _course_id, _offering_id;
+         DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
-
-    RETURN NULL;
 END;
 $$
 LANGUAGE PLPGSQL;
-
-CREATE TRIGGER check_has_session
-AFTER INSERT ON Offerings
-FOR EACH ROW EXECUTE FUNCTION check_has_session_func();
 
 /* -------------- Offerings Triggers -------------- */
 
@@ -434,14 +431,20 @@ DECLARE
     input SessionInput;
     result Offerings;
 BEGIN
+    /* Insert a new entry into Offerings first*/
     INSERT INTO Offerings
         (course_id, offering_id, launch_date, reg_deadline, fees, target_num_reg, eid) VALUES
         (_course_id, _offering_id, _launch_date, _reg_deadline, _fees, _target_num_reg, _eid);
 
+    /* Then process all Sessions */
     FOREACH input IN ARRAY _session_array LOOP
         PERFORM add_session(_course_id, _offering_id,
                     input.session_date, input.start_time, NULL, input.rid);
     END LOOP;
+
+    /* Remove Offerings (and all Sessions, CASCADE) if violates any requirements */
+    PERFORM check_seating_capacity_func(_course_id, _offering_id, _target_num_reg);
+    PERFORM check_has_session_func(_course_id, _offering_id);
 
     /* Store the inserted Offering into result */
     SELECT * INTO result FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
