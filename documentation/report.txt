@@ -1,2 +1,3 @@
 1. Abort offering if 0 session added successfully
 2. Skip inputs that violates any constraints
+3. courses, offerings, sessions pkeys
