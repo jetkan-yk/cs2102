@@ -330,6 +330,18 @@ $$
 $$
 LANGUAGE SQL;
 
+/* This function queries the latest cc_number Owns by a Customer */
+CREATE OR REPLACE FUNCTION get_cc_number(
+    _cust_id INTEGER)
+    RETURNS VARCHAR(19) AS
+$$
+    SELECT cc_number
+      FROM Owns
+     WHERE cust_id = _cust_id
+     ORDER BY owns_ts DESC LIMIT 1;
+$$
+LANGUAGE SQL;
+
 /* --------------- Credit Card Routines --------------- */
 
 /* --------------- Rooms Routines --------------- */
@@ -497,8 +509,7 @@ CREATE OR REPLACE FUNCTION buy_course_package(
     RETURNS Buys AS
 $$
 DECLARE
-    cc_number_ CONSTANT VARCHAR(19) :=
-        (SELECT cc_number FROM Owns WHERE cust_id = _cust_id ORDER BY owns_ts DESC LIMIT 1);
+    cc_number_ CONSTANT VARCHAR(19) := get_cc_number(_cust_id);
     num_free_reg_ INTEGER;
     sale_start_date_ DATE;
     sale_end_date_ DATE;
@@ -550,6 +561,39 @@ $$
 LANGUAGE SQL;
 
 /* --------------- Packages Routines --------------- */
+
+/* --------------- Registers Routines --------------- */
+
+/* 17. register_session
+    This routine is used when a customer requests to register for a session in a course offering.
+    RETURNS: the result of the new Register after successful INSERT */
+CREATE OR REPLACE FUNCTION register_session(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER,
+    _payment_method TEXT)
+    RETURNS VOID AS -- TODO: split into 2 functions (registers & redeems)
+$$
+BEGIN
+    CASE _payment_method
+        WHEN 'payment' THEN
+            RAISE NOTICE
+                'Using payment mode "payment"';
+        WHEN 'redeem' THEN
+            -- TODO: Check course_id, num_remain_redeem
+            RAISE NOTICE
+                'Using payment mode "redeem"';
+        ELSE
+            RAISE NOTICE
+                'Incorrect payment method "%", use "payment" or "redeem", skipping',
+                 _payment_method;
+    END CASE;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* --------------- Registers Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
 
