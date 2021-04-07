@@ -486,6 +486,49 @@ LANGUAGE PLPGSQL;
 
 /* --------------- Offerings Routines --------------- */
 
+/* --------------- Buys Routines --------------- */
+
+/* 13. buy_course_package
+    This routine is used when a customer requests to purchase a course package.
+    RETURNS: the result of the new Buy after successful INSERT */
+CREATE OR REPLACE FUNCTION buy_course_package(
+    _cust_id INTEGER,
+    _package_id INTEGER)
+    RETURNS Buys AS
+$$
+DECLARE
+    cc_number_ CONSTANT VARCHAR(19) :=
+        (SELECT cc_number FROM Owns WHERE cust_id = _cust_id ORDER BY owns_ts DESC LIMIT 1);
+    num_free_reg_ INTEGER;
+    sale_start_date_ DATE;
+    sale_end_date_ DATE;
+    one_day_ CONSTANT INTERVAL := '1 day';
+    result_ Buys;
+BEGIN
+    SELECT num_free_reg, sale_start_date, sale_end_date
+      INTO num_free_reg_, sale_start_date_, sale_end_date_
+      FROM Packages
+     WHERE package_id = _package_id;
+
+     IF NOT (NOW() BETWEEN sale_start_date_ AND (sale_end_date_ + one_day_)) THEN
+        RAISE NOTICE
+           'Packages must be purchased within sales dates [%, %], skipping',
+            sale_start_date_, sale_end_date_;
+        RETURN NULL;
+    END IF;
+
+    INSERT INTO Buys
+        (package_id, cc_number, num_remain_redeem) VALUES
+        (_package_id, cc_number_, num_free_reg_)
+    RETURNING * INTO result_;
+
+    RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* --------------- Buys Routines --------------- */
+
 /* --------------- Packages Routines --------------- */
 
 /* 11. add_course_package
@@ -536,7 +579,7 @@ BEGIN
       FROM Sessions
      WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
 
-      IF (date_ + time_) < now() THEN
+      IF (date_ + time_) < NOW() THEN
          RAISE NOTICE
             'Session has already started (% %), skipping',
              date_, time_;
@@ -579,7 +622,7 @@ BEGIN
       FROM Sessions
      WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
 
-      IF (date_ + time_) < now() THEN
+      IF (date_ + time_) < NOW() THEN
          RAISE NOTICE
             'Session has already started (% %), skipping',
              date_, time_;

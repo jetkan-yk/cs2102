@@ -6,7 +6,6 @@ add_customer                    - gia
 find_instructors                - jason
 get_available_instructors       - jason
 get_available_course_packages   - jet
-buy_course_package              - jet
 get_my_course_package           - jet
 get_available_course_offerings  - jet
 get_available_course_sessions   - jet
@@ -32,3 +31,4 @@ add_course_offering             - jet
 add_session                     - jet
 remove_session                  - jet
 add_course_package              - jet
+buy_course_package              - jet
