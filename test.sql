@@ -1,4 +1,4 @@
-/* to populate Course_Areas table) */
+/* to populate Course_Areas table */
 INSERT INTO Course_areas (area_name)
 VALUES ('CS'),
 ('AI'),
@@ -58,14 +58,11 @@ SELECT * FROM add_course_offering(2, 20411, '2021-04-11', '2021-05-11', 100, -1,
 /* To test update_room routine */
 SELECT * FROM update_room(5, 4236, 2, 4);
 
-
 /*to check add_session routine*/
 SELECT * FROM add_session(1, 10410, '2021-06-30', '09:00', 1, 1); /* should work */
 SELECT * FROM add_session(1, 10410, '2021-07-31', '10:00', 1, 2); /* should fail */
 SELECT * FROM add_session(1, 1242, '2021-07-01', '11:00', 3, 1); /* should fail */
 SELECT * FROM add_session(21, 4225, '2021-07-31', '9:00', 1, 2);
-
-
 
 /* to test add_course_package routine */
 SELECT * FROM add_course_package('A', 2, '2021-02-01', '2021-03-01', 100); /* should work */
@@ -73,20 +70,5 @@ SELECT * FROM add_course_package('B', 2, '2021-03-01', '2021-02-01', 100); /* sh
 SELECT * FROM add_course_package('C', -1, '2021-02-01', '2021-03-01', 100); /* should fail */
 SELECT * FROM add_course_package('D', 2, '2021-02-01', '2021-03-01', -10); /* should fail */
 
-
-
-/* To test add_employee
-CREATE OR REPLACE FUNCTION add_employee(
-    _ename TEXT,
-    _phone_number TEXT,
-    _home_address TEXT,
-    _email_address TEXT,
-    _join_date DATE,
-    _category TEXT,
-    _salary INTEGER,
-    _course_area_set TEXT ARRAY)
-    RETURNS Employees AS
-$$
- */
 SELECT * FROM add_employee('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}');
 

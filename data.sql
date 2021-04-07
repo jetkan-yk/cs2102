@@ -208,7 +208,6 @@ VALUES
   (90051, 'Indira Mckee', '9415 Orci Rd.', 'felis.Nulla.tempor@arcuimperdiet.edu', '169706125912'),
   (95258, 'Hall Savage', '903-4888 Proin Ave', 'in.felis.Nulla@Sed.net', '168304019113'),
   (04533, 'Faith Graves', 'P.O. Box 146, 6550 Gravida St.', 'porta.elit@Crasvulputatevelit.ca', '169002058742');
-  
 
 INSERT INTO Credit_cards (
     cc_number,
@@ -250,18 +249,17 @@ SELECT * FROM update_credit_card(4533, '123456789', 000, '2022-05-05');
 SELECT * FROM update_credit_card(4533, '12345678987', 000, '2022-05-06');
 SELECT * FROM buy_course_package(4533, 10);
 
-
-/*With depart date*/
+/* With depart date */
 INSERT INTO Employees (
-    ename, 
-    phone_number, 
-    home_address, 
-    email_address, 
-    join_date,
-    depart_date,
-    category,
-    salary,
-    course_area_set
+  ename,
+  phone_number,
+  home_address,
+  email_address,
+  join_date,
+  depart_date,
+  category,
+  salary,
+  course_area_set
 )
 VALUES ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','2022-04-02','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}'),
 ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','2022-03-27','Instructor',2240,'{Computer Security}'),
@@ -272,16 +270,16 @@ VALUES ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.'
 ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','2021-01-25','Administrator',1427,'{}'),
 ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','2020-11-27','Instructor',1255,'{Life Sciences, Physics, Bioinformatics}');
 
-/*Without depart date*/
+/* Without depart date */
 INSERT INTO Employees (
-    ename, 
-    phone_number, 
-    home_address, 
-    email_address, 
-    join_date,
-    category,
-    salary,
-    course_area_set
+  ename,
+  phone_number,
+  home_address,
+  email_address,
+  join_date,
+  category,
+  salary,
+  course_area_set
 )
 VALUES ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}'),
 ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Instructor',2240,'{Computer Security}'),
@@ -291,5 +289,3 @@ VALUES ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.'
 ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Instructor',2240,'{Computer Security}'),
 ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','Administrator',1427,'{}'),
 ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','Instructor',1255,'{Life Sciences, Physics, Bioinformatics}');
-
-SELECT * FROM Employees;
