@@ -33,37 +33,28 @@ SELECT * FROM add_course('CS', 'desc1', 'title1', 4); /* should work */
 SELECT * FROM add_course('LS', 'desc2', 'title2', 8); /* should fail */
 SELECT * FROM add_course('course1', 'desc1', 'Computer Security', 4);
 
-/*INSERT INTO Offerings (
-    course_id,
-    offering_id,
-    launch_date,
-    reg_deadline,
-    fees,
-    target_num_reg,
-    eid
-  )
-VALUES (1, 10410, '2021-04-10', '2021-05-10', 100, 9, 1), should work
-(2, 20510, '2021-05-10', '2021-05-05', 100, 9, 1),  should fail
-(1, 10411, '2021-04-11', '2021-05-11', 100, 1000, 1) should fail
-(1, 10412, '2021-04-12', '2021-05-12', -1, 9, 1), should fail
-(2, 20411, '2021-04-11', '2021-05-11', 100, 0, 1); should fail */
-
-/* To test add_course_offering routine
-course offering identifier, course identifier, course fees, launch date,
-registration deadline, administrator’s identifier, and information for
-each session (session date, session start hour, and room identifier)*/
 SELECT * FROM add_course_offering(8, 5001, '2020-12-01', '2020-12-01', 100, 50, 1,
                                     '{"(2021-01-01, 10:00, 1)",
                                       "(2021-01-01, 11:00, 2)",
-                                      "(2021-01-03, 14:00, 3)"}');
+                                      "(2021-01-03, 14:00, 3)"}'); /* should work?*/
+SELECT * FROM add_course_offering(1, 10410, '2021-04-10', '2021-05-10', 100, 9, 1
+                                    '{"(2021-04-09, 10:00, 1)"}'); /*should fail*/
+SELECT * FROM add_course_offering(2, 20510, '2021-05-10', '2021-05-05', 100, 9, 1
+                                    '{"(2021-06-09, 10:00, 1)"}'); /*should fail*/
+SELECT * FROM add_course_offering(1, 10411, '2021-04-11', '2021-05-11', 100, 1000, 1
+                                    '{"(2021-06-09, 10:00, 1)"}'); /*should fail*/
+SELECT * FROM add_course_offering(1, 10412, '2021-04-12', '2021-05-12', -1, 9, 1
+                                    '{"(2021-06-09, 10:00, 1)"}'); /*should fail*/
+SELECT * FROM add_course_offering(2, 20411, '2021-04-11', '2021-05-11', 100, -1, 1
+                                    '{"(2021-06-09, 10:00, 1)"}'); /*should fail*/
 
 /* To test update_room routine */
 SELECT * FROM update_room(5, 4236, 2, 4);
 
 
 /*to check add_session routine*/
-SELECT * FROM add_session(1, 1242, '2021-07-31', '09:00', 1); /* should work */
-SELECT * FROM add_session(1, 1242, '2021-07-31', '10:00', 1); /* should fail */
+SELECT * FROM add_session(1, 10410, '2021-06-31', '09:00', 1, 1); /* should work */
+SELECT * FROM add_session(1, 10410, '2021-07-31', '10:00', 1); /* should fail */
 SELECT * FROM add_session(1, 1242, '2021-07-01', '11:00', 3); /* should fail */
 SELECT * FROM add_session(8, 4225, '2021-07-31', '9:00', 1);
 
