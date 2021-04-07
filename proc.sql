@@ -372,10 +372,10 @@ BEGIN
       FROM Rooms R1
      WHERE R1.rid NOT IN (
            SELECT R2.rid
-             FROM Sessions NATURAL JOIN Rooms R2
+             FROM Sessions S NATURAL JOIN Rooms R2
             WHERE session_date = _date
-                  AND (_start_time BETWEEN R2.start_time AND (R2.end_time - one_hour_)
-                      OR end_time_ BETWEEN (R2.start_time + one_hour_) AND R2.end_time));
+                  AND (_start_time BETWEEN S.start_time AND (S.end_time - one_hour_)
+                      OR end_time_ BETWEEN (S.start_time + one_hour_) AND S.end_time));
 END;
 $$
 LANGUAGE PLPGSQL;
