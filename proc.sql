@@ -374,8 +374,8 @@ BEGIN
            SELECT R2.rid
              FROM Sessions NATURAL JOIN Rooms R2
             WHERE session_date = _date
-                  AND (_start_time BETWEEN start_time AND (end_time - one_hour_)
-                      OR end_time_ BETWEEN (start_time + one_hour_) AND end_time));
+                  AND (_start_time BETWEEN R2.start_time AND (R2.end_time - one_hour_)
+                      OR end_time_ BETWEEN (R2.start_time + one_hour_) AND R2.end_time));
 END;
 $$
 LANGUAGE PLPGSQL;
