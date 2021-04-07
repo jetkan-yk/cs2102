@@ -201,8 +201,7 @@ CREATE TRIGGER check_rid
 BEFORE INSERT OR UPDATE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION check_rid_func();
 
-/* Updates Offering's start_date and end_date
-    TODO: change to STATEMENT level, loop through all sessions */
+/* Updates Offering's start_date and end_date */
 CREATE OR REPLACE FUNCTION update_start_end_dates_func()
     RETURNS TRIGGER AS
 $$
@@ -241,8 +240,7 @@ CREATE TRIGGER update_start_end_dates
 AFTER INSERT OR UPDATE OR DELETE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_start_end_dates_func();
 
-/* Updates Offering's seating_capacity
-    TODO: change to STATEMENT level, loop through all sessions */
+/* Updates Offering's seating_capacity */
 CREATE OR REPLACE FUNCTION update_seating_capacity_func()
     RETURNS TRIGGER AS
 $$
@@ -661,4 +659,93 @@ LANGUAGE SQL;
 
 /* --------------- Sessions Routines --------------- */
 
+/* --------------- Employees Routines --------------- */
+
+/* 1. add_employee
+    This routine is used to add a new employee. The inputs to the routine include the following: name, home address, contact number, email address, salary information (i.e., monthly salary for a full-time employee or hourly rate for a part-time employee), date that the employee joined the company, the employee category (manager, administrator, or instructor), and a (possibly empty) set of course areas. 
+    
+    RETURNS the Employees table after the new employee has been added */
+CREATE OR REPLACE FUNCTION add_employee(
+    _ename TEXT,
+    _phone_number TEXT,
+    _home_address TEXT,
+    _email_address TEXT,
+    _join_date DATE,
+    _category TEXT,
+    _salary INTEGER,
+    _course_area_set TEXT ARRAY)
+    RETURNS Employees AS
+$$
+    INSERT INTO
+    Employees (ename, phone_number, home_address, email_address, join_date, category, salary, course_area_set) 
+    VALUES (_ename, _phone_number, _home_address, _email_address, _join_date, _category, _salary, _course_area_set) 
+    RETURNING *;
+$$
+LANGUAGE SQL;
+
+
+/* 2. remove_employee
+    This routine is used to update an employee’s departed date a non-null value. The inputs to the routine is an employee identifier and a departure date.
+    
+    The update operation is rejected if any one of the following conditions hold: 
+
+    (1) the employee is an administrator who is handling some course offering where its registration deadline is after the employee’s departure date;
+    
+    (2) the employee is an instructor who is teaching some course session that starts after the employee’s departure date;
+    
+    (3) the employee is a manager who is managing some area.
+
+    RETURNS the Employees table after the employee departure_date has been updated */
+CREATE OR REPLACE FUNCTION remove_employee(
+    _eid INTEGER,
+    _depart_date DATE)
+    RETURNS Employees AS
+$$
+DECLARE
+    employee_type_ TEXT;
+    result Employees;
+BEGIN
+    SELECT category INTO employee_type_
+        FROM Employees
+        WHERE eid = _eid;
+    IF employee_type_ = 'Manager' THEN
+        IF _eid IN (SELECT eid FROM Manages) THEN
+            RAISE NOTICE
+                'Cannot remove employee, as employee is a manager managing some area';
+        ELSE
+            UPDATE Employees
+            SET depart_date = _depart_date
+            WHERE eid = _eid
+            RETURNING * INTO result;
+        END IF;
+    ELSIF employee_type_ = 'Administrator' THEN
+        IF _eid IN (SELECT a1.eid 
+            FROM Offerings o1, Administrators a1
+            WHERE o1.reg_deadline > _depart_date) THEN
+            RAISE NOTICE
+                'Cannot remove employee, as employee is an administrator handling a course offering where its registration deadline is after employee depart date';
+        ELSE
+            UPDATE Employees
+            SET depart_date = _depart_date
+            WHERE eid = _eid
+            RETURNING * INTO result;
+        END IF;
+    ELSIF employee_type_ = 'Instructor' THEN
+        IF _eid IN (SELECT i1.eid
+            FROM Sessions s1, Instructors i1
+            WHERE s1.session_date > _depart_date) THEN
+            RAISE NOTICE
+                'Cannot remove employee, as employee is an instructor who is teaching some course session that starts after employee depart date';
+        ELSE
+            UPDATE Employees
+            SET depart_date = _depart_date
+            WHERE eid = _eid
+            RETURNING * INTO result;
+        END IF;
+    END IF;
+
+    RETURN result;
+END;
+$$
+LANGUAGE PLPGSQL;
 /* =============== END OF ROUTINES =============== */

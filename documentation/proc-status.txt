@@ -1,7 +1,5 @@
 Not Implemented:
 
-add_employee                    - jason
-remove_employee                 - jason
 add_customer                    - gia
 find_instructors                - jason
 get_available_instructors       - jason
@@ -32,3 +30,5 @@ add_session                     - jet
 remove_session                  - jet
 add_course_package              - jet
 buy_course_package              - jet
+add_employee                    - jason
+remove_employee                 - jason

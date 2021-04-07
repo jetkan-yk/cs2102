@@ -75,3 +75,18 @@ SELECT * FROM update_room(5, 4236, 2, 4);
 
 /* To test get_available_rooms routine */
 
+/* To test add_employee
+CREATE OR REPLACE FUNCTION add_employee(
+    _ename TEXT,
+    _phone_number TEXT,
+    _home_address TEXT,
+    _email_address TEXT,
+    _join_date DATE,
+    _category TEXT,
+    _salary INTEGER,
+    _course_area_set TEXT ARRAY)
+    RETURNS Employees AS
+$$
+ */
+SELECT * FROM add_employee('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}');
+
