@@ -307,6 +307,31 @@ FOR EACH ROW EXECUTE FUNCTION check_package_status();
 
 /* ============== START OF ROUTINES ============== */
 
+/* --------------- Credit Card Routines --------------- */
+
+/* 8. update_credit_card
+    This routine is used when a customer requests to change his/her credit card details.
+    RETURNS: the result of new credit card details after successful UPDATE */
+CREATE OR REPLACE FUNCTION update_credit_card(
+    _cust_id INTEGER,
+    _cc_number INTEGER,
+    _cvv INTEGER,
+    _expiry_date DATE)
+    RETURNS Owns AS
+$$
+    INSERT INTO Credit_cards
+        (cc_number, cvv, expiry_date) VALUES
+        (_cc_number, _cvv, _expiry_date);
+
+    INSERT INTO Owns
+        (cc_number, cust_id) VALUES
+        (_cc_number, _cust_id)
+    RETURNING *;
+$$
+LANGUAGE SQL;
+
+/* --------------- Credit Card Routines --------------- */
+
 /* --------------- Rooms Routines --------------- */
 
 /* 8. find_rooms
@@ -405,9 +430,9 @@ CREATE OR REPLACE FUNCTION add_course(
     _duration INTEGER)
     RETURNS Courses AS
 $$
-    INSERT INTO
-    Courses (title, description, area_name, duration) VALUES
-            (_title, _description, _area_name, _duration)
+    INSERT INTO Courses
+        (title, description, area_name, duration) VALUES
+        (_title, _description, _area_name, _duration)
     RETURNING *;
 $$
 LANGUAGE SQL;
