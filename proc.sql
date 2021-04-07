@@ -486,6 +486,28 @@ LANGUAGE PLPGSQL;
 
 /* --------------- Offerings Routines --------------- */
 
+/* --------------- Packages Routines --------------- */
+
+/* 11. add_course_package
+    This routine is used to add a new course package for sale.
+    RETURNS: the result of the new Package after successful INSERT */
+CREATE OR REPLACE FUNCTION add_course_package(
+    _name TEXT,
+    _num_free_reg INTEGER,
+    _price INTEGER,
+    _sale_start_date DATE,
+    _sale_end_date DATE)
+    RETURNS Packages AS
+$$
+    INSERT INTO Packages
+        (name, num_free_reg, price, sale_start_date, sale_end_date) VALUES
+        (_name, _num_free_reg, _price, _sale_start_date, _sale_end_date)
+    RETURNING *;
+$$
+LANGUAGE SQL;
+
+/* --------------- Packages Routines --------------- */
+
 /* --------------- Sessions Routines --------------- */
 
 /* 22. update_room
