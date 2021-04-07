@@ -314,7 +314,7 @@ FOR EACH ROW EXECUTE FUNCTION check_package_status();
     RETURNS: the result of new credit card details after successful UPDATE */
 CREATE OR REPLACE FUNCTION update_credit_card(
     _cust_id INTEGER,
-    _cc_number INTEGER,
+    _cc_number VARCHAR(19),
     _cvv INTEGER,
     _expiry_date DATE)
     RETURNS Owns AS
