@@ -145,7 +145,8 @@ INSERT INTO Sessions (
     start_time,
     rid
   )
-VALUES (1, 1242, '2021-08-04', '10:00', 1),
+VALUES
+  (1, 1242, '2021-08-04', '10:00', 1),
   (1, 2317, '2021-07-01', '10:00', 3),
   (1, 2317, '2021-07-01', '14:00', 3),
   (1, 2317, '2021-08-30', '09:00', 6),
@@ -195,32 +196,34 @@ INSERT INTO Customers (
     email,
     phone
 )
-VALUES ("04533","Faith Graves","P.O. Box 146, 6550 Gravida St.","porta.elit@Crasvulputatevelit.ca","16900205 8742"),
-  ("64715","Martha Guy","2841 Ultrices. Road","mollis.Phasellus.libero@hymenaeosMaurisut.org","16540218 1753"),
-  ("95258","Hall Savage","903-4888 Proin Ave","in.felis.Nulla@Sed.net","16830401 9113"),
-  ("84828","Holly Day","Ap #214-8751 Nec Ave","diam@rutrumurnanec.net","16150328 6989"),
-  ("25027","Angie Carlson","Ap #915-3742 Ipsum Avenue","nisi@sapienAenean.edu","16850507 0535"),
-  ("54068","Bernard Pate","530-193 Sapien. Road","scelerisque@pedeCumsociis.com","16150311 4694"),
-  ("90051","Indira Mckee","9415 Orci Rd.","felis.Nulla.tempor@arcuimperdiet.edu","16970612 5912"),
-  ("88106","Uma Weeks","P.O. Box 793, 1381 Sit Road","imperdiet@egetnisi.co.uk","16080720 2395"),
-  ("60405","Ariana Spencer","Ap #871-1904 Lobortis Avenue","vel.turpis.Aliquam@acturpisegestas.edu","16110924 2626"),
-  ("78734","Levi Avery","4394 Adipiscing Av.","est.ac@Donecest.com","16361127 2794");
+VALUES
+  (25027, 'Angie Carlson', 'Ap #915-3742 Ipsum Avenue', 'nisi@sapienAenean.edu', '168505070535'),
+  (54068, 'Bernard Pate', '530-193 Sapien. Road', 'scelerisque@pedeCumsociis.com', '161503114694'),
+  (60405, 'Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', 'vel.turpis.Aliquam@acturpisegestas.edu', '161109242626'),
+  (64715, 'Martha Guy', '2841 Ultrices. Road', 'mollis.Phasellus.libero@hymenaeosMaurisut.org', '165402181753'),
+  (78734, 'Levi Avery', '4394 Adipiscing Av.', 'est.ac@Donecest.com', '163611272794'),
+  (84828, 'Holly Day', 'Ap #214-8751 Nec Ave', 'diam@rutrumurnanec.net', '161503286989'),
+  (88106, 'Uma Weeks', 'P.O. Box 793, 1381 Sit Road', 'imperdiet@egetnisi.co.uk', '160807202395'),
+  (90051, 'Indira Mckee', '9415 Orci Rd.', 'felis.Nulla.tempor@arcuimperdiet.edu', '169706125912'),
+  (95258, 'Hall Savage', '903-4888 Proin Ave', 'in.felis.Nulla@Sed.net', '168304019113'),
+  (04533, 'Faith Graves', 'P.O. Box 146, 6550 Gravida St.', 'porta.elit@Crasvulputatevelit.ca', '169002058742');
 
 INSERT INTO Credit_cards (
     cc_number,
     CVV,
     expiry_date
 )
-VALUES ("5309 0123 1332 6128","264","2022-07-07"),
-  ("510246 0096023660","504","2025-04-12"),
-  ("524 00812 89296 120","334","2023-06-02"),
-  ("552728 810123 2605","523","2025-02-21"),
-  ("5303 5686 3428 9291","279","2021-11-08"),
-  ("545980 516590 7962","552","2024-03-05"),
-  ("5274 9609 1394 7548","424","2022-02-23"),
-  ("522479 841599 3862","927","2023-09-11"),
-  ("537 27426 83829 820","492","2022-04-25"),
-  ("5464354259731163","254","2022-07-14");
+VALUES
+  ('5102460096023660', 504, '2025-04-12'),
+  ('5224798415993862', 927, '2023-09-11'),
+  ('5240081289296120', 334, '2023-06-02'),
+  ('5274960913947548', 424, '2022-02-23'),
+  ('5303568634289291', 279, '2021-11-08'),
+  ('5372742683829820', 492, '2022-04-25'),
+  ('5459805165907962', 552, '2024-03-05'),
+  ('5464354259731163', 254, '2022-07-14'),
+  ('5527288101232605', 523, '2025-02-21'),
+  ('5309012313326128', 264, '2022-07-07');
 
 INSERT INTO Packages (
     name,
@@ -229,13 +232,14 @@ INSERT INTO Packages (
     sale_start_date,
     sale_end_date
 )
-VALUES ("Beginner 1", 2, 200, "2021-01-01", "2021-02-01")
-  ("Beginner 2", 2, 200, "2021-02-02", "2021-03-02"),
-  ("Familiar 1", 3, 300, "2021-01-01", "2021-02-01"),
-  ("Familiar 2", 3, 300, "2021-02-02", "2021-03-02"),
-  ("Adept 1", 4, 400, "2021-01-01", "2021-02-01"),
-  ("Adept 2", 4, 400, "2021-02-02", "2021-03-02"),
-  ("Proficient 1", 5, 500, "2021-01-01", "2021-02-01"),
-  ("Proficient 2", 5, 500, "2021-02-02", "2021-03-02"),
-  ("Expert 1", 6, 600, "2021-01-01", "2021-02-01"),
-  ("Expert 2", 6, 600, "2021-02-02", "2021-03-02");
+VALUES
+  ('Beginner 1', 2, 200, '2021-01-01', '2021-02-01'),
+  ('Beginner 2', 2, 200, '2021-02-02', '2021-03-02'),
+  ('Familiar 1', 3, 300, '2021-01-01', '2021-02-01'),
+  ('Familiar 2', 3, 300, '2021-02-02', '2021-03-02'),
+  ('Adept 1', 4, 400, '2021-01-01', '2021-02-01'),
+  ('Adept 2', 4, 400, '2021-02-02', '2021-03-02'),
+  ('Proficient 1', 5, 500, '2021-01-01', '2021-02-01'),
+  ('Proficient 2', 5, 500, '2021-02-02', '2021-03-02'),
+  ('Expert 1', 6, 600, '2021-01-01', '2021-02-01'),
+  ('Expert 2', 6, 600, '2021-02-02', '2021-03-02');
