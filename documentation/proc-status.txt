@@ -1,14 +1,9 @@
 Not Implemented:
 
-add_employee                    - jason
-remove_employee                 - jason
 add_customer                    - gia
-update_credit_card              - jet
 find_instructors                - jason
 get_available_instructors       - jason
-add_course_package              - jet
 get_available_course_packages   - jet
-buy_course_package              - jet
 get_my_course_package           - jet
 get_available_course_offerings  - jet
 get_available_course_sessions   - jet
@@ -25,6 +20,7 @@ view_summary_report             - jason
 view_manager_report             - jason
 
 Implemented:
+update_credit_card              - jet
 find_rooms                      - jet
 update_room                     - jet
 get_available_rooms             - jet
@@ -32,3 +28,7 @@ add_course                      - jet
 add_course_offering             - jet
 add_session                     - jet
 remove_session                  - jet
+add_course_package              - jet
+buy_course_package              - jet
+add_employee                    - jason
+remove_employee                 - jason

@@ -115,16 +115,16 @@ CREATE TABLE Sessions (
 
 CREATE TABLE Customers (
     cust_id INTEGER,
-    name    TEXT    NOT NULL,
-    address TEXT    NOT NULL,
-    email   TEXT    NOT NULL,
-    phone   INTEGER NOT NULL,
+    name    TEXT        NOT NULL,
+    address TEXT        NOT NULL,
+    email   TEXT        NOT NULL,
+    phone   VARCHAR(15) NOT NULL,
 
     PRIMARY KEY (cust_id)
 );
 
 CREATE TABLE Credit_cards (
-    cc_number   INTEGER,
+    cc_number   VARCHAR(19),
     cvv         INTEGER NOT NULL,
     expiry_date DATE    NOT NULL,
 
@@ -132,7 +132,7 @@ CREATE TABLE Credit_cards (
 );
 
 CREATE TABLE Owns (
-    cc_number INTEGER,
+    cc_number VARCHAR(19),
     cust_id   INTEGER   NOT NULL,
     owns_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -157,11 +157,11 @@ CREATE TABLE Cancels (
 );
 
 CREATE TABLE Registers (
-    registers_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    cc_number    INTEGER   NOT NULL,
-    course_id    INTEGER   NOT NULL,
-    offering_id  INTEGER   NOT NULL,
-    session_id   INTEGER   NOT NULL,
+    registers_ts TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    cc_number    VARCHAR(19) NOT NULL,
+    course_id    INTEGER     NOT NULL,
+    offering_id  INTEGER     NOT NULL,
+    session_id   INTEGER     NOT NULL,
 
     PRIMARY KEY (registers_ts),
     FOREIGN KEY (cc_number)                          REFERENCES Owns,
@@ -187,10 +187,10 @@ CREATE TABLE Packages (
 );
 
 CREATE TABLE Buys (
-    buys_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    package_id        INTEGER   NOT NULL,
-    cc_number         INTEGER   NOT NULL,
-    num_remain_redeem INTEGER   NOT NULL,
+    buys_ts           TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    package_id        INTEGER     NOT NULL,
+    cc_number         VARCHAR(19) NOT NULL,
+    num_remain_redeem INTEGER     NOT NULL,
 
     PRIMARY KEY (buys_ts),
     FOREIGN KEY (package_id) REFERENCES Packages,

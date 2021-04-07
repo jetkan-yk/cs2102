@@ -12,3 +12,4 @@
 10. date & time in ISO 8601 format
 11. rename Packages -> packages
 12. routines always returns something for information
+13. phone number max limit 15 chars, cc_num max 19 chars
