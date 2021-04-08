@@ -130,8 +130,7 @@ CREATE TRIGGER set_end_time
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
 
-/* Assigns eid for Sessions if not provided
-    TODO: Implement assign set_instructor() that returns eid and other side effects */
+/* Assigns eid for Sessions if not provided */
 CREATE OR REPLACE FUNCTION set_eid_func()
     RETURNS TRIGGER AS
 $$
@@ -416,7 +415,7 @@ LANGUAGE PLPGSQL;
 
 /* This function returns the Customer's active package Buys information
     RETURNS: the active Buys entry */
--- TODO: Change to include partially active package
+-- TODO1: Change to include partially active package
 CREATE OR REPLACE FUNCTION get_active_buys(
     _cust_id INTEGER)
     RETURNS Buys AS
@@ -714,7 +713,7 @@ CREATE OR REPLACE FUNCTION buy_course_package(
     _package_id INTEGER)
     RETURNS Buys AS
 $$
--- TODO: add Buys trigger to check Customer eligibility (no active package)
+-- TODO1: add Buys trigger to check Customer eligibility (no active package)
     INSERT INTO Buys
         (package_id, cc_number) VALUES
         (_package_id, get_cc_number(_cust_id))
@@ -726,7 +725,7 @@ LANGUAGE SQL;
     This routine is used when a customer requests to view his/her active/partially active course
     package.
     RETURNS: a JSON result */
--- TODO: Implement redeemed sessions
+-- TODO1: Implement redeemed sessions
 CREATE OR REPLACE FUNCTION get_my_course_package(
     _cust_id INTEGER)
     RETURNS JSON AS
@@ -760,7 +759,7 @@ LANGUAGE PLPGSQL;
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: the result of the new Register after successful INSERT */
--- TODO: check get_available_course_session before insert
+-- TODO1: check get_available_course_session before insert
 CREATE OR REPLACE FUNCTION register_session(
     _cust_id INTEGER,
     _course_id INTEGER,
@@ -815,10 +814,9 @@ $$
 DECLARE
     date_ DATE;
     time_ TIME;
-    num_reg_ CONSTANT INTEGER := 0;
-    /* TODO: Replace with
+    num_reg_ CONSTANT INTEGER :=
         (SELECT count(*) FROM Registers
-          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)); */
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
     room_cap_ CONSTANT INTEGER :=
         (SELECT seating_capacity FROM Rooms WHERE rid = _rid);
     result_ Sessions;
@@ -849,8 +847,7 @@ LANGUAGE PLPGSQL;
 
 /* 23. remove_session
     This routine is used to remove a course session.
-    RETURNS: the Session detail after successful DELETE
-    TODO: Implement update session start_date and end_date */
+    RETURNS: the Session detail after successful DELETE */
 CREATE OR REPLACE FUNCTION remove_session(
     _course_id INTEGER,
     _offering_id INTEGER,
@@ -860,10 +857,9 @@ $$
 DECLARE
     date_ DATE;
     time_ TIME;
-    num_reg_ CONSTANT INTEGER := 0;
-    /* TODO: Replace with
+    num_reg_ CONSTANT INTEGER :=
         (SELECT count(*) FROM Registers
-          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)); */
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
     result_ Sessions;
 BEGIN
     SELECT session_date, start_time
