@@ -555,6 +555,26 @@ $$
 $$
 LANGUAGE SQL;
 
+/* 12. get_available_course_packages
+    This routine is used to retrieve the course packages that are available for sale.
+    RETURNS: a table of available Packages */
+CREATE OR REPLACE FUNCTION get_available_course_packages()
+    RETURNS TABLE (package_id INTEGER,
+                   name TEXT,
+                   num_free_sessions INTEGER,
+                   sale_end_date DATE,
+                   price INTEGER) AS
+$$
+    SELECT package_id,
+           name,
+           num_free_reg AS num_free_sessions,
+           sale_end_date,
+           price
+      FROM Packages
+     WHERE NOW() BETWEEN sale_start_date AND (sale_end_date + '1 day'::INTERVAL);
+$$
+LANGUAGE SQL;
+
 /* --------------- Packages Routines --------------- */
 
 /* --------------- Registers Routines --------------- */
