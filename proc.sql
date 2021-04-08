@@ -680,6 +680,38 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* 14. get_my_course_package
+    This routine is used when a customer requests to view his/her active/partially active course
+    package.
+    RETURNS: a JSON result */
+CREATE OR REPLACE FUNCTION get_my_course_package(
+    _cust_id INTEGER)
+    RETURNS JSON AS
+$$
+DECLARE
+    active_buys_ RECORD;
+    active_packages_ RECORD;
+BEGIN
+    SELECT package_id,
+           DATE(buys_ts) AS purchase_date,
+           num_remain_redeem AS num_redeem_allow
+      INTO active_buys_
+      FROM Buys
+     WHERE cc_number = get_cc_number(_cust_id)
+           AND num_remain_redeem > 0;
+
+    SELECT name AS package_name,
+           price AS package_price,
+           num_free_reg AS num_free_sessions
+      INTO active_packages_
+      FROM Packages
+     WHERE package_id = active_buys_.package_id;
+
+    RETURN JSONB_PRETTY(TO_JSONB(active_buys_) || TO_JSONB(active_packages_));
+END;
+$$
+LANGUAGE PLPGSQL;
+
 /* --------------- Buys Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
