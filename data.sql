@@ -134,7 +134,7 @@ VALUES (1, 1242, '2021-02-07', '2021-04-22', 260, 198, 3),
   (6, 4218, '2021-01-30', '2021-05-27', 460, 153, 4),
   (8, 4225, '2021-03-12', '2021-06-15', 75, 23, 7),
   (8, 4236, '2021-02-28', '2021-06-23', 440, 127, 4),
-  (9, 2317, '2021-02-10', '2021-04-03', 200, 51, 9),
+  (9, 2317, '2021-02-10', '2021-04-23', 200, 51, 9),
   (9, 5340, '2021-03-15', '2021-06-04', 270, 171, 6),
   (10, 6585, '2021-02-07', '2021-06-23', 125, 73, 9);
 
@@ -246,7 +246,7 @@ VALUES
 SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
 SELECT * FROM update_credit_card(4, '12345678987', 123, '2022-05-06');
 SELECT * FROM buy_course_package(4, 10);
---SELECT * FROM register_session(4, 5, 3757, 1, 'payment');
---SELECT * FROM register_session(4, 1, 2317, 1, 'payment');
+SELECT * FROM register_session(4, 5, 3757, 1, 'payment');
+SELECT * FROM register_session(4, 1, 2317, 1, 'payment');
 SELECT * FROM register_session(4, 5, 3757, 1, 'redeem');
-SELECT * FROM register_session(4, 1, 2317, 1, 'redeem');
+SELECT * FROM register_session(4, 9, 2317, 1, 'redeem');

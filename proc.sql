@@ -266,63 +266,9 @@ FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* -------------- Sessions Triggers -------------- */
 
-
 /* -------------- Registers Triggers -------------- */
 
 /* check that customer has only 1 active/partially active package */
-
-/* Checks that a Customer Registers for only 1 Session of the same Course */
-CREATE OR REPLACE FUNCTION check_reg_cid_func()
-    RETURNS TRIGGER AS
-$$
-DECLARE
-    old_offering_id_ INTEGER;
-    old_session_id_ INTEGER;
-BEGIN
-    SELECT offering_id, session_id
-      INTO old_offering_id_, old_session_id_
-      FROM Registers
-     WHERE course_id = NEW.course_id;
-
-      IF old_offering_id_ IS NULL
-    THEN RETURN NEW;
-    ELSE RAISE NOTICE
-            'Customer has already registered a Session (%, %, %) from this Course, skipping',
-             NEW.course_id, old_offering_id_, old_session_id_;
-         RETURN NULL;
-     END IF;
-END;
-$$
-LANGUAGE PLPGSQL;
-
-CREATE TRIGGER check_reg_cid
-BEFORE INSERT ON Registers
-FOR EACH ROW EXECUTE FUNCTION check_reg_cid_func();
-
-/* Checks that Register is done before registration deadline */
-CREATE OR REPLACE FUNCTION check_reg_deadline_func()
-    RETURNS TRIGGER AS
-$$
-DECLARE
-    reg_deadline_ CONSTANT DATE :=
-        (SELECT reg_deadline FROM Offerings
-          WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id));
-    one_day_ CONSTANT INTERVAL := '1 day';
-BEGIN
-      IF NOW() < (reg_deadline_ + one_day_)
-    THEN RETURN NEW;
-    ELSE RAISE NOTICE
-            'Session must be registered before Offering (%, %) registration deadline %',
-             NEW.course_id, NEW.offering_id, reg_deadline_ + one_day_;
-         RETURN NULL;
-     END IF;
-END;
-$$
-LANGUAGE PLPGSQL;
-
-CREATE TRIGGER check_reg_deadline
-BEFORE INSERT ON Registers
-FOR EACH ROW EXECUTE FUNCTION check_reg_deadline_func();
 
 /* check for late cancellation and refund */
 
@@ -672,6 +618,56 @@ LANGUAGE PLPGSQL;
 
 /* --------------- Sessions Routines --------------- */
 
+/* Checks that a Customer Registers for only 1 Session of the same Course */
+CREATE OR REPLACE FUNCTION check_can_register_course(
+    _cust_id INTEGER,
+    _course_id INTEGER)
+    RETURNS BOOLEAN AS
+$$
+DECLARE
+    old_offering_id_ INTEGER;
+    old_session_id_ INTEGER;
+BEGIN
+    SELECT offering_id, session_id
+      INTO old_offering_id_, old_session_id_
+      FROM Registers
+     WHERE course_id = _course_id
+           AND cc_number = get_cc_number(_cust_id);
+
+      IF old_offering_id_ IS NULL
+    THEN RETURN TRUE;
+    ELSE RAISE NOTICE
+            'Customer has already registered a Session (%, %, %) from this Course, skipping',
+             _course_id, old_offering_id_, old_session_id_;
+         RETURN FALSE;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* Checks that Register is done before registration deadline */
+CREATE OR REPLACE FUNCTION check_is_before_reg_deadline(
+    _course_id INTEGER,
+    _offering_id INTEGER)
+    RETURNS BOOLEAN AS
+$$
+DECLARE
+    reg_deadline_ CONSTANT DATE :=
+        (SELECT reg_deadline FROM Offerings
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+    one_day_ CONSTANT INTERVAL := '1 day';
+BEGIN
+      IF NOW() < (reg_deadline_ + one_day_)
+    THEN RETURN TRUE;
+    ELSE RAISE NOTICE
+            'Session must be registered before Offering (%, %) registration deadline %, skipping',
+             _course_id, _offering_id, reg_deadline_ + one_day_;
+         RETURN FALSE;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: the result of the new Register after successful INSERT */
@@ -685,17 +681,24 @@ CREATE OR REPLACE FUNCTION register_session(
     _payment_method TEXT)
     RETURNS VOID AS
 $$
+DECLARE
+    can_register_course CONSTANT BOOLEAN :=
+        check_can_register_course(_cust_id, _course_id);
+    is_before_reg_deadline CONSTANT BOOLEAN :=
+        check_is_before_reg_deadline(_course_id, _offering_id);
 BEGIN
-    CASE _payment_method
-        WHEN 'payment' THEN
-            PERFORM add_registers(_cust_id, _course_id, _offering_id, _session_id);
-        WHEN 'redeem' THEN
-            PERFORM add_redeems(_cust_id, _course_id, _offering_id, _session_id);
-        ELSE
-            RAISE NOTICE
-                'Incorrect payment method "%", use "payment" or "redeem", skipping',
-                 _payment_method;
-    END CASE;
+    IF can_register_course AND is_before_reg_deadline THEN
+        CASE _payment_method
+            WHEN 'payment' THEN
+                PERFORM add_registers(_cust_id, _course_id, _offering_id, _session_id);
+            WHEN 'redeem' THEN
+                PERFORM add_redeems(_cust_id, _course_id, _offering_id, _session_id);
+            ELSE
+                RAISE NOTICE
+                    'Incorrect payment method "%", use "payment" or "redeem", skipping',
+                     _payment_method;
+        END CASE;
+    END IF;
 END;
 $$
 LANGUAGE PLPGSQL;
