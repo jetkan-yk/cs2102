@@ -601,7 +601,6 @@ CREATE OR REPLACE FUNCTION add_registers(
     _session_id INTEGER)
     RETURNS Registers AS
 $$
-    -- TODO: use trigger to check the session can be registered by the customer
     INSERT INTO Registers
         (cc_number, course_id, offering_id, session_id) VALUES
         (get_cc_number(_cust_id), _course_id, _offering_id, _session_id)
@@ -622,11 +621,12 @@ CREATE OR REPLACE FUNCTION register_session(
     _offering_id INTEGER,
     _session_id INTEGER,
     _payment_method TEXT)
-    RETURNS VOID AS -- TODO: split into 2 functions (registers & redeems), figure out how to print
+    RETURNS VOID AS -- TODO: split into 2 functions (registers & redeems)
 $$
 BEGIN
     CASE _payment_method
         WHEN 'payment' THEN
+            -- TODO: figure out how to print this
             PERFORM add_registers(_cust_id, _course_id, _offering_id, _session_id);
         WHEN 'redeem' THEN
             -- TODO: Check course_id, num_remain_redeem

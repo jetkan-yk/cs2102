@@ -17,3 +17,4 @@
     to apply restrictions, e.g. check whether a customer is allowed to register
     a certain session
 15. might misunderstood how session works (atomic or weekly recurring events?)
+16. how to print result for functions that have multiple return types?
