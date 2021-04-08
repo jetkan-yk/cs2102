@@ -615,6 +615,7 @@ LANGUAGE SQL;
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: the result of the new Register after successful INSERT */
+-- TODO: check get_available_course_session before insert
 CREATE OR REPLACE FUNCTION register_session(
     _cust_id INTEGER,
     _course_id INTEGER,
