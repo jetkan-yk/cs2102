@@ -190,23 +190,22 @@ VALUES
   (10, 6585, '2021-09-13', '17:00', 1);
 
 INSERT INTO Customers (
-    cust_id,
     name,
     address,
     email,
     phone
 )
 VALUES
-  (25027, 'Angie Carlson', 'Ap #915-3742 Ipsum Avenue', 'nisi@sapienAenean.edu', '168505070535'),
-  (54068, 'Bernard Pate', '530-193 Sapien. Road', 'scelerisque@pedeCumsociis.com', '161503114694'),
-  (60405, 'Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', 'vel.turpis.Aliquam@acturpisegestas.edu', '161109242626'),
-  (64715, 'Martha Guy', '2841 Ultrices. Road', 'mollis.Phasellus.libero@hymenaeosMaurisut.org', '165402181753'),
-  (78734, 'Levi Avery', '4394 Adipiscing Av.', 'est.ac@Donecest.com', '163611272794'),
-  (84828, 'Holly Day', 'Ap #214-8751 Nec Ave', 'diam@rutrumurnanec.net', '161503286989'),
-  (88106, 'Uma Weeks', 'P.O. Box 793, 1381 Sit Road', 'imperdiet@egetnisi.co.uk', '160807202395'),
-  (90051, 'Indira Mckee', '9415 Orci Rd.', 'felis.Nulla.tempor@arcuimperdiet.edu', '169706125912'),
-  (95258, 'Hall Savage', '903-4888 Proin Ave', 'in.felis.Nulla@Sed.net', '168304019113'),
-  (04533, 'Faith Graves', 'P.O. Box 146, 6550 Gravida St.', 'porta.elit@Crasvulputatevelit.ca', '169002058742');
+  ('Angie Carlson', 'Ap #915-3742 Ipsum Avenue', 'nisi@sapienAenean.edu', '168505070535'),
+  ('Bernard Pate', '530-193 Sapien. Road', 'scelerisque@pedeCumsociis.com', '161503114694'),
+  ('Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', 'vel.turpis.Aliquam@acturpisegestas.edu', '161109242626'),
+  ('Martha Guy', '2841 Ultrices. Road', 'mollis.Phasellus.libero@hymenaeosMaurisut.org', '165402181753'),
+  ('Levi Avery', '4394 Adipiscing Av.', 'est.ac@Donecest.com', '163611272794'),
+  ('Holly Day', 'Ap #214-8751 Nec Ave', 'diam@rutrumurnanec.net', '161503286989'),
+  ('Uma Weeks', 'P.O. Box 793, 1381 Sit Road', 'imperdiet@egetnisi.co.uk', '160807202395'),
+  ('Indira Mckee', '9415 Orci Rd.', 'felis.Nulla.tempor@arcuimperdiet.edu', '169706125912'),
+  ('Hall Savage', '903-4888 Proin Ave', 'in.felis.Nulla@Sed.net', '168304019113'),
+  ('Faith Graves', 'P.O. Box 146, 6550 Gravida St.', 'porta.elit@Crasvulputatevelit.ca', '169002058742');
 
 INSERT INTO Credit_cards (
     cc_number,
@@ -242,8 +241,8 @@ VALUES
   ('Proficient 1', 5, 500, '2021-01-01', '2021-02-01'),
   ('Proficient 2', 5, 500, '2021-02-02', '2021-03-02'),
   ('Expert 1', 6, 600, '2021-01-01', '2021-02-01'),
-  ('Expert 2', 6, 600, '2021-02-02', '2021-04-07');
+  ('Expert 2', 6, 600, '2021-02-02', '2021-05-07');
 
-SELECT * FROM update_credit_card(4533, '123456789', 000, '2022-05-05');
-SELECT * FROM update_credit_card(4533, '12345678987', 000, '2022-05-06');
-SELECT * FROM buy_course_package(4533, 10);
+SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
+SELECT * FROM update_credit_card(4, '12345678987', 123, '2022-05-06');
+SELECT * FROM buy_course_package(4, 10);

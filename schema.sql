@@ -114,7 +114,7 @@ CREATE TABLE Sessions (
 );
 
 CREATE TABLE Customers (
-    cust_id INTEGER,
+    cust_id SERIAL,
     name    TEXT        NOT NULL,
     address TEXT        NOT NULL,
     email   TEXT        NOT NULL,
