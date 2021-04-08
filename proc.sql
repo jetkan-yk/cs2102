@@ -18,7 +18,7 @@ DECLARE
 BEGIN
       IF total_seat_cap_ < _target_num_reg
     THEN RAISE NOTICE
-             'Offering seating_capacity (%) must be >= target_num_reg (%), skipping',
+             'Offering seating_capacity (%) must be >= target_num_reg (%)',
               total_seat_cap_, _target_num_reg;
          DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
@@ -36,7 +36,7 @@ BEGIN
       IF NOT EXISTS (SELECT 1 FROM Sessions
                       WHERE (course_id, offering_id) = (_course_id, _offering_id))
     THEN RAISE NOTICE
-             'Offerings (%, %) must have at least 1 Sessions, skipping',
+             'Offerings (%, %) must have at least 1 Sessions',
               _course_id, _offering_id;
          DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
@@ -79,7 +79,7 @@ BEGIN
       IF deadline_ + 10 <= NEW.session_date
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'Session date must be at least 10 days (inclusive) after %, skipping',
+            'Session date must be at least 10 days (inclusive) after %',
              deadline_;
          RETURN NULL;
      END IF;
@@ -117,7 +117,7 @@ BEGIN
       IF NEW.end_time <= '18:00'
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'Sessions (%, %, %, %:00, % hours) must end before 6pm, skipping',
+            'Sessions (%, %, %, %:00, % hours) must end before 6pm',
              NEW.course_id, NEW.offering_id, NEW.session_date,
              EXTRACT(HOURS from NEW.start_time), EXTRACT(HOURS from duration_);
          RETURN NULL;
@@ -130,8 +130,7 @@ CREATE TRIGGER set_end_time
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION set_end_time_func();
 
-/* Assigns eid for Sessions if not provided
-    TODO: Implement assign set_instructor() that returns eid and other side effects */
+/* Assigns eid for Sessions if not provided */
 CREATE OR REPLACE FUNCTION set_eid_func()
     RETURNS TRIGGER AS
 $$
@@ -140,7 +139,7 @@ BEGIN
       IF NEW.eid IS NOT NULL
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'No available instructor for Session (%, %, %, %), skipping',
+            'No available instructor for Session (%, %, %, %)',
              NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -169,7 +168,7 @@ BEGIN
       IF NEW.rid IS NOT NULL
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'No available room for Session (%, %, %, %), skipping',
+            'No available room for Session (%, %, %, %)',
              NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -189,7 +188,7 @@ BEGIN
                  (SELECT duration FROM Courses WHERE course_id = NEW.course_id)))
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'Room % not available for Session (%, %, %, %), skipping',
+            'Room % not available for Session (%, %, %, %)',
              NEW.rid, NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -264,42 +263,282 @@ CREATE TRIGGER update_seating_capacity
 AFTER INSERT OR UPDATE OR DELETE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
-/* -------------- Sessions Triggers -------------- */
-
-
-/* -------------- Registration Triggers -------------- */
-
-/* insert or update Owns based on Customers and Credit_cards */
-
-/* check that customer registers for only 1 session in one course before deadline */
-
-/* check that customer has only 1 active/partially active package */
-/*
-CREATE OR REPLACE FUNCTION check_package_status()
-    RETURNS TRIGGER AS
+/* Checks that a Customer Registers/Redeems only 1 Session of the same Course */
+CREATE OR REPLACE FUNCTION check_can_register_course(
+    _cust_id INTEGER,
+    _course_id INTEGER)
+    RETURNS BOOLEAN AS
 $$
+DECLARE
+    old_offering_id_ INTEGER;
+    old_session_id_ INTEGER;
 BEGIN
-    SELECT num_remaining_redemptions
-    INTO indicator
-    FROM Buys
+-- TODO2: Update implementation with get_available_course_offerings() routine
+    SELECT offering_id, session_id
+      INTO old_offering_id_, old_session_id_
+      FROM Registers
+     WHERE course_id = _course_id
+           AND cc_number = get_cc_number(_cust_id);
 
-    IF indicator > 0
-
+      IF old_offering_id_ IS NULL
+    THEN RETURN TRUE;
+    ELSE RAISE NOTICE
+            'Customer has already registered a Session (%, %, %) from this Course',
+             _course_id, old_offering_id_, old_session_id_;
+         RETURN FALSE;
+     END IF;
 END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER check_package_status
-BEFORE INSERT ON Buys
-FOR EACH ROW EXECUTE FUNCTION check_package_status();
-*/
+/* Checks that Register/Redeem Session is done before registration deadline */
+CREATE OR REPLACE FUNCTION check_is_before_reg_deadline(
+    _course_id INTEGER,
+    _offering_id INTEGER)
+    RETURNS BOOLEAN AS
+$$
+DECLARE
+    reg_deadline_ CONSTANT DATE :=
+        (SELECT reg_deadline FROM Offerings
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+    one_day_ CONSTANT INTERVAL := '1 day';
+BEGIN
+      IF NOW() < (reg_deadline_ + one_day_)
+    THEN RETURN TRUE;
+    ELSE RAISE NOTICE
+            'Session must be registered before Offering (%, %) registration deadline %',
+             _course_id, _offering_id, reg_deadline_ + one_day_;
+         RETURN FALSE;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* Checks whether a Session is refundable, i.e. now + 7 days <= session_date  */
+CREATE OR REPLACE FUNCTION check_is_session_refundable(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS BOOLEAN AS
+$$
+DECLARE
+    session_date_ CONSTANT DATE :=
+        (SELECT session_date FROM Sessions
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
+    seven_days_ CONSTANT INTERVAL := '7 days';
+BEGIN
+      IF (NOW() + seven_days_) <= session_date_
+    THEN RETURN TRUE;
+    ELSE RAISE NOTICE
+            'Session (%, %, %) is only refundable before %',
+             _course_id, _offering_id, _session_id, (session_date_ - seven_days_);
+         RETURN FALSE;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* -------------- Sessions Triggers -------------- */
+
+/* -------------- Credit Card Triggers -------------- */
+
+/* This function queries the latest cc_number Owns by a Customer */
+CREATE OR REPLACE FUNCTION get_cc_number(
+    _cust_id INTEGER)
+    RETURNS VARCHAR(19) AS
+$$
+    SELECT cc_number
+      FROM Owns
+     WHERE cust_id = _cust_id
+     ORDER BY owns_ts DESC LIMIT 1;
+$$
+LANGUAGE SQL;
+
+/* -------------- Credit Card Triggers -------------- */
+
+/* -------------- Registers Triggers -------------- */
+
+/* check that customer has only 1 active/partially active package */
 
 /* check for late cancellation and refund */
 
+/* This function Registers a Customer for a Session using credit card.
+    RETURNS: the result of the new Register after successful INSERT */
+CREATE OR REPLACE FUNCTION add_registers(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS Registers AS
+$$
+    INSERT INTO Registers
+        (cc_number, course_id, offering_id, session_id) VALUES
+        (get_cc_number(_cust_id), _course_id, _offering_id, _session_id)
+    RETURNING *;
+$$
+LANGUAGE SQL;
 
+/* -------------- Registers Triggers -------------- */
 
-/* -------------- Registration Triggers -------------- */
+/* -------------- Redeems Triggers -------------- */
 
+/* Updates the redeemed Package's num_remain_redeem */
+CREATE OR REPLACE FUNCTION update_num_remain_redeem_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    UPDATE Buys
+       SET num_remain_redeem = num_remain_redeem - 1
+     WHERE buys_ts = NEW.buys_ts;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER update_num_remain_redeem
+AFTER INSERT ON Redeems
+FOR EACH ROW EXECUTE FUNCTION update_num_remain_redeem_func();
+
+/* This function Redeems a Session using Package.
+    RETURNS: the result of the new Redeems after successful INSERT */
+CREATE OR REPLACE FUNCTION add_redeems(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS Redeems AS
+$$
+DECLARE
+    buys_ts_ TIMESTAMP;
+    num_remain_redeem_ INTEGER;
+    result_ Redeems;
+BEGIN
+    SELECT buys_ts, num_remain_redeem
+      INTO buys_ts_, num_remain_redeem_
+      FROM get_active_buys(_cust_id);
+
+      IF buys_ts_ IS NULL
+    THEN RAISE NOTICE
+            'No redeemable package';
+         RETURN NULL;
+    ELSE INSERT INTO Redeems
+             (buys_ts, course_id, offering_id, session_id) VALUES
+             (buys_ts_, _course_id, _offering_id, _session_id)
+         RETURNING * INTO result_;
+     END IF;
+
+    RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* This function returns a list of Sessions Redeemed by the Customer
+-- TODO1: Implement this with Owns x Buys x Redeems
+CREATE OR REPLACE FUNCTION get_redeemed_sessions(
+    _cust_id INTEGER)
+    RETURNS SETOF Sessions AS
+$$
+DECLARE
+BEGIN
+END;
+$$
+LANGUAGE PLPGSQL; */
+
+/* -------------- Redeems Triggers -------------- */
+
+/* -------------- Buys Triggers -------------- */
+
+/* This function returns the Customer's active package Buys information
+    RETURNS: the active Buys entry */
+/* TODO1: Change to include partially active package,
+            prereq: get_redeemed_sessions, for each sessions check_refundable */
+CREATE OR REPLACE FUNCTION get_active_buys(
+    _cust_id INTEGER)
+    RETURNS Buys AS
+$$
+    SELECT * FROM Buys
+     WHERE cc_number = get_cc_number(_cust_id)
+           AND num_remain_redeem > 0;
+$$
+LANGUAGE SQL;
+
+/* Checks whether the Customer has active Package before Buying */
+CREATE OR REPLACE FUNCTION check_has_active_package_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    cust_id_ INTEGER;
+BEGIN
+    SELECT cust_id
+      INTO cust_id_
+      FROM Owns
+     WHERE cc_number = NEW.cc_number;
+
+      IF get_active_buys(cust_id_) IS NOT NULL
+    THEN RAISE NOTICE
+             'Customer % still has active/partially active Package %',
+              cust_id_, get_active_buys(cust_id_);
+         RETURN NULL;
+    ELSE RETURN NEW;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_has_active_package
+BEFORE INSERT ON Buys
+FOR EACH ROW EXECUTE FUNCTION check_has_active_package_func();
+
+/* Checks whether the Package is Bought during sales date */
+CREATE OR REPLACE FUNCTION check_sales_date_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    sale_start_date_ DATE;
+    sale_end_date_ DATE;
+    one_day_ CONSTANT INTERVAL := '1 day';
+BEGIN
+    SELECT sale_start_date, sale_end_date
+      INTO sale_start_date_, sale_end_date_
+      FROM Packages
+     WHERE package_id = NEW.package_id;
+
+      IF (NOW() BETWEEN sale_start_date_ AND (sale_end_date_ + one_day_))
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE
+             'Packages must be purchased within sales dates (%, %)',
+              sale_start_date_, sale_end_date_;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_sales_date
+BEFORE INSERT ON Buys
+FOR EACH ROW EXECUTE FUNCTION check_sales_date_func();
+
+/* Sets the num_remain_redeem in Buys */
+CREATE OR REPLACE FUNCTION set_num_remain_redeem_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    SELECT num_free_reg
+      INTO NEW.num_remain_redeem
+      FROM Packages
+     WHERE package_id = NEW.package_id;
+
+    RETURN NEW;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER set_num_remain_redeem
+BEFORE INSERT ON Buys
+FOR EACH ROW WHEN (NEW.num_remain_redeem IS NULL) EXECUTE FUNCTION set_num_remain_redeem_func();
+
+/* -------------- Buys Triggers -------------- */
 
 /* =============== END OF TRIGGERS =============== */
 
@@ -309,7 +548,7 @@ FOR EACH ROW EXECUTE FUNCTION check_package_status();
 
 /* --------------- Credit Card Routines --------------- */
 
-/* 8. update_credit_card
+/* 4. update_credit_card
     This routine is used when a customer requests to change his/her credit card details.
     RETURNS: the result of new credit card details after successful UPDATE */
 CREATE OR REPLACE FUNCTION update_credit_card(
@@ -330,19 +569,28 @@ $$
 $$
 LANGUAGE SQL;
 
-/* This function queries the latest cc_number Owns by a Customer */
-CREATE OR REPLACE FUNCTION get_cc_number(
-    _cust_id INTEGER)
-    RETURNS VARCHAR(19) AS
+/* --------------- Credit Card Routines --------------- */
+
+/* --------------- Courses Routines --------------- */
+
+/* 5. add_course
+    This routine is used to add a new course.
+    RETURNS: the result of the new Course after successful INSERT */
+CREATE OR REPLACE FUNCTION add_course(
+    _title TEXT,
+    _description TEXT,
+    _area_name TEXT,
+    _duration INTEGER)
+    RETURNS Courses AS
 $$
-    SELECT cc_number
-      FROM Owns
-     WHERE cust_id = _cust_id
-     ORDER BY owns_ts DESC LIMIT 1;
+    INSERT INTO Courses
+        (title, description, area_name, duration) VALUES
+        (_title, _description, _area_name, _duration)
+    RETURNING *;
 $$
 LANGUAGE SQL;
 
-/* --------------- Credit Card Routines --------------- */
+/* --------------- Courses Routines --------------- */
 
 /* --------------- Rooms Routines --------------- */
 
@@ -430,27 +678,6 @@ LANGUAGE PLPGSQL;
 
 /* --------------- Rooms Routines --------------- */
 
-/* --------------- Courses Routines --------------- */
-
-/* 5. add_course
-    This routine is used to add a new course.
-    RETURNS: the result of the new Course after successful INSERT */
-CREATE OR REPLACE FUNCTION add_course(
-    _title TEXT,
-    _description TEXT,
-    _area_name TEXT,
-    _duration INTEGER)
-    RETURNS Courses AS
-$$
-    INSERT INTO Courses
-        (title, description, area_name, duration) VALUES
-        (_title, _description, _area_name, _duration)
-    RETURNING *;
-$$
-LANGUAGE SQL;
-
-/* --------------- Courses Routines --------------- */
-
 /* --------------- Offerings Routines --------------- */
 
 /* 10. add_course_offering
@@ -498,48 +725,6 @@ LANGUAGE PLPGSQL;
 
 /* --------------- Offerings Routines --------------- */
 
-/* --------------- Buys Routines --------------- */
-
-/* 13. buy_course_package
-    This routine is used when a customer requests to purchase a course package.
-    RETURNS: the result of the new Buy after successful INSERT */
-CREATE OR REPLACE FUNCTION buy_course_package(
-    _cust_id INTEGER,
-    _package_id INTEGER)
-    RETURNS Buys AS
-$$
-DECLARE
-    cc_number_ CONSTANT VARCHAR(19) := get_cc_number(_cust_id);
-    num_free_reg_ INTEGER;
-    sale_start_date_ DATE;
-    sale_end_date_ DATE;
-    one_day_ CONSTANT INTERVAL := '1 day';
-    result_ Buys;
-BEGIN
-    SELECT num_free_reg, sale_start_date, sale_end_date
-      INTO num_free_reg_, sale_start_date_, sale_end_date_
-      FROM Packages
-     WHERE package_id = _package_id;
-
-     IF NOT (NOW() BETWEEN sale_start_date_ AND (sale_end_date_ + one_day_)) THEN
-        RAISE NOTICE
-           'Packages must be purchased within sales dates [%, %], skipping',
-            sale_start_date_, sale_end_date_;
-        RETURN NULL;
-    END IF;
-
-    INSERT INTO Buys
-        (package_id, cc_number, num_remain_redeem) VALUES
-        (_package_id, cc_number_, num_free_reg_)
-    RETURNING * INTO result_;
-
-    RETURN result_;
-END;
-$$
-LANGUAGE PLPGSQL;
-
-/* --------------- Buys Routines --------------- */
-
 /* --------------- Packages Routines --------------- */
 
 /* 11. add_course_package
@@ -560,9 +745,79 @@ $$
 $$
 LANGUAGE SQL;
 
+/* 12. get_available_course_packages
+    This routine is used to retrieve the course packages that are available for sale.
+    RETURNS: a table of available Packages */
+CREATE OR REPLACE FUNCTION get_available_course_packages()
+    RETURNS TABLE (package_id INTEGER,
+                   name TEXT,
+                   num_free_sessions INTEGER,
+                   sale_end_date DATE,
+                   price INTEGER) AS
+$$
+    SELECT package_id,
+           name,
+           num_free_reg AS num_free_sessions,
+           sale_end_date,
+           price
+      FROM Packages
+     WHERE NOW() BETWEEN sale_start_date AND (sale_end_date + '1 day'::INTERVAL);
+$$
+LANGUAGE SQL;
+
 /* --------------- Packages Routines --------------- */
 
-/* --------------- Registers Routines --------------- */
+/* --------------- Buys Routines --------------- */
+
+/* 13. buy_course_package
+    This routine is used when a customer requests to purchase a course package.
+    RETURNS: the result of the new Buy after successful INSERT */
+CREATE OR REPLACE FUNCTION buy_course_package(
+    _cust_id INTEGER,
+    _package_id INTEGER)
+    RETURNS Buys AS
+$$
+    INSERT INTO Buys
+        (package_id, cc_number) VALUES
+        (_package_id, get_cc_number(_cust_id))
+    RETURNING *;
+$$
+LANGUAGE SQL;
+
+/* 14. get_my_course_package
+    This routine is used when a customer requests to view his/her active/partially active course
+    package.
+    RETURNS: a JSON result */
+-- TODO1: Implement redeemed sessions
+CREATE OR REPLACE FUNCTION get_my_course_package(
+    _cust_id INTEGER)
+    RETURNS JSON AS
+$$
+DECLARE
+    active_buys_ RECORD;
+    active_packages_ RECORD;
+BEGIN
+    SELECT package_id,
+           DATE(buys_ts) AS purchase_date,
+           num_remain_redeem AS num_redeem_allow
+      INTO active_buys_
+      FROM get_active_buys(_cust_id);
+
+    SELECT name AS package_name,
+           price AS package_price,
+           num_free_reg AS num_free_sessions
+      INTO active_packages_
+      FROM Packages
+     WHERE package_id = active_buys_.package_id;
+
+    RETURN JSONB_PRETTY(TO_JSONB(active_buys_) || TO_JSONB(active_packages_));
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* --------------- Buys Routines --------------- */
+
+/* --------------- Sessions Routines --------------- */
 
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
@@ -573,29 +828,41 @@ CREATE OR REPLACE FUNCTION register_session(
     _offering_id INTEGER,
     _session_id INTEGER,
     _payment_method TEXT)
-    RETURNS VOID AS -- TODO: split into 2 functions (registers & redeems)
+    RETURNS TEXT AS
 $$
+DECLARE
+-- TODO2: Replace with get_available_course_session before insert trigger
+    can_register_course CONSTANT BOOLEAN :=
+        check_can_register_course(_cust_id, _course_id);
+    is_before_reg_deadline CONSTANT BOOLEAN :=
+        check_is_before_reg_deadline(_course_id, _offering_id);
+    result_ TEXT :=
+        FORMAT('Operation rejected for Customer %s Session (%s, %s, %s)',
+                _cust_id, _course_id, _offering_id, _session_id);
 BEGIN
-    CASE _payment_method
-        WHEN 'payment' THEN
-            RAISE NOTICE
-                'Using payment mode "payment"';
-        WHEN 'redeem' THEN
-            -- TODO: Check course_id, num_remain_redeem
-            RAISE NOTICE
-                'Using payment mode "redeem"';
-        ELSE
-            RAISE NOTICE
-                'Incorrect payment method "%", use "payment" or "redeem", skipping',
-                 _payment_method;
-    END CASE;
+    IF can_register_course AND is_before_reg_deadline THEN
+        CASE _payment_method
+            WHEN 'payment' THEN
+                  IF add_registers(_cust_id, _course_id, _offering_id, _session_id) IS NOT NULL
+                THEN result_ = FORMAT('Payment successful for Customer %s Session (%s, %s, %s)',
+                                       _cust_id, _course_id, _offering_id, _session_id);
+                 END IF;
+            WHEN 'redeem' THEN
+                  IF add_redeems(_cust_id, _course_id, _offering_id, _session_id) IS NOT NULL
+                THEN result_ = FORMAT('Redemption successful for Customer %s Session (%s, %s, %s)',
+                                       _cust_id, _course_id, _offering_id, _session_id);
+                 END IF;
+            ELSE
+                RAISE NOTICE
+                    'Incorrect payment method "%", use "payment" or "redeem"',
+                     _payment_method;
+        END CASE;
+    END IF;
+
+    RETURN result_;
 END;
 $$
 LANGUAGE PLPGSQL;
-
-/* --------------- Registers Routines --------------- */
-
-/* --------------- Sessions Routines --------------- */
 
 /* 22. update_room
     This routine is used to change the room for a course session.
@@ -610,10 +877,9 @@ $$
 DECLARE
     date_ DATE;
     time_ TIME;
-    num_reg_ CONSTANT INTEGER := 0;
-    /* TODO: Replace with
+    num_reg_ CONSTANT INTEGER :=
         (SELECT count(*) FROM Registers
-          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)); */
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
     room_cap_ CONSTANT INTEGER :=
         (SELECT seating_capacity FROM Rooms WHERE rid = _rid);
     result_ Sessions;
@@ -625,11 +891,11 @@ BEGIN
 
       IF (date_ + time_) < NOW() THEN
          RAISE NOTICE
-            'Session has already started (% %), skipping',
+            'Session has already started (% %)',
              date_, time_;
    ELSIF num_reg_ > room_cap_ THEN
          RAISE NOTICE
-            'Session number of registrations (%) > room capacity (%), skipping',
+            'Session number of registrations (%) > room capacity (%)',
              num_reg_, room_cap_;
     ELSE UPDATE Sessions
             SET rid = _rid
@@ -644,8 +910,7 @@ LANGUAGE PLPGSQL;
 
 /* 23. remove_session
     This routine is used to remove a course session.
-    RETURNS: the Session detail after successful DELETE
-    TODO: Implement update session start_date and end_date */
+    RETURNS: the Session detail after successful DELETE */
 CREATE OR REPLACE FUNCTION remove_session(
     _course_id INTEGER,
     _offering_id INTEGER,
@@ -655,10 +920,9 @@ $$
 DECLARE
     date_ DATE;
     time_ TIME;
-    num_reg_ CONSTANT INTEGER := 0;
-    /* TODO: Replace with
+    num_reg_ CONSTANT INTEGER :=
         (SELECT count(*) FROM Registers
-          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)); */
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
     result_ Sessions;
 BEGIN
     SELECT session_date, start_time
@@ -668,11 +932,11 @@ BEGIN
 
       IF (date_ + time_) < NOW() THEN
          RAISE NOTICE
-            'Session has already started (% %), skipping',
+            'Session has already started (% %)',
              date_, time_;
    ELSIF num_reg_ > 0 THEN
          RAISE NOTICE
-            'Number of registrations (%) > 0, skipping',
+            'Number of registrations (%) > 0',
              num_reg_;
     ELSE DELETE FROM Sessions
           WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)

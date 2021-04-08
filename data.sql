@@ -123,8 +123,8 @@ INSERT INTO Offerings (
     target_num_reg,
     eid
   )
-VALUES (1, 1242, '2021-02-07', '2021-04-22', 260, 198, 3),
-  (1, 2317, '2021-01-10', '2021-04-10', 320, 101, 1),
+VALUES (1, 1242, '2021-02-07', '2021-02-22', 260, 198, 3),
+  (1, 2317, '2021-01-10', '2021-03-10', 320, 101, 1),
   (2, 4248, '2021-02-28', '2021-05-29', 190, 141, 2),
   (3, 4248, '2021-02-27', '2021-06-04', 400, 137, 8),
   (4, 3235, '2021-03-17', '2021-04-11', 170, 24, 5),
@@ -134,7 +134,7 @@ VALUES (1, 1242, '2021-02-07', '2021-04-22', 260, 198, 3),
   (6, 4218, '2021-01-30', '2021-05-27', 460, 153, 4),
   (8, 4225, '2021-03-12', '2021-06-15', 75, 23, 7),
   (8, 4236, '2021-02-28', '2021-06-23', 440, 127, 4),
-  (9, 2317, '2021-02-10', '2021-04-03', 200, 51, 9),
+  (9, 2317, '2021-02-10', '2021-04-23', 200, 51, 9),
   (9, 5340, '2021-03-15', '2021-06-04', 270, 171, 6),
   (10, 6585, '2021-02-07', '2021-06-23', 125, 73, 9);
 
@@ -146,9 +146,9 @@ INSERT INTO Sessions (
     rid
   )
 VALUES
-  (1, 1242, '2021-08-04', '10:00', 1),
-  (1, 2317, '2021-07-01', '10:00', 3),
-  (1, 2317, '2021-07-01', '14:00', 3),
+  (1, 1242, '2021-04-16', '10:00', 1),
+  (1, 2317, '2021-04-15', '10:00', 3),
+  (1, 2317, '2021-05-14', '14:00', 3),
   (1, 2317, '2021-08-30', '09:00', 6),
   (1, 2317, '2021-08-30', '14:00', 2),
   (2, 4248, '2021-08-09', '09:00', 8),
@@ -190,23 +190,22 @@ VALUES
   (10, 6585, '2021-09-13', '17:00', 1);
 
 INSERT INTO Customers (
-    cust_id,
     name,
     address,
     email,
     phone
 )
 VALUES
-  (25027, 'Angie Carlson', 'Ap #915-3742 Ipsum Avenue', 'nisi@sapienAenean.edu', '168505070535'),
-  (54068, 'Bernard Pate', '530-193 Sapien. Road', 'scelerisque@pedeCumsociis.com', '161503114694'),
-  (60405, 'Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', 'vel.turpis.Aliquam@acturpisegestas.edu', '161109242626'),
-  (64715, 'Martha Guy', '2841 Ultrices. Road', 'mollis.Phasellus.libero@hymenaeosMaurisut.org', '165402181753'),
-  (78734, 'Levi Avery', '4394 Adipiscing Av.', 'est.ac@Donecest.com', '163611272794'),
-  (84828, 'Holly Day', 'Ap #214-8751 Nec Ave', 'diam@rutrumurnanec.net', '161503286989'),
-  (88106, 'Uma Weeks', 'P.O. Box 793, 1381 Sit Road', 'imperdiet@egetnisi.co.uk', '160807202395'),
-  (90051, 'Indira Mckee', '9415 Orci Rd.', 'felis.Nulla.tempor@arcuimperdiet.edu', '169706125912'),
-  (95258, 'Hall Savage', '903-4888 Proin Ave', 'in.felis.Nulla@Sed.net', '168304019113'),
-  (04533, 'Faith Graves', 'P.O. Box 146, 6550 Gravida St.', 'porta.elit@Crasvulputatevelit.ca', '169002058742');
+  ('Angie Carlson', 'Ap #915-3742 Ipsum Avenue', 'nisi@sapienAenean.edu', '168505070535'),
+  ('Bernard Pate', '530-193 Sapien. Road', 'scelerisque@pedeCumsociis.com', '161503114694'),
+  ('Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', 'vel.turpis.Aliquam@acturpisegestas.edu', '161109242626'),
+  ('Martha Guy', '2841 Ultrices. Road', 'mollis.Phasellus.libero@hymenaeosMaurisut.org', '165402181753'),
+  ('Levi Avery', '4394 Adipiscing Av.', 'est.ac@Donecest.com', '163611272794'),
+  ('Holly Day', 'Ap #214-8751 Nec Ave', 'diam@rutrumurnanec.net', '161503286989'),
+  ('Uma Weeks', 'P.O. Box 793, 1381 Sit Road', 'imperdiet@egetnisi.co.uk', '160807202395'),
+  ('Indira Mckee', '9415 Orci Rd.', 'felis.Nulla.tempor@arcuimperdiet.edu', '169706125912'),
+  ('Hall Savage', '903-4888 Proin Ave', 'in.felis.Nulla@Sed.net', '168304019113'),
+  ('Faith Graves', 'P.O. Box 146, 6550 Gravida St.', 'porta.elit@Crasvulputatevelit.ca', '169002058742');
 
 INSERT INTO Credit_cards (
     cc_number,
@@ -234,16 +233,24 @@ INSERT INTO Packages (
 )
 VALUES
   ('Beginner 1', 2, 200, '2021-01-01', '2021-02-01'),
-  ('Beginner 2', 2, 200, '2021-02-02', '2021-03-02'),
+  ('Beginner 2', 2, 200, '2021-02-02', '2022-03-02'),
   ('Familiar 1', 3, 300, '2021-01-01', '2021-02-01'),
-  ('Familiar 2', 3, 300, '2021-02-02', '2021-03-02'),
+  ('Familiar 2', 3, 300, '2021-02-02', '2022-03-02'),
   ('Adept 1', 4, 400, '2021-01-01', '2021-02-01'),
-  ('Adept 2', 4, 400, '2021-02-02', '2021-03-02'),
+  ('Adept 2', 4, 400, '2021-02-02', '2022-03-02'),
   ('Proficient 1', 5, 500, '2021-01-01', '2021-02-01'),
-  ('Proficient 2', 5, 500, '2021-02-02', '2021-03-02'),
+  ('Proficient 2', 5, 500, '2021-02-02', '2022-03-02'),
   ('Expert 1', 6, 600, '2021-01-01', '2021-02-01'),
-  ('Expert 2', 6, 600, '2021-02-02', '2021-04-07');
+  ('Expert 2', 1, 600, '2021-04-02', '2021-05-08');
 
-SELECT * FROM update_credit_card(4533, '123456789', 000, '2022-05-05');
-SELECT * FROM update_credit_card(4533, '12345678987', 000, '2022-05-06');
-SELECT * FROM buy_course_package(4533, 10);
+SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
+SELECT * FROM update_credit_card(4, '12345678987', 123, '2022-05-06');
+SELECT * FROM buy_course_package(4, 10);
+SELECT * FROM buy_course_package(4, 10);
+SELECT * FROM register_session(4, 5, 3757, 1, 'payment');
+SELECT * FROM register_session(4, 1, 2317, 1, 'payment');
+SELECT * FROM register_session(4, 5, 3757, 1, 'redeem');
+SELECT * FROM register_session(4, 9, 2317, 1, 'redeem');
+SELECT * FROM buy_course_package(4, 10);
+SELECT * FROM get_available_course_packages();
+SELECT * FROM get_my_course_package(4);
