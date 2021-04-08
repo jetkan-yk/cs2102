@@ -274,6 +274,7 @@ DECLARE
     old_offering_id_ INTEGER;
     old_session_id_ INTEGER;
 BEGIN
+-- TODO: Update implementation with get_available_course_offerings() routine
     SELECT offering_id, session_id
       INTO old_offering_id_, old_session_id_
       FROM Registers
@@ -338,7 +339,7 @@ LANGUAGE SQL;
 
 /* check for late cancellation and refund */
 
-/*  This function Registers a Customer for a Session using credit card.
+/* This function Registers a Customer for a Session using credit card.
     RETURNS: the result of the new Register after successful INSERT */
 CREATE OR REPLACE FUNCTION add_registers(
     _cust_id INTEGER,
@@ -376,7 +377,7 @@ CREATE TRIGGER update_num_remain_redeem
 AFTER INSERT ON Redeems
 FOR EACH ROW EXECUTE FUNCTION update_num_remain_redeem_func();
 
-/*  This function Redeems a Session using Package.
+/* This function Redeems a Session using Package.
     RETURNS: the result of the new Redeems after successful INSERT */
 CREATE OR REPLACE FUNCTION add_redeems(
     _cust_id INTEGER,
@@ -392,9 +393,7 @@ DECLARE
 BEGIN
     SELECT buys_ts, num_remain_redeem
       INTO buys_ts_, num_remain_redeem_
-      FROM Buys
-     WHERE cc_number = get_cc_number(_cust_id)
-           AND num_remain_redeem > 0;
+      FROM get_active_buys(_cust_id);
 
       IF buys_ts_ IS NULL
     THEN RAISE NOTICE
@@ -412,6 +411,23 @@ $$
 LANGUAGE PLPGSQL;
 
 /* -------------- Redeems Triggers -------------- */
+
+/* -------------- Buys Triggers -------------- */
+
+/* This function returns the Customer's active package Buys information
+    RETURNS: the active Buys entry */
+-- TODO: Change to include partially active package
+CREATE OR REPLACE FUNCTION get_active_buys(
+    _cust_id INTEGER)
+    RETURNS Buys AS
+$$
+    SELECT * FROM Buys
+     WHERE cc_number = get_cc_number(_cust_id)
+           AND num_remain_redeem > 0;
+$$
+LANGUAGE SQL;
+
+/* -------------- Buys Triggers -------------- */
 
 /* =============== END OF TRIGGERS =============== */
 
@@ -662,7 +678,8 @@ BEGIN
       INTO num_free_reg_, sale_start_date_, sale_end_date_
       FROM Packages
      WHERE package_id = _package_id;
-
+-- TODO: move check sales date to Buys trigger
+-- TODO: add Buys trigger to check Customer eligibility (no active package)
      IF NOT (NOW() BETWEEN sale_start_date_ AND (sale_end_date_ + one_day_)) THEN
         RAISE NOTICE
            'Packages must be purchased within sales dates [%, %]',
@@ -684,6 +701,7 @@ LANGUAGE PLPGSQL;
     This routine is used when a customer requests to view his/her active/partially active course
     package.
     RETURNS: a JSON result */
+-- TODO: Implement redeemed sessions
 CREATE OR REPLACE FUNCTION get_my_course_package(
     _cust_id INTEGER)
     RETURNS JSON AS
@@ -696,9 +714,7 @@ BEGIN
            DATE(buys_ts) AS purchase_date,
            num_remain_redeem AS num_redeem_allow
       INTO active_buys_
-      FROM Buys
-     WHERE cc_number = get_cc_number(_cust_id)
-           AND num_remain_redeem > 0;
+      FROM get_active_buys(_cust_id);
 
     SELECT name AS package_name,
            price AS package_price,
@@ -740,13 +756,15 @@ BEGIN
     IF can_register_course AND is_before_reg_deadline THEN
         CASE _payment_method
             WHEN 'payment' THEN
-                PERFORM add_registers(_cust_id, _course_id, _offering_id, _session_id);
-                result_ = FORMAT('Payment successful for Customer %s Session (%s, %s, %s)',
-                                _cust_id, _course_id, _offering_id, _session_id);
+                  IF add_registers(_cust_id, _course_id, _offering_id, _session_id) IS NOT NULL
+                THEN result_ = FORMAT('Payment successful for Customer %s Session (%s, %s, %s)',
+                                       _cust_id, _course_id, _offering_id, _session_id);
+                 END IF;
             WHEN 'redeem' THEN
-                PERFORM add_redeems(_cust_id, _course_id, _offering_id, _session_id);
-                result_ = FORMAT('Redemption successful for Customer %s Session (%s, %s, %s)',
-                                _cust_id, _course_id, _offering_id, _session_id);
+                  IF add_redeems(_cust_id, _course_id, _offering_id, _session_id) IS NOT NULL
+                THEN result_ = FORMAT('Redemption successful for Customer %s Session (%s, %s, %s)',
+                                       _cust_id, _course_id, _offering_id, _session_id);
+                 END IF;
             ELSE
                 RAISE NOTICE
                     'Incorrect payment method "%", use "payment" or "redeem"',
