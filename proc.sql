@@ -269,34 +269,62 @@ FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
 /* -------------- Registration Triggers -------------- */
 
-/* insert or update Owns based on Customers and Credit_cards */
-
-/* check that customer registers for only 1 session in one course before deadline */
-
 /* check that customer has only 1 active/partially active package */
-/*
-CREATE OR REPLACE FUNCTION check_package_status()
+
+/* Checks that a Customer Registers for only 1 Session of the same Course */
+CREATE OR REPLACE FUNCTION check_reg_cid_func()
     RETURNS TRIGGER AS
 $$
+DECLARE
+    old_offering_id_ INTEGER;
+    old_session_id_ INTEGER;
 BEGIN
-    SELECT num_remaining_redemptions
-    INTO indicator
-    FROM Buys
+    SELECT offering_id, session_id
+      INTO old_offering_id_, old_session_id_
+      FROM Registers
+     WHERE course_id = NEW.course_id;
 
-    IF indicator > 0
-
+      IF old_offering_id_ IS NULL
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE
+            'Customer has already registered a Session (%, %, %) from this Course, skipping',
+             NEW.course_id, old_offering_id_, old_session_id_;
+         RETURN NULL;
+     END IF;
 END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER check_package_status
-BEFORE INSERT ON Buys
-FOR EACH ROW EXECUTE FUNCTION check_package_status();
-*/
+CREATE TRIGGER check_reg_cid
+BEFORE INSERT ON Registers
+FOR EACH ROW EXECUTE FUNCTION check_reg_cid_func();
+
+/* Checks that Register is done before registration deadline */
+CREATE OR REPLACE FUNCTION check_reg_deadline_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    reg_deadline_ CONSTANT DATE :=
+        (SELECT reg_deadline FROM Offerings
+          WHERE (course_id, offering_id) = (NEW.course_id, NEW.offering_id));
+    one_day_ CONSTANT INTERVAL := '1 day';
+BEGIN
+      IF NOW() < (reg_deadline_ + one_day_)
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE
+            'Session must be registered before Offering (%, %) registration deadline %',
+             NEW.course_id, NEW.offering_id, reg_deadline_ + one_day_;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_reg_deadline
+BEFORE INSERT ON Registers
+FOR EACH ROW EXECUTE FUNCTION check_reg_deadline_func();
 
 /* check for late cancellation and refund */
-
-
 
 /* -------------- Registration Triggers -------------- */
 
@@ -564,6 +592,27 @@ LANGUAGE SQL;
 
 /* --------------- Registers Routines --------------- */
 
+/*  This function Registers a Customer for a Session using credit card.
+    RETURNS: the result of the new Register after successful INSERT */
+CREATE OR REPLACE FUNCTION add_registers(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS Registers AS
+$$
+    -- TODO: use trigger to check the session can be registered by the customer
+    INSERT INTO Registers
+        (cc_number, course_id, offering_id, session_id) VALUES
+        (get_cc_number(_cust_id), _course_id, _offering_id, _session_id)
+    RETURNING *;
+$$
+LANGUAGE SQL;
+
+/* --------------- Registers Routines --------------- */
+
+/* --------------- Sessions Routines --------------- */
+
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: the result of the new Register after successful INSERT */
@@ -573,13 +622,12 @@ CREATE OR REPLACE FUNCTION register_session(
     _offering_id INTEGER,
     _session_id INTEGER,
     _payment_method TEXT)
-    RETURNS VOID AS -- TODO: split into 2 functions (registers & redeems)
+    RETURNS VOID AS -- TODO: split into 2 functions (registers & redeems), figure out how to print
 $$
 BEGIN
     CASE _payment_method
         WHEN 'payment' THEN
-            RAISE NOTICE
-                'Using payment mode "payment"';
+            PERFORM add_registers(_cust_id, _course_id, _offering_id, _session_id);
         WHEN 'redeem' THEN
             -- TODO: Check course_id, num_remain_redeem
             RAISE NOTICE
@@ -592,10 +640,6 @@ BEGIN
 END;
 $$
 LANGUAGE PLPGSQL;
-
-/* --------------- Registers Routines --------------- */
-
-/* --------------- Sessions Routines --------------- */
 
 /* 22. update_room
     This routine is used to change the room for a course session.
