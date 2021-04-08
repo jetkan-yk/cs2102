@@ -433,13 +433,26 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* This function returns a list of Sessions Redeemed by the Customer
+-- TODO1: Implement this with Owns x Buys x Redeems
+CREATE OR REPLACE FUNCTION get_redeemed_sessions(
+    _cust_id INTEGER)
+    RETURNS SETOF Sessions AS
+$$
+DECLARE
+BEGIN
+END;
+$$
+LANGUAGE PLPGSQL; */
+
 /* -------------- Redeems Triggers -------------- */
 
 /* -------------- Buys Triggers -------------- */
 
 /* This function returns the Customer's active package Buys information
     RETURNS: the active Buys entry */
--- TODO1: Change to include partially active package
+/* TODO1: Change to include partially active package,
+            prereq: get_redeemed_sessions, for each sessions check_refundable */
 CREATE OR REPLACE FUNCTION get_active_buys(
     _cust_id INTEGER)
     RETURNS Buys AS
