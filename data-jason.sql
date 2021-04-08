@@ -118,12 +118,3 @@ VALUES
     (1, 1242, 1, '2021-08-04', '10:00', 1, 1),
     (1, 2317, 2, '2021-07-01', '10:00', 4, 3),
     (2, 4248, 3, '2021-08-09', '09:00', 4, 8);
-
-/*------------------------ Valid Add ---------------------------*/
-SELECT * FROM add_employee('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Instructor',2240, '{Computer Security}');
-
-SELECT * FROM add_employee('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','Administrator',1427,'{}');
-
-SELECT * FROM add_employee('Nathaniel Mckenzie', '1-792-176-8701', 'P.O. Box 436, 6023 Malesuada Rd.', 'erat.volutpat@hendreritidante.com', '2019-08-19', 'Manager', 2327, '{Artificial Intelligence, Computer Graphics and Games}');
-
-SELECT * FROM add_employee('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','Instructor',1255,'{Life Sciences, Physics, Bioinformatics}');

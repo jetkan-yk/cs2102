@@ -103,6 +103,34 @@ BEFORE INSERT ON Handles
 FOR EACH ROW EXECUTE FUNCTION add_course_area_func();
 
 
+CREATE OR REPLACE FUNCTION add_employee_type_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    trimmed_category_ TEXT;
+BEGIN
+    IF NEW.category = 'Manager' OR NEW.category = 'Administrator' OR NEW.category = 'Full-time Instructor' THEN
+        INSERT INTO Full_time_Employees (eid, monthly_salary)
+        VALUES (NEW.eid, NEW.salary);
+    ELSE
+        INSERT INTO Part_time_Employees (eid, hourly_rate)
+        VALUES (NEW.eid, NEW.salary);
+    END IF;
+    IF NEW.category = 'Full-time Instructor' OR NEW.category = 'Part-time Instructor' THEN
+        trimmed_category_ := 'Instructor';
+        UPDATE Employees
+        SET category = trimmed_category_
+        WHERE eid = NEW.eid;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER add_employee_type
+AFTER INSERT ON Employees
+FOR EACH ROW EXECUTE FUNCTION add_employee_type_func();
+
+
 /* --------------- Employees Routines --------------- */
 
 /* 1. add_employee
@@ -128,7 +156,7 @@ BEGIN
         IF _category = 'Administrator' THEN
             RAISE NOTICE
                 'Cannot add employee of type Administrator because course area set should not be specified for Administrators, skipping...';
-        ELSIF _category = 'Manager' OR _category = 'Instructor' THEN
+        ELSIF _category = 'Manager' OR _category = 'Full-time Instructor' OR _category = 'Part-time Instructor' THEN
             INSERT INTO Employees
                 (ename, phone_number, home_address, email_address, join_date, category, salary)
                 VALUES
@@ -153,7 +181,7 @@ BEGIN
             'Cannot add employee because employee category is invalid, skipping...';
         END IF;
     ELSE
-        IF _category = 'Manager' OR _category = 'Instructor' THEN
+        IF _category = 'Manager' OR _category = 'Full-time Instructor' OR _category = 'Part-time Instructor' THEN
             RAISE NOTICE
                 'Cannot add employee of type % because course area set specified is empty or invalid, skipping...', _category;
         ELSIF _category = 'Administrator' THEN
@@ -228,3 +256,27 @@ BEGIN
 END;
 $$
 LANGUAGE PLPGSQL;
+
+
+/* 6. remove_employee
+    This routine is used to update an employee’s departed date a non-null value.
+    RETURNS: the Employee detail after successful DELETE */
+/*Instructor can be assigne to a course session
+1. Instructor should specialize in the course area that course belongs to
+2. Instructor's depart date should be after session date
+3. Instructor can teach at most 1 course session in an hour
+4. There must be an hour of break for Instructor between sessions
+5. Part-time Instructor's total number of hour taught this month < 30*/
+-- CREATE OR REPLACE FUNCTION find_instructors(
+--     _course_id INTEGER,
+--     _session_date DATE,
+--     _session_start_hour TIME)
+-- RETURNS SETOF RECORD AS
+-- $$
+-- DECLARE
+    
+-- BEGIN
+    
+-- END;
+-- $$
+-- LANGUAGE PLPGSQL;

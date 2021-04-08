@@ -42,20 +42,20 @@ CREATE TABLE Employees (
 
 /*Employee ISA Part-time Employee/Full-time Employees - An Employee HAS to be either a Full-time Employee or Part-time Employee, but not both*/
 /*ISA Part-time Instructor - A Part-time Employee HAS to be a Part-time Instructor*/
--- CREATE TABLE Part_time_Employees (
---     eid             INTEGER PRIMARY KEY REFERENCES Employees
---         ON DELETE CASCADE
---         ON UPDATE CASCADE,
---     hourly_rate     INTEGER
--- );
+CREATE TABLE Part_time_Employees (
+    eid             INTEGER PRIMARY KEY REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    hourly_rate     INTEGER
+);
 --
 -- /*ISA Full-time Instructor/Manager/Administrator - A Full-time Employee HAS to be either a Full-time Instructor, an Administrator or a Manager*/
--- CREATE TABLE Full_time_Employees (
---     eid             INTEGER PRIMARY KEY REFERENCES Employees
---         ON DELETE CASCADE
---         ON UPDATE CASCADE,
---     monthly_salary  INTEGER
--- );
+CREATE TABLE Full_time_Employees (
+    eid             INTEGER PRIMARY KEY REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    monthly_salary  INTEGER
+);
 
 /*Employees ISA Instructor - An Employee COULD (may or may not) be an instructor*/
 /*ISA Part-time Instructor/Full-time Instructor - An Instructor HAS to be either a Full-time Instructor or Part-time Instructor, but not both*/
@@ -65,13 +65,6 @@ CREATE TABLE Instructors (
         ON UPDATE CASCADE,
     course_areas    TEXT ARRAY
 );
-
-/*Instructor, Full_time_Employee - How to enforce ISA relationship on both?*/
--- CREATE TABLE Full_time_Instructors (
---     eid     INTEGER PRIMARY KEY REFERENCES Full_time_Employees
---         ON DELETE CASCADE
---         ON UPDATE CASCADE
--- );
 
 /*Full_time_Employee*/
 CREATE TABLE Managers (
