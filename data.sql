@@ -241,14 +241,16 @@ VALUES
   ('Proficient 1', 5, 500, '2021-01-01', '2021-02-01'),
   ('Proficient 2', 5, 500, '2021-02-02', '2022-03-02'),
   ('Expert 1', 6, 600, '2021-01-01', '2021-02-01'),
-  ('Expert 2', 6, 600, '2021-04-02', '2021-05-08');
+  ('Expert 2', 1, 600, '2021-04-02', '2021-05-08');
 
 SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
 SELECT * FROM update_credit_card(4, '12345678987', 123, '2022-05-06');
+SELECT * FROM buy_course_package(4, 10);
 SELECT * FROM buy_course_package(4, 10);
 SELECT * FROM register_session(4, 5, 3757, 1, 'payment');
 SELECT * FROM register_session(4, 1, 2317, 1, 'payment');
 SELECT * FROM register_session(4, 5, 3757, 1, 'redeem');
 SELECT * FROM register_session(4, 9, 2317, 1, 'redeem');
+SELECT * FROM buy_course_package(4, 10);
 SELECT * FROM get_available_course_packages();
 SELECT * FROM get_my_course_package(4);

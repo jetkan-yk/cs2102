@@ -273,7 +273,7 @@ DECLARE
     old_offering_id_ INTEGER;
     old_session_id_ INTEGER;
 BEGIN
--- TODO: Update implementation with get_available_course_offerings() routine
+-- TODO2: Update implementation with get_available_course_offerings() routine
     SELECT offering_id, session_id
       INTO old_offering_id_, old_session_id_
       FROM Registers
@@ -449,6 +449,33 @@ $$
            AND num_remain_redeem > 0;
 $$
 LANGUAGE SQL;
+
+/* Checks whether the Customer has active Package before Buying */
+CREATE OR REPLACE FUNCTION check_has_active_package_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    cust_id_ INTEGER;
+BEGIN
+    SELECT cust_id
+      INTO cust_id_
+      FROM Owns
+     WHERE cc_number = NEW.cc_number;
+
+      IF get_active_buys(cust_id_) IS NOT NULL
+    THEN RAISE NOTICE
+             'Customer % still has active/partially active Package %',
+              cust_id_, get_active_buys(cust_id_);
+         RETURN NULL;
+    ELSE RETURN NEW;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_has_active_package
+BEFORE INSERT ON Buys
+FOR EACH ROW EXECUTE FUNCTION check_has_active_package_func();
 
 /* Checks whether the Package is Bought during sales date */
 CREATE OR REPLACE FUNCTION check_sales_date_func()
@@ -737,7 +764,6 @@ CREATE OR REPLACE FUNCTION buy_course_package(
     _package_id INTEGER)
     RETURNS Buys AS
 $$
--- TODO1: add Buys trigger to check Customer eligibility (no active package)
     INSERT INTO Buys
         (package_id, cc_number) VALUES
         (_package_id, get_cc_number(_cust_id))
@@ -783,7 +809,6 @@ LANGUAGE PLPGSQL;
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: the result of the new Register after successful INSERT */
--- TODO1: check get_available_course_session before insert
 CREATE OR REPLACE FUNCTION register_session(
     _cust_id INTEGER,
     _course_id INTEGER,
@@ -793,6 +818,7 @@ CREATE OR REPLACE FUNCTION register_session(
     RETURNS TEXT AS
 $$
 DECLARE
+-- TODO2: Replace with get_available_course_session before insert trigger
     can_register_course CONSTANT BOOLEAN :=
         check_can_register_course(_cust_id, _course_id);
     is_before_reg_deadline CONSTANT BOOLEAN :=
