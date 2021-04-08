@@ -314,6 +314,30 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* Checks whether a Session is refundable, i.e. now + 7 days <= session_date  */
+CREATE OR REPLACE FUNCTION check_is_session_refundable(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS BOOLEAN AS
+$$
+DECLARE
+    session_date_ CONSTANT DATE :=
+        (SELECT session_date FROM Sessions
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
+    seven_days_ CONSTANT INTERVAL := '7 days';
+BEGIN
+      IF (NOW() + seven_days_) <= session_date_
+    THEN RETURN TRUE;
+    ELSE RAISE NOTICE
+            'Session (%, %, %) is only refundable before %',
+             _course_id, _offering_id, _session_id, (session_date_ - seven_days_);
+         RETURN FALSE;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
 /* -------------- Sessions Triggers -------------- */
 
 /* -------------- Credit Card Triggers -------------- */
