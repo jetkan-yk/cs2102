@@ -672,33 +672,41 @@ LANGUAGE PLPGSQL;
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: the result of the new Register after successful INSERT */
 -- TODO: check get_available_course_session before insert
--- TODO: figure out how to print result
 CREATE OR REPLACE FUNCTION register_session(
     _cust_id INTEGER,
     _course_id INTEGER,
     _offering_id INTEGER,
     _session_id INTEGER,
     _payment_method TEXT)
-    RETURNS VOID AS
+    RETURNS TEXT AS
 $$
 DECLARE
     can_register_course CONSTANT BOOLEAN :=
         check_can_register_course(_cust_id, _course_id);
     is_before_reg_deadline CONSTANT BOOLEAN :=
         check_is_before_reg_deadline(_course_id, _offering_id);
+    result_ TEXT :=
+        FORMAT('Operation rejected for Customer %s Session (%s, %s, %s)',
+                _cust_id, _course_id, _offering_id, _session_id);
 BEGIN
     IF can_register_course AND is_before_reg_deadline THEN
         CASE _payment_method
             WHEN 'payment' THEN
                 PERFORM add_registers(_cust_id, _course_id, _offering_id, _session_id);
+                result_ = FORMAT('Payment successful for Customer %s Session (%s, %s, %s)',
+                                _cust_id, _course_id, _offering_id, _session_id);
             WHEN 'redeem' THEN
                 PERFORM add_redeems(_cust_id, _course_id, _offering_id, _session_id);
+                result_ = FORMAT('Redemption successful for Customer %s Session (%s, %s, %s)',
+                                _cust_id, _course_id, _offering_id, _session_id);
             ELSE
                 RAISE NOTICE
                     'Incorrect payment method "%", use "payment" or "redeem"',
                      _payment_method;
         END CASE;
     END IF;
+
+    RETURN result_;
 END;
 $$
 LANGUAGE PLPGSQL;
