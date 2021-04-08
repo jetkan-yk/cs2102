@@ -267,7 +267,7 @@ FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 /* -------------- Sessions Triggers -------------- */
 
 
-/* -------------- Registration Triggers -------------- */
+/* -------------- Registers Triggers -------------- */
 
 /* check that customer has only 1 active/partially active package */
 
@@ -326,8 +326,29 @@ FOR EACH ROW EXECUTE FUNCTION check_reg_deadline_func();
 
 /* check for late cancellation and refund */
 
-/* -------------- Registration Triggers -------------- */
+/* -------------- Registers Triggers -------------- */
 
+/* -------------- Redeems Triggers -------------- */
+
+/* Updates the redeemed Package's num_remain_redeem */
+CREATE OR REPLACE FUNCTION update_num_remain_redeem_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    UPDATE Buys
+       SET num_remain_redeem = num_remain_redeem - 1
+     WHERE buys_ts = NEW.buys_ts;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER update_num_remain_redeem
+AFTER INSERT ON Redeems
+FOR EACH ROW EXECUTE FUNCTION update_num_remain_redeem_func();
+
+/* -------------- Redeems Triggers -------------- */
 
 /* =============== END OF TRIGGERS =============== */
 
@@ -610,29 +631,66 @@ LANGUAGE SQL;
 
 /* --------------- Registers Routines --------------- */
 
+/* --------------- Redeems Routines --------------- */
+
+/*  This function Redeems a Session using Package.
+    RETURNS: the result of the new Redeems after successful INSERT */
+CREATE OR REPLACE FUNCTION add_redeems(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS Redeems AS
+$$
+DECLARE
+    buys_ts_ TIMESTAMP;
+    num_remain_redeem_ INTEGER;
+    result_ Redeems;
+BEGIN
+    SELECT buys_ts, num_remain_redeem
+      INTO buys_ts_, num_remain_redeem_
+      FROM Buys
+     WHERE cc_number = get_cc_number(_cust_id)
+           AND num_remain_redeem > 0;
+
+      IF buys_ts_ IS NULL
+    THEN RAISE NOTICE
+            'No redeemable package, skipping';
+         RETURN NULL;
+    ELSE INSERT INTO Redeems
+             (buys_ts, course_id, offering_id, session_id) VALUES
+             (buys_ts_, _course_id, _offering_id, _session_id)
+         RETURNING * INTO result_;
+     END IF;
+
+    RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* --------------- Redeems Routines --------------- */
+
 /* --------------- Sessions Routines --------------- */
 
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: the result of the new Register after successful INSERT */
 -- TODO: check get_available_course_session before insert
+-- TODO: figure out how to print result
 CREATE OR REPLACE FUNCTION register_session(
     _cust_id INTEGER,
     _course_id INTEGER,
     _offering_id INTEGER,
     _session_id INTEGER,
     _payment_method TEXT)
-    RETURNS VOID AS -- TODO: split into 2 functions (registers & redeems)
+    RETURNS VOID AS
 $$
 BEGIN
     CASE _payment_method
         WHEN 'payment' THEN
-            -- TODO: figure out how to print this
             PERFORM add_registers(_cust_id, _course_id, _offering_id, _session_id);
         WHEN 'redeem' THEN
-            -- TODO: Check course_id, num_remain_redeem
-            RAISE NOTICE
-                'Using payment mode "redeem"';
+            PERFORM add_redeems(_cust_id, _course_id, _offering_id, _session_id);
         ELSE
             RAISE NOTICE
                 'Incorrect payment method "%", use "payment" or "redeem", skipping',

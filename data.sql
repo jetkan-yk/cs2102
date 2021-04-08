@@ -246,5 +246,7 @@ VALUES
 SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
 SELECT * FROM update_credit_card(4, '12345678987', 123, '2022-05-06');
 SELECT * FROM buy_course_package(4, 10);
-SELECT * FROM register_session(4, 5, 3757, 1, 'payment');
-SELECT * FROM register_session(4, 1, 2317, 1, 'payment');
+--SELECT * FROM register_session(4, 5, 3757, 1, 'payment');
+--SELECT * FROM register_session(4, 1, 2317, 1, 'payment');
+SELECT * FROM register_session(4, 5, 3757, 1, 'redeem');
+SELECT * FROM register_session(4, 1, 2317, 1, 'redeem');
