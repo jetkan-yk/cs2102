@@ -18,7 +18,7 @@ DECLARE
 BEGIN
       IF total_seat_cap_ < _target_num_reg
     THEN RAISE NOTICE
-             'Offering seating_capacity (%) must be >= target_num_reg (%), skipping',
+             'Offering seating_capacity (%) must be >= target_num_reg (%)',
               total_seat_cap_, _target_num_reg;
          DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
@@ -36,7 +36,7 @@ BEGIN
       IF NOT EXISTS (SELECT 1 FROM Sessions
                       WHERE (course_id, offering_id) = (_course_id, _offering_id))
     THEN RAISE NOTICE
-             'Offerings (%, %) must have at least 1 Sessions, skipping',
+             'Offerings (%, %) must have at least 1 Sessions',
               _course_id, _offering_id;
          DELETE FROM Offerings WHERE (course_id, offering_id) = (_course_id, _offering_id);
      END IF;
@@ -79,7 +79,7 @@ BEGIN
       IF deadline_ + 10 <= NEW.session_date
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'Session date must be at least 10 days (inclusive) after %, skipping',
+            'Session date must be at least 10 days (inclusive) after %',
              deadline_;
          RETURN NULL;
      END IF;
@@ -117,7 +117,7 @@ BEGIN
       IF NEW.end_time <= '18:00'
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'Sessions (%, %, %, %:00, % hours) must end before 6pm, skipping',
+            'Sessions (%, %, %, %:00, % hours) must end before 6pm',
              NEW.course_id, NEW.offering_id, NEW.session_date,
              EXTRACT(HOURS from NEW.start_time), EXTRACT(HOURS from duration_);
          RETURN NULL;
@@ -140,7 +140,7 @@ BEGIN
       IF NEW.eid IS NOT NULL
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'No available instructor for Session (%, %, %, %), skipping',
+            'No available instructor for Session (%, %, %, %)',
              NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -169,7 +169,7 @@ BEGIN
       IF NEW.rid IS NOT NULL
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'No available room for Session (%, %, %, %), skipping',
+            'No available room for Session (%, %, %, %)',
              NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -189,7 +189,7 @@ BEGIN
                  (SELECT duration FROM Courses WHERE course_id = NEW.course_id)))
     THEN RETURN NEW;
     ELSE RAISE NOTICE
-            'Room % not available for Session (%, %, %, %), skipping',
+            'Room % not available for Session (%, %, %, %)',
              NEW.rid, NEW.course_id, NEW.offering_id, NEW.session_date, NEW.start_time;
          RETURN NULL;
      END IF;
@@ -518,7 +518,7 @@ BEGIN
 
      IF NOT (NOW() BETWEEN sale_start_date_ AND (sale_end_date_ + one_day_)) THEN
         RAISE NOTICE
-           'Packages must be purchased within sales dates [%, %], skipping',
+           'Packages must be purchased within sales dates [%, %]',
             sale_start_date_, sale_end_date_;
         RETURN NULL;
     END IF;
@@ -601,7 +601,7 @@ BEGIN
 
       IF buys_ts_ IS NULL
     THEN RAISE NOTICE
-            'No redeemable package, skipping';
+            'No redeemable package';
          RETURN NULL;
     ELSE INSERT INTO Redeems
              (buys_ts, course_id, offering_id, session_id) VALUES
@@ -637,7 +637,7 @@ BEGIN
       IF old_offering_id_ IS NULL
     THEN RETURN TRUE;
     ELSE RAISE NOTICE
-            'Customer has already registered a Session (%, %, %) from this Course, skipping',
+            'Customer has already registered a Session (%, %, %) from this Course',
              _course_id, old_offering_id_, old_session_id_;
          RETURN FALSE;
      END IF;
@@ -660,7 +660,7 @@ BEGIN
       IF NOW() < (reg_deadline_ + one_day_)
     THEN RETURN TRUE;
     ELSE RAISE NOTICE
-            'Session must be registered before Offering (%, %) registration deadline %, skipping',
+            'Session must be registered before Offering (%, %) registration deadline %',
              _course_id, _offering_id, reg_deadline_ + one_day_;
          RETURN FALSE;
      END IF;
@@ -695,7 +695,7 @@ BEGIN
                 PERFORM add_redeems(_cust_id, _course_id, _offering_id, _session_id);
             ELSE
                 RAISE NOTICE
-                    'Incorrect payment method "%", use "payment" or "redeem", skipping',
+                    'Incorrect payment method "%", use "payment" or "redeem"',
                      _payment_method;
         END CASE;
     END IF;
@@ -731,11 +731,11 @@ BEGIN
 
       IF (date_ + time_) < NOW() THEN
          RAISE NOTICE
-            'Session has already started (% %), skipping',
+            'Session has already started (% %)',
              date_, time_;
    ELSIF num_reg_ > room_cap_ THEN
          RAISE NOTICE
-            'Session number of registrations (%) > room capacity (%), skipping',
+            'Session number of registrations (%) > room capacity (%)',
              num_reg_, room_cap_;
     ELSE UPDATE Sessions
             SET rid = _rid
@@ -774,11 +774,11 @@ BEGIN
 
       IF (date_ + time_) < NOW() THEN
          RAISE NOTICE
-            'Session has already started (% %), skipping',
+            'Session has already started (% %)',
              date_, time_;
    ELSIF num_reg_ > 0 THEN
          RAISE NOTICE
-            'Number of registrations (%) > 0, skipping',
+            'Number of registrations (%) > 0',
              num_reg_;
     ELSE DELETE FROM Sessions
           WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)
