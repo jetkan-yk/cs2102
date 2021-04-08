@@ -427,6 +427,54 @@ $$
 $$
 LANGUAGE SQL;
 
+/* Checks whether the Package is Bought during sales date */
+CREATE OR REPLACE FUNCTION check_sales_date_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    sale_start_date_ DATE;
+    sale_end_date_ DATE;
+    one_day_ CONSTANT INTERVAL := '1 day';
+BEGIN
+    SELECT sale_start_date, sale_end_date
+      INTO sale_start_date_, sale_end_date_
+      FROM Packages
+     WHERE package_id = NEW.package_id;
+
+      IF (NOW() BETWEEN sale_start_date_ AND (sale_end_date_ + one_day_))
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE
+             'Packages must be purchased within sales dates (%, %)',
+              sale_start_date_, sale_end_date_;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_sales_date
+BEFORE INSERT ON Buys
+FOR EACH ROW EXECUTE FUNCTION check_sales_date_func();
+
+/* Sets the num_remain_redeem in Buys */
+CREATE OR REPLACE FUNCTION set_num_remain_redeem_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    SELECT num_free_reg
+      INTO NEW.num_remain_redeem
+      FROM Packages
+     WHERE package_id = NEW.package_id;
+
+    RETURN NEW;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER set_num_remain_redeem
+BEFORE INSERT ON Buys
+FOR EACH ROW WHEN (NEW.num_remain_redeem IS NULL) EXECUTE FUNCTION set_num_remain_redeem_func();
+
 /* -------------- Buys Triggers -------------- */
 
 /* =============== END OF TRIGGERS =============== */
@@ -666,36 +714,13 @@ CREATE OR REPLACE FUNCTION buy_course_package(
     _package_id INTEGER)
     RETURNS Buys AS
 $$
-DECLARE
-    cc_number_ CONSTANT VARCHAR(19) := get_cc_number(_cust_id);
-    num_free_reg_ INTEGER;
-    sale_start_date_ DATE;
-    sale_end_date_ DATE;
-    one_day_ CONSTANT INTERVAL := '1 day';
-    result_ Buys;
-BEGIN
-    SELECT num_free_reg, sale_start_date, sale_end_date
-      INTO num_free_reg_, sale_start_date_, sale_end_date_
-      FROM Packages
-     WHERE package_id = _package_id;
--- TODO: move check sales date to Buys trigger
 -- TODO: add Buys trigger to check Customer eligibility (no active package)
-     IF NOT (NOW() BETWEEN sale_start_date_ AND (sale_end_date_ + one_day_)) THEN
-        RAISE NOTICE
-           'Packages must be purchased within sales dates [%, %]',
-            sale_start_date_, sale_end_date_;
-        RETURN NULL;
-    END IF;
-
     INSERT INTO Buys
-        (package_id, cc_number, num_remain_redeem) VALUES
-        (_package_id, cc_number_, num_free_reg_)
-    RETURNING * INTO result_;
-
-    RETURN result_;
-END;
+        (package_id, cc_number) VALUES
+        (_package_id, get_cc_number(_cust_id))
+    RETURNING *;
 $$
-LANGUAGE PLPGSQL;
+LANGUAGE SQL;
 
 /* 14. get_my_course_package
     This routine is used when a customer requests to view his/her active/partially active course
