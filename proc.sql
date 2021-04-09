@@ -120,7 +120,7 @@ BEGIN
     ELSE RAISE NOTICE
             'Sessions (%, %, %, %:00, % hours) must end before 6pm',
              NEW.course_id, NEW.offering_id, NEW.session_date,
-             EXTRACT(HOURS from NEW.start_time), EXTRACT(HOURS from duration_);
+             EXTRACT(HOURS FROM NEW.start_time), EXTRACT(HOURS FROM duration_);
          RETURN NULL;
      END IF;
 END;
@@ -451,7 +451,7 @@ LANGUAGE SQL;
 /* This function returns a list of Registers by the Customer */
 CREATE OR REPLACE FUNCTION get_registers(
     _cust_id INTEGER)
-    RETURNS Registers AS
+    RETURNS SETOF Registers AS
 $$
     SELECT R.*
       FROM Registers R NATURAL JOIN Owns
@@ -510,7 +510,7 @@ LANGUAGE PLPGSQL;
 /* This function returns a list of Redeems by the Customer */
 CREATE OR REPLACE FUNCTION get_redeems(
     _cust_id INTEGER)
-    RETURNS Redeems AS
+    RETURNS SETOF Redeems AS
 $$
     SELECT R.*
       FROM Redeems R NATURAL JOIN Buys NATURAL JOIN Owns
@@ -745,8 +745,8 @@ BEGIN
 
             /* For each (start_time, end_time) pairs in Sessions */
             FOR t1_, t2_ IN
-                (SELECT EXTRACT(HOURS from start_time),
-                        EXTRACT(HOURS from end_time) - 1
+                (SELECT EXTRACT(HOURS FROM start_time),
+                        EXTRACT(HOURS FROM end_time) - 1
                    FROM Sessions S
                   WHERE S.session_date = day
                         AND S.rid = rid_) LOOP
@@ -878,29 +878,49 @@ LANGUAGE SQL;
     This routine is used when a customer requests to view his/her active/partially active course
     package.
     RETURNS: a JSON result */
--- TODO1: Implement redeemed sessions
 CREATE OR REPLACE FUNCTION get_my_course_package(
     _cust_id INTEGER)
     RETURNS JSON AS
 $$
 DECLARE
-    ap_buys_ RECORD;
-    ap_packages_ RECORD;
+    result1_ RECORD;
+    result2_ RECORD;
+    redeemed_sessions_ JSON;
 BEGIN
     SELECT package_id,
            DATE(buys_ts) AS purchase_date,
-           num_remain_redeem AS num_redeem_allow
-      INTO ap_buys_
+           num_remain_redeem AS num_redeem_available
+      INTO result1_
       FROM get_active_or_partial_buys(_cust_id);
 
     SELECT name AS package_name,
            price AS package_price,
-           num_free_reg AS num_free_sessions
-      INTO ap_packages_
+           num_free_reg AS total_num_free_sessions
+      INTO result2_
       FROM Packages
-     WHERE package_id = ap_buys_.package_id;
+     WHERE package_id = result1_.package_id;
 
-    RETURN JSONB_PRETTY(TO_JSONB(ap_buys_) || TO_JSONB(ap_packages_));
+      WITH redeemed_sessions_cte_ AS (
+               SELECT title,
+                      session_date,
+                      start_time
+                 FROM get_redeems(_cust_id)
+                          NATURAL JOIN Buys -- package_id
+                          NATURAL JOIN Sessions -- session_date, start_time
+                          NATURAL JOIN Courses -- title
+                WHERE package_id = result1_.package_id
+                ORDER BY session_date, start_time)
+    SELECT JSONB_AGG(
+             JSONB_BUILD_OBJECT(
+                 'course_name', title,
+                 'session_date', session_date,
+                 'start_time', start_time))
+      INTO redeemed_sessions_
+      FROM redeemed_sessions_cte_;
+
+    RETURN JSONB_PRETTY(
+               TO_JSONB(result1_) || TO_JSONB(result2_) ||
+               JSONB_BUILD_OBJECT('redeemed_sessions', redeemed_sessions_));
 END;
 $$
 LANGUAGE PLPGSQL;
