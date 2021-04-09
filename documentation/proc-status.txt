@@ -2,8 +2,6 @@ Not Implemented:
 
 find_instructors                - jason
 get_available_instructors       - jason
-get_my_course_package           - jet
-get_available_course_offerings  - jet
 get_available_course_sessions   - jet
 get_my_registrations            - jet
 update_course_session           - jet
@@ -33,3 +31,5 @@ add_employee                    - jason
 remove_employee                 - jason
 register_session                - jet
 get_available_course_packages   - jet
+get_my_course_package           - jet
+get_available_course_offerings  - jet
