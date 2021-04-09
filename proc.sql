@@ -1203,7 +1203,7 @@ LANGUAGE SQL;
 /* 19. update_course_session
     This routine is used when a customer requests to change a registered course session
     to another session.
-    RETURNS: a new Registers/Redeems */
+    RETURNS: a TEXT status */
 CREATE OR REPLACE FUNCTION update_course_session(
     _cust_id INTEGER,
     _course_id INTEGER,
@@ -1242,6 +1242,18 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* 20. cancel_registration
+    This routine is used when a customer requests to cancel a registered/redeemed course session.
+    RETURNS: a TEXT status */
+CREATE OR REPLACE FUNCTION cancel_registration(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER)
+    RETURNS TEXT AS
+$$
+$$
+LANGUAGE SQL;
+
 /* --------------- Registers Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
@@ -1274,7 +1286,7 @@ LANGUAGE SQL;
 
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
-    RETURNS: the result of the new Register after successful INSERT */
+    RETURNS: a TEXT status  */
 CREATE OR REPLACE FUNCTION register_session(
     _cust_id INTEGER,
     _course_id INTEGER,

@@ -33,6 +33,6 @@
 23. SELECT R.*
 24. dont use natural join
 25. For each course offered by the company, a customer can register for at most one of its sessions 
-    before its registration deadline -> checks course_id not offering_id
+    before its registration deadline -> checks offering_id
 26. Possible to merge registers, redeems into signups as both have similar operations
 27. overloading function: count_signups, count_remain_seats
