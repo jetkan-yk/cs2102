@@ -30,12 +30,6 @@ CREATE TABLE Courses (
     FOREIGN KEY (area_name) REFERENCES Course_areas
 );
 
-CREATE TABLE Administrators (
-    eid INTEGER,
-
-    PRIMARY KEY (eid)
-);
-
 /* eid is the administrator id */
 CREATE TABLE Offerings (
     course_id        INTEGER,
@@ -71,12 +65,6 @@ CREATE TABLE Rooms (
                           CHECK (seating_capacity >= 0),
 
     PRIMARY KEY (rid)
-);
-
-CREATE TABLE Instructors (
-    eid INTEGER,
-
-    PRIMARY KEY (eid)
 );
 
 /* Sessions can take lunch break, e.g. 4 hour session from 11am to 5pm */
