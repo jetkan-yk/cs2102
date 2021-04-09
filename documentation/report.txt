@@ -31,4 +31,4 @@
     strictly trigger based restrictions: add_session
     flexible: remove_session
 23. SELECT R.*
-24.
+24. dont use natural join

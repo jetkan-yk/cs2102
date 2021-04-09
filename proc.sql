@@ -415,6 +415,26 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* Counts the number of Registers/Redeems for a Session */
+CREATE OR REPLACE FUNCTION count_sessions_signup(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS INTEGER AS
+$$
+DECLARE
+    num_reg_ CONSTANT INTEGER :=
+        (SELECT COUNT(*) FROM Registers
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
+    num_red_ CONSTANT INTEGER :=
+        (SELECT COUNT(*) FROM Redeems
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
+BEGIN
+    RETURN num_reg_ + num_red_;
+END;
+$$
+LANGUAGE PLPGSQL;
+
 /* -------------- Sessions Triggers -------------- */
 
 /* -------------- Credit Card Triggers -------------- */
@@ -875,8 +895,9 @@ $$
            fees AS course_fees,
            seating_capacity - count_offerings_signup(course_id, offering_id)
                AS num_remain_seats
-      FROM Courses NATURAL JOIN Offerings
-     WHERE NOW() < reg_deadline;
+      FROM Offerings LEFT JOIN Courses USING (course_id)
+     WHERE NOW() < reg_deadline
+     ORDER BY reg_deadline, title;
 $$
 LANGUAGE SQL;
 
@@ -995,6 +1016,34 @@ LANGUAGE SQL;
 /* --------------- Buys Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
+
+/* 16. get_available_course_sessions
+    This routine is used to retrieve all the available sessions for a course offering that
+    could be registered.
+    RETURNS: a table of RECORD for each available Sessions */
+CREATE OR REPLACE FUNCTION get_available_course_sessions(
+    _course_id INTEGER,
+    _offering_id INTEGER)
+    RETURNS TABLE (session_date DATE,
+                   start_hour TIME,
+                   instructor_name TEXT,
+                   num_remain_seats INTEGER) AS
+$$
+    SELECT session_date,
+           start_time AS start_hour,
+           'Bob' AS instructor_name,
+ /* TODO:  (SELECT name FROM Employees E
+             WHERE E.eid = eid) AS instructor_name, */
+           (SELECT seating_capacity FROM Rooms R WHERE R.rid = S.rid) -
+               count_sessions_signup(course_id, offering_id, session_id)
+               AS num_remain_seats
+      FROM Sessions S
+              LEFT JOIN Offerings USING (course_id, offering_id)
+              LEFT JOIN Courses USING (course_id)
+     WHERE NOW() < reg_deadline
+     ORDER BY session_date, start_time;
+$$
+LANGUAGE SQL;
 
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
