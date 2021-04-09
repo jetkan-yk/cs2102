@@ -320,22 +320,33 @@ CREATE OR REPLACE FUNCTION check_can_signup_course(
     RETURNS BOOLEAN AS
 $$
 DECLARE
-    old_offering_id_ INTEGER;
-    old_session_id_ INTEGER;
+    reg_offering_id_ INTEGER;
+    reg_session_id_ INTEGER;
+    red_offering_id_ INTEGER;
+    red_session_id_ INTEGER;
 BEGIN
 -- TODO2: Update implementation with get_available_course_offerings() routine
     SELECT offering_id, session_id
-      INTO old_offering_id_, old_session_id_
-      FROM Registers
-     WHERE course_id = _course_id
-           AND cc_number IN (SELECT cc_number FROM get_all_cc_numbers(_cust_id));
+      INTO reg_offering_id_, reg_session_id_
+      FROM get_registers(_cust_id)
+     WHERE course_id = _course_id;
 
-      IF old_offering_id_ IS NULL
-    THEN RETURN TRUE;
-    ELSE RAISE NOTICE
+    SELECT offering_id, session_id
+      INTO red_offering_id_, red_session_id_
+      FROM get_redeems(_cust_id)
+     WHERE course_id = _course_id;
+
+      IF reg_offering_id_ IS NOT NULL
+    THEN RAISE NOTICE
             'Customer has already registered a Session (%, %, %) from this Course',
-             _course_id, old_offering_id_, old_session_id_;
+             _course_id, reg_offering_id_, reg_session_id_;
          RETURN FALSE;
+   ELSIF red_offering_id_ IS NOT NULL
+    THEN RAISE NOTICE
+            'Customer has already redeemed a Session (%, %, %) from this Course',
+             _course_id, red_offering_id_, red_session_id_;
+         RETURN FALSE;
+    ELSE RETURN TRUE;
      END IF;
 END;
 $$
@@ -379,10 +390,7 @@ DECLARE
 BEGIN
       IF (NOW() + seven_days_) <= session_date_
     THEN RETURN TRUE;
-    ELSE RAISE NOTICE
-            'Session (%, %, %) is only refundable before %',
-             _course_id, _offering_id, _session_id, (session_date_ - seven_days_);
-         RETURN FALSE;
+    ELSE RETURN FALSE;
      END IF;
 END;
 $$
@@ -483,7 +491,7 @@ CREATE OR REPLACE FUNCTION add_redeems(
     RETURNS Redeems AS
 $$
 DECLARE
-    buys_ts_ CONSTANT TIMESTAMP := (SELECT buys_ts FROM get_active_buys(_cust_id));
+    buys_ts_ CONSTANT TIMESTAMP := (SELECT buys_ts FROM get_redeemable_buys(_cust_id));
     result_ Redeems;
 BEGIN
       IF buys_ts_ IS NULL
@@ -526,10 +534,10 @@ BEGIN
       FROM Owns
      WHERE cc_number = NEW.cc_number;
 
-      IF get_active_buys(cust_id_) IS NOT NULL
+      IF get_active_or_partial_buys(cust_id_) IS NOT NULL
     THEN RAISE NOTICE
              'Customer % still has active/partially active Package %',
-              cust_id_, get_active_buys(cust_id_);
+              cust_id_, get_active_or_partial_buys(cust_id_);
          RETURN NULL;
     ELSE RETURN NEW;
      END IF;
@@ -589,17 +597,31 @@ CREATE TRIGGER set_num_remain_redeem
 BEFORE INSERT ON Buys
 FOR EACH ROW WHEN (NEW.num_remain_redeem IS NULL) EXECUTE FUNCTION set_num_remain_redeem_func();
 
-/* This function returns the Customer's active package Buys information
-    RETURNS: the active Buys entry */
-/* TODO1: Change to include partially active package,
-            prereq: get_redeemed_sessions, for each sessions check_refundable */
-CREATE OR REPLACE FUNCTION get_active_buys(
+/* This function returns the Customer's Buys that can be used to redeem Session */
+CREATE OR REPLACE FUNCTION get_redeemable_buys(
     _cust_id INTEGER)
     RETURNS Buys AS
 $$
-    SELECT * FROM Buys
-     WHERE cc_number IN (SELECT cc_number FROM get_all_cc_numbers(_cust_id))
+    SELECT B.*
+      FROM Buys B NATURAL JOIN Owns
+     WHERE cust_id = _cust_id
            AND num_remain_redeem > 0;
+$$
+LANGUAGE SQL;
+
+/* This function returns the Customer's active/partially package Buys information */
+CREATE OR REPLACE FUNCTION get_active_or_partial_buys(
+    _cust_id INTEGER)
+    RETURNS Buys AS
+$$
+      WITH partially_active_buys_ts AS
+               (SELECT buys_ts FROM get_redeems(_cust_id)
+                 WHERE check_is_session_refundable(course_id, offering_id, session_id))
+    SELECT B.*
+      FROM Buys B NATURAL JOIN Owns
+     WHERE cust_id = _cust_id
+           AND num_remain_redeem > 0
+               OR buys_ts IN (SELECT buys_ts FROM partially_active_buys_ts);
 $$
 LANGUAGE SQL;
 
@@ -862,23 +884,23 @@ CREATE OR REPLACE FUNCTION get_my_course_package(
     RETURNS JSON AS
 $$
 DECLARE
-    active_buys_ RECORD;
-    active_packages_ RECORD;
+    ap_buys_ RECORD;
+    ap_packages_ RECORD;
 BEGIN
     SELECT package_id,
            DATE(buys_ts) AS purchase_date,
            num_remain_redeem AS num_redeem_allow
-      INTO active_buys_
-      FROM get_active_buys(_cust_id);
+      INTO ap_buys_
+      FROM get_active_or_partial_buys(_cust_id);
 
     SELECT name AS package_name,
            price AS package_price,
            num_free_reg AS num_free_sessions
-      INTO active_packages_
+      INTO ap_packages_
       FROM Packages
-     WHERE package_id = active_buys_.package_id;
+     WHERE package_id = ap_buys_.package_id;
 
-    RETURN JSONB_PRETTY(TO_JSONB(active_buys_) || TO_JSONB(active_packages_));
+    RETURN JSONB_PRETTY(TO_JSONB(ap_buys_) || TO_JSONB(ap_packages_));
 END;
 $$
 LANGUAGE PLPGSQL;
