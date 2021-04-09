@@ -66,6 +66,7 @@ CREATE TABLE Instructors (
     eid             INTEGER PRIMARY KEY REFERENCES Employees
         ON DELETE CASCADE
         ON UPDATE CASCADE,
+    num_teach_hours INTEGER,
     course_areas    TEXT ARRAY
 );
 

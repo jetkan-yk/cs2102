@@ -90,7 +90,9 @@ CREATE TABLE Sessions (
                  CONSTRAINT valid_start_time
                       CHECK (start_time BETWEEN '09:00' AND '11:00'
                          OR  start_time BETWEEN '14:00' AND '17:00'),
-    end_time     TIME,
+    end_time     TIME
+                 CONSTRAINT valid_end_time
+                    CHECK (end_time > start_time),
     eid          INTEGER,
     rid          INTEGER NOT NULL,
 
