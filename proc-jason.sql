@@ -1,8 +1,12 @@
 DROP FUNCTION IF EXISTS add_employee(text,text,text,text,date,text,integer,text[]);
+DROP FUNCTION IF EXISTS find_instructors(integer,date,time without time zone);
 
 DROP TRIGGER IF EXISTS add_manage_area ON Manages;
 DROP TRIGGER IF EXISTS add_specialize_area ON Specializes;
 DROP TRIGGER IF EXISTS add_handle_area ON Handles;
+DROP TRIGGER IF EXISTS add_employee_type ON Employees;
+
+DROP TYPE IF EXISTS found_instructors;
 -- /* With depart date */
 -- INSERT INTO Employees (
 --   ename,
@@ -110,11 +114,11 @@ DECLARE
     trimmed_category_ TEXT;
 BEGIN
     IF NEW.category = 'Manager' OR NEW.category = 'Administrator' OR NEW.category = 'Full-time Instructor' THEN
-        INSERT INTO Full_time_Employees (eid, monthly_salary)
-        VALUES (NEW.eid, NEW.salary);
+        INSERT INTO Full_time_Employees (eid, num_work_days, monthly_salary)
+        VALUES (NEW.eid, 0, NEW.salary);
     ELSE
-        INSERT INTO Part_time_Employees (eid, hourly_rate)
-        VALUES (NEW.eid, NEW.salary);
+        INSERT INTO Part_time_Employees (eid, num_work_hours, hourly_rate)
+        VALUES (NEW.eid, 0, NEW.salary);
     END IF;
     IF NEW.category = 'Full-time Instructor' OR NEW.category = 'Part-time Instructor' THEN
         trimmed_category_ := 'Instructor';
@@ -261,22 +265,50 @@ LANGUAGE PLPGSQL;
 /* 6. remove_employee
     This routine is used to update an employee’s departed date a non-null value.
     RETURNS: the Employee detail after successful DELETE */
-/*Instructor can be assigne to a course session
-1. Instructor should specialize in the course area that course belongs to
-2. Instructor's depart date should be after session date
-3. Instructor can teach at most 1 course session in an hour
-4. There must be an hour of break for Instructor between sessions
-5. Part-time Instructor's total number of hour taught this month < 30*/
--- CREATE OR REPLACE FUNCTION find_instructors(
---     _course_id INTEGER,
---     _session_date DATE,
---     _session_start_hour TIME)
--- RETURNS SETOF RECORD AS
--- $$
--- DECLARE
-    
--- BEGIN
-    
--- END;
--- $$
--- LANGUAGE PLPGSQL;
+/*Instructor can be assigne to a course session if
+1. Instructor should specialize in the course area that course belongs to - done
+2. Instructor can teach at most 1 course session in an hour - done
+3. There must be an hour of break for Instructor between sessions - done
+4. Part-time Instructor's total number of hour taught this month < 30*/
+
+CREATE TYPE found_instructors AS (
+    eid INTEGER,
+    ename TEXT
+);
+
+CREATE OR REPLACE FUNCTION find_instructors(
+    _course_id INTEGER,
+    _session_date DATE,
+    _session_start_hour TIME)
+RETURNS SETOF found_instructors AS
+$$
+DECLARE
+    course_area_ TEXT;
+    one_hour_ INTERVAL;
+    found_instructors_ found_instructors;
+BEGIN
+    one_hour_ := '01:00';
+    SELECT area_name INTO course_area_
+    FROM Courses C WHERE C.course_id = _course_id;
+
+    RAISE NOTICE 'Course area is %', course_area_;
+
+    SELECT eid, ename INTO found_instructors_
+    FROM Employees
+    WHERE eid IN (SELECT eid
+                  FROM Specializes
+                  WHERE area_name = course_area_)
+    /* Availability */
+    AND eid NOT IN (SELECT eid 
+                    FROM Sessions
+                    WHERE session_date = _session_date 
+                        AND (_session_start_hour BETWEEN start_time - one_hour_ AND end_time + one_hour_))
+    AND eid NOT IN (SELECT eid
+                    FROM Part_time_Employees
+                    WHERE num_work_hours >= 30)
+    AND eid NOT IN (SELECT eid
+                    FROM Employees
+                    WHERE depart_date IS NULL OR depart_date > _session_date);
+END;
+$$
+LANGUAGE PLPGSQL;

@@ -1,8 +1,6 @@
 Not Implemented:
 
 add_customer                    - gia
-find_instructors                - jason
-get_available_instructors       - jason
 get_my_course_package           - jet
 get_available_course_offerings  - jet
 get_available_course_sessions   - jet
@@ -32,3 +30,5 @@ add_employee                    - jason
 remove_employee                 - jason
 register_session                - jet
 get_available_course_packages   - jet
+find_instructors                - jason
+get_available_instructors       - jason

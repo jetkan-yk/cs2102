@@ -19,9 +19,10 @@ CREATE TABLE Employees (
     ename           TEXT    NOT NULL,
     phone_number    TEXT    NOT NULL,
     home_address    TEXT    NOT NULL,
-    email_address   TEXT,
+    email_address   TEXT    NOT NULL,
     join_date       DATE    NOT NULL,
-    depart_date     DATE,
+    depart_date     DATE    CONSTRAINT valid_depart_date 
+                            CHECK (depart_date > join_date),
     category        TEXT,
     salary          INTEGER,  /*Can be either hourly or monthly*/
     PRIMARY KEY (eid)
@@ -46,6 +47,7 @@ CREATE TABLE Part_time_Employees (
     eid             INTEGER PRIMARY KEY REFERENCES Employees
         ON DELETE CASCADE
         ON UPDATE CASCADE,
+    num_work_hours  INTEGER,
     hourly_rate     INTEGER
 );
 --
@@ -54,6 +56,7 @@ CREATE TABLE Full_time_Employees (
     eid             INTEGER PRIMARY KEY REFERENCES Employees
         ON DELETE CASCADE
         ON UPDATE CASCADE,
+    num_work_days   INTEGER,
     monthly_salary  INTEGER
 );
 

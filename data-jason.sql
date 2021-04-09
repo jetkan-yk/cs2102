@@ -72,10 +72,22 @@ VALUES (
     'Artificial Intelligence'
   ),
   (
-    'Uncertainty Modelling in AI',
-    'The module covers modelling methods that are suitable for reasoning with uncertainty.',
+    'Engineering Physics',
+    'The module covers topics related physics concepts related to Engineering.',
     5,
-    'Artificial Intelligence'
+    'Physics'
+  ),
+  (
+    'Intro to Life Sciences',
+    'The module covers introductory topics in Life Sciences.',
+    5,
+    'Life Sciences'
+  ),
+  (
+    'Intro to Bioinformatics',
+    'The module covers introductory topics in Bioinformatics.',
+    5,
+    'Bioinformatics'
   );
 
 INSERT INTO Rooms (rid, location, seating_capacity)
@@ -111,10 +123,11 @@ INSERT INTO Sessions (
     session_id,
     session_date,
     start_time,
+    end_time,
     eid,
     rid
 )
 VALUES
-    (1, 1242, 1, '2021-08-04', '10:00', 1, 1),
-    (1, 2317, 2, '2021-07-01', '10:00', 4, 3),
-    (2, 4248, 3, '2021-08-09', '09:00', 4, 8);
+    (1, 1242, 1, '2021-08-04', '10:00', '12:00', 1, 1),
+    (1, 2317, 2, '2021-07-01', '10:00', '12:00', 4, 3),
+    (2, 4248, 3, '2021-08-09', '09:00', '10:00', 4, 8);
