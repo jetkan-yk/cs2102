@@ -344,7 +344,6 @@ DECLARE
     red_offering_id_ INTEGER;
     red_session_id_ INTEGER;
 BEGIN
--- TODO2: Update implementation with get_available_course_offerings() routine
     SELECT offering_id, session_id
       INTO reg_offering_id_, reg_session_id_
       FROM get_registers(_cust_id)
@@ -1055,7 +1054,6 @@ CREATE OR REPLACE FUNCTION register_session(
     RETURNS TEXT AS
 $$
 DECLARE
--- TODO2: Replace with get_available_course_session before insert trigger
     can_signup_course CONSTANT BOOLEAN :=
         check_can_signup_course(_cust_id, _course_id);
     is_before_reg_deadline CONSTANT BOOLEAN :=
