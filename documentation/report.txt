@@ -27,6 +27,6 @@
 20. need rework: update_start_end_dates, update_seating_capacity for delete case
 21. get_latest_cc_number() and get_all_cc_numbers() to prevent signing up 2 sessions of
     the same courses by exploiting the change cc_number loophole
-22. strictly routine based restrictions: update_room
+22. strictly routine based restrictions: update_room, add_redeems
     strictly trigger based restrictions: add_session
     flexible: remove_session
