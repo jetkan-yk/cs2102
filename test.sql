@@ -23,6 +23,9 @@ SELECT session_date, start_time, end_time, rid
   FROM Sessions NATURAL JOIN Rooms
  ORDER BY session_date, start_time, end_time;
 
+/* to test add_customer routine */
+SELECT * FROM add_customer('John', 'Lake Garden', 'abcdef@gmail.com', '90717243', '587624359845', 543, '2023-03-05');
+
 /* to test update_credit_card routine */
 SELECT * FROM update_credit_card(1, '123454321', 321, '2025-01-01');
 
@@ -40,11 +43,11 @@ SELECT * FROM get_available_rooms('2021-07-31', '2021-07-31');
 
 /* To test add_course_offerings routine */
 
-SELECT * FROM add_course_offering(2, 5001, '2020-12-01', '2020-12-01', 100, 50, 1,
+SELECT * FROM add_course_offering(2, 21201, '2020-12-01', '2020-12-01', 100, 50, 1,
                                     '{"(2021-01-01, 10:00, 1)",
                                       "(2021-01-01, 11:00, 2)",
                                       "(2021-01-03, 14:00, 3)"}'); /* should fail*/
-SELECT * FROM add_course_offering(2, 5001, '2020-12-01', '2020-12-01', 100, 50, 1,
+SELECT * FROM add_course_offering(2, 21201, '2020-12-01', '2020-12-01', 100, 50, 1,
                                     '{"(2021-01-01, 10:00, 5)",
                                       "(2021-01-01, 11:00, 2)",
                                       "(2021-01-03, 14:00, 3)"}'); /* should work*/
@@ -64,23 +67,22 @@ SELECT * FROM add_course_package('D', 2, -10, '2021-02-01', '2021-03-01'); */
 SELECT * FROM get_available_course_packages();
 
 /* to test buy_course_package routine */
-SELECT * FROM buy_course_package(5, 10); /* should work */
-/*fails due to cc_num being null*/
+SELECT * FROM buy_course_package(11, 10); /* should work */
 SELECT * FROM buy_course_package(1, 1); /* should fail */
 
 /* to test get_my_course_package routine */
-SELECT * FROM get_my_course_package(5);
+SELECT * FROM get_my_course_package(11);
 
 /* to test register_session routine*/
-SELECT * FROM register_session(5, 1, 1242, 1, 'redeem');
-SELECT * FROM register_session(5, 2, 4248, 1, 'redeem');
-SELECT * FROM register_session(5, 3, 4248, 1, 'redeem');
-SELECT * FROM register_session(5, 4, 3235, 1, 'redeem');
-SELECT * FROM register_session(5, 5, 3242, 1, 'redeem');
-SELECT * FROM register_session(5, 6, 4218, 1, 'redeem');
-SELECT * FROM register_session(5, 7, 3757, 1, 'redeem'); /*should fail*/
-SELECT * FROM register_session(5, 8, 4225, 1, 'redeem'); /*should fail*/
-SELECT * FROM register_session(5, 8, 4225, 1, 'payment');
+SELECT * FROM register_session(11, 1, 1242, 1, 'redeem');
+SELECT * FROM register_session(11, 2, 4248, 1, 'redeem');
+SELECT * FROM register_session(11, 3, 4248, 1, 'redeem');
+SELECT * FROM register_session(11, 4, 3235, 1, 'redeem');
+SELECT * FROM register_session(11, 5, 3242, 1, 'redeem');
+SELECT * FROM register_session(11, 6, 4218, 1, 'redeem');
+SELECT * FROM register_session(11, 7, 3757, 1, 'redeem'); /*should fail*/
+SELECT * FROM register_session(11, 8, 4225, 1, 'redeem'); /*should fail*/
+SELECT * FROM register_session(11, 8, 4225, 1, 'payment');
 /*redeem and payment proceeds despite no package bought*/
 
 
@@ -110,7 +112,7 @@ INSERT INTO Sessions (
 VALUES (1, 1234, '2021-04-09', '11:00', 1);
 /*SELECT * FROM update_room(1, 1234, 6, 4); for Session is ongoing*/
 
-SELECT * FROM register_session(5, 1, 1234, 6, 'payment');
+SELECT * FROM register_session(11, 1, 1234, 6, 'payment');
 SELECT * FROM register_session(1, 1, 1234, 6, 'payment');
 SELECT * FROM update_room(1, 1234, 6, 11); /*for no: of reg>room capacity */
 

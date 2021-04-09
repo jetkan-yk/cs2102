@@ -16,6 +16,8 @@ view_summary_report             - jason
 view_manager_report             - jason
 
 Implemented:
+
+add_customer                    - gia
 update_credit_card              - jet
 find_rooms                      - jet
 update_room                     - jet
