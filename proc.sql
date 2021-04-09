@@ -45,7 +45,7 @@ $$
 LANGUAGE PLPGSQL;
 
 /* Counts the number of Registers/Redeems for an Offering */
-CREATE OR REPLACE FUNCTION count_offerings_signup(
+CREATE OR REPLACE FUNCTION count_signups(
     _course_id INTEGER,
     _offering_id INTEGER)
     RETURNS INTEGER AS
@@ -415,7 +415,7 @@ $$
 LANGUAGE PLPGSQL;
 
 /* Counts the number of Registers/Redeems for a Session */
-CREATE OR REPLACE FUNCTION count_sessions_signup(
+CREATE OR REPLACE FUNCTION count_signups(
     _course_id INTEGER,
     _offering_id INTEGER,
     _session_id INTEGER)
@@ -438,6 +438,23 @@ LANGUAGE PLPGSQL;
 
 /* -------------- Rooms Triggers -------------- */
 
+/* Counts the number of remaining seats of the Offering */
+CREATE OR REPLACE FUNCTION count_remain_seats(
+    _course_id INTEGER,
+    _offering_id INTEGER)
+    RETURNS INTEGER AS
+$$
+DECLARE
+    offering_capacity_ CONSTANT INTEGER :=
+        (SELECT seating_capacity
+           FROM Offerings
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+BEGIN
+    RETURN offering_capacity_ - count_signups(_course_id, _offering_id);
+END;
+$$
+LANGUAGE PLPGSQL;
+
 /* Counts the number of remaining seats of the Session */
 CREATE OR REPLACE FUNCTION count_remain_seats(
     _course_id INTEGER,
@@ -446,7 +463,12 @@ CREATE OR REPLACE FUNCTION count_remain_seats(
     RETURNS INTEGER AS
 $$
 DECLARE
+    room_capacity_ CONSTANT INTEGER :=
+        (SELECT seating_capacity
+           FROM Sessions LEFT JOIN Rooms USING (rid)
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
 BEGIN
+    RETURN room_capacity_ - count_signups(_course_id, _offering_id, _session_id);
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -498,7 +520,7 @@ LANGUAGE PLPGSQL;
 
 CREATE TRIGGER check_has_seats_reg
 BEFORE INSERT OR UPDATE ON Registers
-FOR EACH ROW WHEN EXECUTE FUNCTION check_has_seats_reg_func();
+FOR EACH ROW EXECUTE FUNCTION check_has_seats_reg_func();
 
 /* This function Registers a Customer for a Session using credit card.
     RETURNS: the result of the new Register after successful INSERT */
@@ -576,7 +598,7 @@ LANGUAGE PLPGSQL;
 
 CREATE TRIGGER check_has_seats_red
 BEFORE INSERT OR UPDATE ON Redeems
-FOR EACH ROW WHEN EXECUTE FUNCTION check_has_seats_red_func();
+FOR EACH ROW EXECUTE FUNCTION check_has_seats_red_func();
 
 /* Updates the redeemed Package's num_remain_redeem */
 CREATE OR REPLACE FUNCTION update_num_remain_redeem_func()

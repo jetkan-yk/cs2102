@@ -260,3 +260,5 @@ SELECT * FROM register_session(4, 4, 3235, 1, 'redeem');
 SELECT * FROM get_my_course_package(4);
 SELECT * FROM register_session(4, 8, 4236, 3, 'redeem');
 SELECT * FROM update_course_session(4, 5, 3757, 2);
+SELECT * FROM get_available_course_offerings();
+SELECT * FROM get_available_course_sessions();
