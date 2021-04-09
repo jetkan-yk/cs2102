@@ -43,11 +43,11 @@ SELECT * FROM get_available_rooms('2021-07-31', '2021-07-31');
 
 /* To test add_course_offerings routine */
 
-SELECT * FROM add_course_offering(2, 5001, '2020-12-01', '2020-12-01', 100, 50, 1,
+SELECT * FROM add_course_offering(2, 21201, '2020-12-01', '2020-12-01', 100, 50, 1,
                                     '{"(2021-01-01, 10:00, 1)",
                                       "(2021-01-01, 11:00, 2)",
                                       "(2021-01-03, 14:00, 3)"}'); /* should fail*/
-SELECT * FROM add_course_offering(2, 5001, '2020-12-01', '2020-12-01', 100, 50, 1,
+SELECT * FROM add_course_offering(2, 21201, '2020-12-01', '2020-12-01', 100, 50, 1,
                                     '{"(2021-01-01, 10:00, 5)",
                                       "(2021-01-01, 11:00, 2)",
                                       "(2021-01-03, 14:00, 3)"}'); /* should work*/
