@@ -30,3 +30,5 @@
 22. strictly routine based restrictions: update_room, add_redeems
     strictly trigger based restrictions: add_session
     flexible: remove_session
+23. SELECT R.*
+24.

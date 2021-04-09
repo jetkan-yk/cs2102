@@ -440,15 +440,13 @@ $$
 $$
 LANGUAGE SQL;
 
-/* This function returns a list of session_id Registered by the Customer */
-CREATE OR REPLACE FUNCTION get_registered_session_ids(
+/* This function returns a list of Registers by the Customer */
+CREATE OR REPLACE FUNCTION get_registers(
     _cust_id INTEGER)
-    RETURNS TABLE(course_id INTEGER,
-                  offering_id INTEGER,
-                  session_id INTEGER) AS
+    RETURNS Registers AS
 $$
-    SELECT course_id, offering_id, session_id
-      FROM Registers NATURAL JOIN Owns
+    SELECT R.*
+      FROM Registers R NATURAL JOIN Owns
      WHERE cust_id = _cust_id;
 $$
 LANGUAGE SQL;
@@ -501,15 +499,13 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/* This function returns a list of session_id Redeemed by the Customer */
-CREATE OR REPLACE FUNCTION get_redeemed_session_ids(
+/* This function returns a list of Redeems by the Customer */
+CREATE OR REPLACE FUNCTION get_redeems(
     _cust_id INTEGER)
-    RETURNS TABLE(course_id INTEGER,
-                  offering_id INTEGER,
-                  session_id INTEGER) AS
+    RETURNS Redeems AS
 $$
-    SELECT course_id, offering_id, session_id
-      FROM Redeems NATURAL JOIN Buys NATURAL JOIN Owns
+    SELECT R.*
+      FROM Redeems R NATURAL JOIN Buys NATURAL JOIN Owns
      WHERE cust_id = _cust_id;
 $$
 LANGUAGE SQL;
