@@ -201,6 +201,55 @@ CREATE TRIGGER check_rid
 BEFORE INSERT OR UPDATE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION check_rid_func();
 
+/* Checks whether Session has already started before DELETE */
+CREATE OR REPLACE FUNCTION delete_session_check_date_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+      IF (OLD.session_date + OLD.start_time) < NOW()
+    THEN RAISE NOTICE
+            'Cannot delete Sessions that has already started (% %)',
+             date_, time_;
+         RETURN NULL;
+    ELSE RETURN OLD;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER delete_session_check_date
+BEFORE DELETE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION delete_session_check_date_func();
+
+/* Checks whether Session has at least 1 Register/Redeem before DELETE */
+CREATE OR REPLACE FUNCTION delete_session_check_has_signup_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    num_registers_ CONSTANT INTEGER :=
+        (SELECT count(*) FROM Registers
+          WHERE (course_id, offering_id, session_id) =
+                (OLD.course_id, OLD.offering_id, OLD.session_id));
+    num_redeems_ CONSTANT INTEGER :=
+        (SELECT count(*) FROM Redeems
+          WHERE (course_id, offering_id, session_id) =
+                (OLD.course_id, OLD.offering_id, OLD.session_id));
+BEGIN
+      IF (num_registers_ + num_redeems_) > 0
+    THEN RAISE NOTICE
+            'Cannot delete Sessions that has at least 1 signups (Registers: %, Redeems: %)',
+             num_registers_, num_redeems_;
+         RETURN NULL;
+    ELSE RETURN OLD;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER delete_session_check_has_signup
+BEFORE DELETE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION delete_session_check_has_signup_func();
+
 /* Updates Offering's start_date and end_date
     TODO: change to STATEMENT level, loop through all sessions */
 CREATE OR REPLACE FUNCTION update_start_end_dates_func()
@@ -918,8 +967,20 @@ LANGUAGE PLPGSQL;
 /* 23. remove_session
     This routine is used to remove a course session.
     RETURNS: the Session detail after successful DELETE */
--- TODO: migrate checks to trigger
 CREATE OR REPLACE FUNCTION remove_session(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS Sessions AS
+$$
+    DELETE FROM Sessions
+     WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)
+    RETURNING *;
+$$
+LANGUAGE SQL;
+
+/* 23. remove_session VERSION 2 FOR DEMO PURPOSE ONLY */
+CREATE OR REPLACE FUNCTION remove_session_v2(
     _course_id INTEGER,
     _offering_id INTEGER,
     _session_id INTEGER)
