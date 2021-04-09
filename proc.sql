@@ -436,6 +436,23 @@ LANGUAGE PLPGSQL;
 
 /* -------------- Sessions Triggers -------------- */
 
+/* -------------- Rooms Triggers -------------- */
+
+/* Counts the number of remaining seats of the Session */
+CREATE OR REPLACE FUNCTION count_remain_seats(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS INTEGER AS
+$$
+DECLARE
+BEGIN
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* -------------- Rooms Triggers -------------- */
+
 /* -------------- Credit Card Triggers -------------- */
 
 /* This function queries the latest cc_number Owns by a Customer */
@@ -466,7 +483,22 @@ LANGUAGE SQL;
 
 /* -------------- Registers Triggers -------------- */
 
--- TODO: check seating capacity before insert or update
+/* Checks if Session still has seats */
+CREATE OR REPLACE FUNCTION check_has_seats_reg_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+      IF count_remain_seats(NEW.course_id, NEW.offering_id, NEW.session_id) > 0
+    THEN RETURN NEW;
+    ELSE RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_has_seats_reg
+BEFORE INSERT OR UPDATE ON Registers
+FOR EACH ROW WHEN EXECUTE FUNCTION check_has_seats_reg_func();
 
 /* This function Registers a Customer for a Session using credit card.
     RETURNS: the result of the new Register after successful INSERT */
@@ -528,6 +560,23 @@ LANGUAGE PLPGSQL;
 /* -------------- Registers Triggers -------------- */
 
 /* -------------- Redeems Triggers -------------- */
+
+/* Checks if Session still has seats */
+CREATE OR REPLACE FUNCTION check_has_seats_red_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+      IF count_remain_seats(NEW.course_id, NEW.offering_id, NEW.session_id) > 0
+    THEN RETURN NEW;
+    ELSE RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER check_has_seats_red
+BEFORE INSERT OR UPDATE ON Redeems
+FOR EACH ROW WHEN EXECUTE FUNCTION check_has_seats_red_func();
 
 /* Updates the redeemed Package's num_remain_redeem */
 CREATE OR REPLACE FUNCTION update_num_remain_redeem_func()
@@ -955,8 +1004,7 @@ $$
            end_date,
            reg_deadline,
            fees AS course_fees,
-           seating_capacity - count_offerings_signup(course_id, offering_id)
-               AS num_remain_seats
+           count_remain_seats(course_id, offering_id) AS num_remain_seats
       FROM Offerings LEFT JOIN Courses USING (course_id)
      WHERE NOW() < reg_deadline
      ORDER BY reg_deadline, title;
@@ -1177,9 +1225,7 @@ $$
            start_time AS start_hour,
            'Bob' AS instructor_name,
   -- TODO: name AS instructor_name
-           (SELECT seating_capacity FROM Rooms R WHERE R.rid = S.rid) -
-               count_sessions_signup(course_id, offering_id, session_id)
-               AS num_remain_seats
+           count_remain_seats(course_id, offering_id, session_id) AS num_remain_seats
       FROM Sessions S
               LEFT JOIN Offerings USING (course_id, offering_id)
               LEFT JOIN Courses USING (course_id)
