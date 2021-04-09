@@ -855,25 +855,6 @@ $$
 $$
 LANGUAGE SQL;
 
-/* --------------- Packages Routines --------------- */
-
-/* --------------- Buys Routines --------------- */
-
-/* 13. buy_course_package
-    This routine is used when a customer requests to purchase a course package.
-    RETURNS: the result of the new Buy after successful INSERT */
-CREATE OR REPLACE FUNCTION buy_course_package(
-    _cust_id INTEGER,
-    _package_id INTEGER)
-    RETURNS Buys AS
-$$
-    INSERT INTO Buys
-        (package_id, cc_number) VALUES
-        (_package_id, get_latest_cc_number(_cust_id))
-    RETURNING *;
-$$
-LANGUAGE SQL;
-
 /* 14. get_my_course_package
     This routine is used when a customer requests to view his/her active/partially active course
     package.
@@ -925,7 +906,57 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* --------------- Packages Routines --------------- */
+
 /* --------------- Buys Routines --------------- */
+
+/* 13. buy_course_package
+    This routine is used when a customer requests to purchase a course package.
+    RETURNS: the result of the new Buy after successful INSERT */
+CREATE OR REPLACE FUNCTION buy_course_package(
+    _cust_id INTEGER,
+    _package_id INTEGER)
+    RETURNS Buys AS
+$$
+    INSERT INTO Buys
+        (package_id, cc_number) VALUES
+        (_package_id, get_latest_cc_number(_cust_id))
+    RETURNING *;
+$$
+LANGUAGE SQL;
+
+/* --------------- Buys Routines --------------- */
+
+/* --------------- Offerings Routines --------------- */
+
+/* 15. get_available_course_offerings
+    This routine is used to retrieve all the available course offerings that could be registered.
+    RETURNS: a table of RECORD for each offerings
+CREATE OR REPLACE FUNCTION get_available_course_offerings()
+    RETURNS TABLE (course_title TEXT,
+                   course_area TEXT,
+                   start_date DATE,
+                   end_date DATE,
+                   reg_deadline DATE,
+                   course_fees INTEGER,
+                   num_remain_seats INTEGER) AS
+$$
+    SELECT title AS course_title,
+           area_name AS course_area,
+           start_date,
+           end_date,
+           reg_deadline,
+           fees AS course_fees,
+           (seating_capacity -
+               (SELECT count(*) ON (course_id, offering_id)
+                  FROM Registers, Redeems)) AS num_remain_seats
+      FROM Courses
+               NATURAL JOIN Offerings
+               NATURAL JOIN Sessions;
+$$
+LANGUAGE SQL; */
+
+/* --------------- Offerings Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
 
