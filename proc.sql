@@ -440,6 +440,19 @@ $$
 $$
 LANGUAGE SQL;
 
+/* This function returns a list of session_id Registered by the Customer */
+CREATE OR REPLACE FUNCTION get_registered_session_ids(
+    _cust_id INTEGER)
+    RETURNS TABLE(course_id INTEGER,
+                  offering_id INTEGER,
+                  session_id INTEGER) AS
+$$
+    SELECT course_id, offering_id, session_id
+      FROM Registers NATURAL JOIN Owns
+     WHERE cust_id = _cust_id;
+$$
+LANGUAGE SQL;
+
 /* -------------- Registers Triggers -------------- */
 
 /* -------------- Redeems Triggers -------------- */
@@ -488,17 +501,18 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/* This function returns a list of Sessions Redeemed by the Customer
--- TODO1: Implement this with Owns x Buys x Redeems
-CREATE OR REPLACE FUNCTION get_redeemed_sessions(
+/* This function returns a list of session_id Redeemed by the Customer */
+CREATE OR REPLACE FUNCTION get_redeemed_session_ids(
     _cust_id INTEGER)
-    RETURNS SETOF Sessions AS
+    RETURNS TABLE(course_id INTEGER,
+                  offering_id INTEGER,
+                  session_id INTEGER) AS
 $$
-DECLARE
-BEGIN
-END;
+    SELECT course_id, offering_id, session_id
+      FROM Redeems NATURAL JOIN Buys NATURAL JOIN Owns
+     WHERE cust_id = _cust_id;
 $$
-LANGUAGE PLPGSQL; */
+LANGUAGE SQL;
 
 /* -------------- Redeems Triggers -------------- */
 
