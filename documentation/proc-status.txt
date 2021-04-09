@@ -1,13 +1,11 @@
 Not Implemented:
 
-add_customer                    - gia
 get_my_course_package           - jet
 get_available_course_offerings  - jet
 get_available_course_sessions   - jet
 get_my_registrations            - jet
 update_course_session           - jet
 cancel_registration             - jet
-update_instructor               - jason
 pay_salary                      - jason
 promote_courses                 - jet
 top_packages                    - jet
@@ -34,3 +32,4 @@ register_session                - jet
 get_available_course_packages   - jet
 find_instructors                - jason
 get_available_instructors       - jason
+update_instructor               - jason
