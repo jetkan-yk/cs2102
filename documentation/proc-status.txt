@@ -1,6 +1,5 @@
 Not Implemented:
 
-add_customer                    - gia
 find_instructors                - jason
 get_available_instructors       - jason
 get_my_course_package           - jet
@@ -18,6 +17,8 @@ view_summary_report             - jason
 view_manager_report             - jason
 
 Implemented:
+
+add_customer                    - gia
 update_credit_card              - jet
 find_rooms                      - jet
 update_room                     - jet
