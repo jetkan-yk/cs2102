@@ -191,7 +191,11 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/*TODO: trigger add hour/day when session/offering is assigned to Employees*/
+/*TODO: trigger add work hour/day when session/offering is assigned to Employees*/
+/*TODO: trigger add teaching_hour when session is assigned to Instructor*/
+
+
+
 
 /* 6. find_instructors
     This routine is used to find all the instructors who could be assigned to teach a course session. */
@@ -256,6 +260,7 @@ RETURNS TABLE (eid INTEGER,
     available_hours INTEGER ARRAY) AS
 $$
 DECLARE
+    course_area_ TEXT;
     eid_ INTEGER;
     total_hour_ INTEGER ARRAY;
     lunch_hour_ INTEGER ARRAY;
@@ -263,8 +268,12 @@ DECLARE
     t1_ INTEGER;
     t2_ INTEGER;
 BEGIN
+    SELECT area_name INTO course_area_
+    FROM Courses C WHERE C.course_id = _course_id;
     /*for each instructor*/
-    FOR eid_ IN (SELECT I.eid FROM Instructors I) LOOP
+    FOR eid_ IN (SELECT S.eid 
+                    FROM Specializes S
+                    WHERE area_name = course_area_) LOOP
         RAISE NOTICE 'Instructor %', eid_;
         eid := eid_;
         total_teaching_hours := (SELECT num_teach_hours 
