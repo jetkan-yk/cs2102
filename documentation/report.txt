@@ -32,3 +32,6 @@
     flexible: remove_session, add_redeems
 23. SELECT R.*
 24. dont use natural join
+25. For each course offered by the company, a customer can register for at most one of its sessions 
+    before its registration deadline -> checks course_id not offering_id
+26. Possible to merge registers, redeems into signups as both have similar operations

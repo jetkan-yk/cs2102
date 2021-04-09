@@ -466,6 +466,8 @@ LANGUAGE SQL;
 
 /* -------------- Registers Triggers -------------- */
 
+-- TODO: check seating capacity before insert or update
+
 /* This function Registers a Customer for a Session using credit card.
     RETURNS: the result of the new Register after successful INSERT */
 CREATE OR REPLACE FUNCTION add_registers(
@@ -492,6 +494,36 @@ $$
      WHERE cust_id = _cust_id;
 $$
 LANGUAGE SQL;
+
+/* This function updates the Session of a Registers entry.
+    RETURNS: the result of the new Register after successful UPDATE */
+CREATE OR REPLACE FUNCTION update_registers_session(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _new_session_id INTEGER)
+    RETURNS Registers AS
+$$
+DECLARE
+    update_reg_ts_ CONSTANT TIMESTAMP :=
+        (SELECT registers_ts FROM get_registers(_cust_id)
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+    result_ Registers;
+BEGIN
+      IF update_reg_ts_ IS NULL
+    THEN RAISE NOTICE
+             'Previous registration record for Customer % Course (%, %) not found',
+              _cust_id, _course_id, _offering_id;
+    ELSE UPDATE Registers
+            SET session_id = _new_session_id
+          WHERE registers_ts = update_reg_ts_
+         RETURNING * INTO result_;
+     END IF;
+
+    RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
 
 /* -------------- Registers Triggers -------------- */
 
@@ -553,6 +585,36 @@ $$
      WHERE cust_id = _cust_id;
 $$
 LANGUAGE SQL;
+
+/* This function updates the Session of a Redeems entry.
+    RETURNS: the result of the new Redeems after successful UPDATE */
+CREATE OR REPLACE FUNCTION update_redeems_session(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _new_session_id INTEGER)
+    RETURNS Redeems AS
+$$
+DECLARE
+    update_red_ts_ CONSTANT TIMESTAMP :=
+        (SELECT redeems_ts FROM get_redeems(_cust_id)
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+    result_ Redeems;
+BEGIN
+      IF update_red_ts_ IS NULL
+    THEN RAISE NOTICE
+             'Previous redemption record for Customer % Course (%, %) not found',
+              _cust_id, _course_id, _offering_id;
+    ELSE UPDATE Redeems
+            SET session_id = _new_session_id
+          WHERE redeems_ts = update_red_ts_
+         RETURNING * INTO result_;
+     END IF;
+
+    RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
 
 /* -------------- Redeems Triggers -------------- */
 
@@ -1052,6 +1114,48 @@ $$
      ORDER BY session_date, start_time;
 $$
 LANGUAGE SQL;
+
+/* 19. update_course_session
+    This routine is used when a customer requests to change a registered course session
+    to another session.
+    RETURNS: a new Registers/Redeems */
+CREATE OR REPLACE FUNCTION update_course_session(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _new_session_id INTEGER)
+    RETURNS TEXT AS
+$$
+DECLARE
+    is_registered CONSTANT BOOLEAN :=
+        _course_id IN (SELECT course_id FROM get_registers(_cust_id));
+    is_redeemed CONSTANT BOOLEAN :=
+        _course_id IN (SELECT course_id FROM get_redeems(_cust_id));
+BEGIN
+    CASE
+        WHEN is_registered THEN
+              IF update_registers_session(
+                     _cust_id, _course_id, _offering_id, _new_session_id) IS NOT NULL
+            THEN RETURN FORMAT('Registration successful for Customer %s Session (%s, %s, %s)',
+                                _cust_id, _course_id, _offering_id, _new_session_id);
+             END IF;
+        WHEN is_redeemed THEN
+              IF update_redeems_session(
+                     _cust_id, _course_id, _offering_id, _new_session_id) IS NOT NULL
+            THEN RETURN FORMAT('Redemption successful for Customer %s Session (%s, %s, %s)',
+                                _cust_id, _course_id, _offering_id, _new_session_id);
+             END IF;
+        ELSE
+            RAISE NOTICE
+                'Record for Customer % Course (%, %) not found',
+                 _cust_id, _course_id, _offering_id;
+    END CASE;
+
+    RETURN FORMAT('Operation rejected for Customer %s Session (%s, %s, %s)',
+                   _cust_id, _course_id, _offering_id, _new_session_id);
+END;
+$$
+LANGUAGE PLPGSQL;
 
 /* --------------- Registers Routines --------------- */
 
