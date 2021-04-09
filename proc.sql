@@ -467,10 +467,6 @@ LANGUAGE SQL;
 
 /* -------------- Registers Triggers -------------- */
 
-/* check that customer has only 1 active/partially active package */
-
-/* check for late cancellation and refund */
-
 /* This function Registers a Customer for a Session using credit card.
     RETURNS: the result of the new Register after successful INSERT */
 CREATE OR REPLACE FUNCTION add_registers(
