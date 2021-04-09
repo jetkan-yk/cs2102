@@ -44,6 +44,25 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* Counts the number of Registers/Redeems for an Offering */
+CREATE OR REPLACE FUNCTION count_offerings_signup(
+    _course_id INTEGER,
+    _offering_id INTEGER)
+    RETURNS INTEGER AS
+$$
+DECLARE
+    num_reg_ CONSTANT INTEGER :=
+        (SELECT COUNT(*) FROM Registers
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+    num_red_ CONSTANT INTEGER :=
+        (SELECT COUNT(*) FROM Redeems
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+BEGIN
+    RETURN num_reg_ + num_red_;
+END;
+$$
+LANGUAGE PLPGSQL;
+
 /* -------------- Offerings Triggers -------------- */
 
 /* -------------- Sessions Triggers -------------- */
@@ -237,7 +256,7 @@ DECLARE
 BEGIN
       IF (num_registers_ + num_redeems_) > 0
     THEN RAISE NOTICE
-            'Cannot delete Sessions that has at least 1 signups (Registers: %, Redeems: %)',
+            'Cannot delete Sessions that has at least 1 signup (Registers: %, Redeems: %)',
              num_registers_, num_redeems_;
          RETURN NULL;
     ELSE RETURN OLD;
@@ -836,6 +855,31 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* 15. get_available_course_offerings
+    This routine is used to retrieve all the available course offerings that could be registered.
+    RETURNS: a table of RECORD for each offerings */
+CREATE OR REPLACE FUNCTION get_available_course_offerings()
+    RETURNS TABLE (course_title TEXT,
+                   course_area TEXT,
+                   start_date DATE,
+                   end_date DATE,
+                   reg_deadline DATE,
+                   course_fees INTEGER,
+                   num_remain_seats INTEGER) AS
+$$
+    SELECT title AS course_title,
+           area_name AS course_area,
+           start_date,
+           end_date,
+           reg_deadline,
+           fees AS course_fees,
+           seating_capacity - count_offerings_signup(course_id, offering_id)
+               AS num_remain_seats
+      FROM Courses NATURAL JOIN Offerings
+     WHERE NOW() < reg_deadline;
+$$
+LANGUAGE SQL;
+
 /* --------------- Offerings Routines --------------- */
 
 /* --------------- Packages Routines --------------- */
@@ -949,37 +993,6 @@ $$
 LANGUAGE SQL;
 
 /* --------------- Buys Routines --------------- */
-
-/* --------------- Offerings Routines --------------- */
-
-/* 15. get_available_course_offerings
-    This routine is used to retrieve all the available course offerings that could be registered.
-    RETURNS: a table of RECORD for each offerings
-CREATE OR REPLACE FUNCTION get_available_course_offerings()
-    RETURNS TABLE (course_title TEXT,
-                   course_area TEXT,
-                   start_date DATE,
-                   end_date DATE,
-                   reg_deadline DATE,
-                   course_fees INTEGER,
-                   num_remain_seats INTEGER) AS
-$$
-    SELECT title AS course_title,
-           area_name AS course_area,
-           start_date,
-           end_date,
-           reg_deadline,
-           fees AS course_fees,
-           (seating_capacity -
-               (SELECT count(*) ON (course_id, offering_id)
-                  FROM Registers, Redeems)) AS num_remain_seats
-      FROM Courses
-               NATURAL JOIN Offerings
-               NATURAL JOIN Sessions;
-$$
-LANGUAGE SQL; */
-
-/* --------------- Offerings Routines --------------- */
 
 /* --------------- Sessions Routines --------------- */
 
