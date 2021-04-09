@@ -6,6 +6,7 @@ DROP TRIGGER IF EXISTS add_manage_area ON Manages;
 DROP TRIGGER IF EXISTS add_specialize_area ON Specializes;
 DROP TRIGGER IF EXISTS add_handle_area ON Handles;
 DROP TRIGGER IF EXISTS add_employee_type ON Employees;
+DROP TRIGGER IF EXISTS update_teaching_hours ON Sessions;
 
 DROP TYPE IF EXISTS found_instructors;
 DROP TYPE IF EXISTS available_instructors;
@@ -257,7 +258,8 @@ RETURNS TABLE (eid INTEGER,
     ename TEXT,
     total_teaching_hours INTEGER,
     day DATE,
-    available_hours INTEGER ARRAY) AS
+    available_hours INTEGER ARRAY
+) AS
 $$
 DECLARE
     course_area_ TEXT;
@@ -273,7 +275,10 @@ BEGIN
     /*for each instructor*/
     FOR eid_ IN (SELECT S.eid 
                     FROM Specializes S
-                    WHERE area_name = course_area_) LOOP
+                    WHERE area_name = course_area_
+                        AND S.eid NOT IN (SELECT PTE.eid
+                            FROM Part_time_Employees PTE
+                            WHERE PTE.num_work_hours >= 30)) LOOP
         RAISE NOTICE 'Instructor %', eid_;
         eid := eid_;
         total_teaching_hours := (SELECT num_teach_hours 
@@ -297,6 +302,115 @@ BEGIN
             RETURN NEXT;
         END LOOP;
     END LOOP;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+CREATE OR REPLACE FUNCTION update_teaching_hours_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    session_duration_ INTEGER;
+BEGIN
+    IF NEW.eid IS DISTINCT FROM OLD.eid THEN
+        session_duration_ := EXTRACT(HOURS FROM NEW.end_time) - EXTRACT(HOURS FROM NEW.start_time);
+
+        UPDATE Instructors
+        SET num_teach_hours = num_teach_hours + session_duration_
+        WHERE eid = NEW.eid;
+
+        UPDATE Instructors
+        SET num_teach_hours = num_teach_hours - session_duration_
+        WHERE eid = OLD.eid;
+
+        IF NEW.eid IN (SELECT eid FROM Full_time_Employees) THEN
+            UPDATE Full_time_Employees
+            SET num_work_days = num_work_days + 1
+            WHERE eid = NEW.eid;
+        ELSE
+            UPDATE Part_time_Employees
+            SET num_work_hours = num_work_hours + session_duration_
+            WHERE eid = NEW.eid;
+        END IF;
+
+        IF OLD.eid IN (SELECT eid FROM Full_time_Employees) THEN
+            UPDATE Full_time_Employees
+            SET num_work_days = num_work_days - 1
+            WHERE eid = OLD.eid;
+        ELSE
+            UPDATE Part_time_Employees
+            SET num_work_hours = num_work_hours - session_duration_
+            WHERE eid = OLD.eid;
+        END IF;
+
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER update_teaching_hours
+AFTER UPDATE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION update_teaching_hours_func();
+
+/* 21. update_instructors
+    This routine is used when a customer requests to change a registered course session to another session.
+    */
+CREATE OR REPLACE FUNCTION update_instructors(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER,
+    _new_instructor_id INTEGER)
+RETURNS VOID AS
+$$
+DECLARE
+    start_date_ DATE;
+    start_time_ TIME;
+    end_time_ TIME;
+    session_interval_ INTEGER ARRAY;
+    available_hours_ INTEGER ARRAY;
+    instructor_available_ BOOLEAN;
+    num_ INTEGER;
+    t1_ INTEGER;
+    t2_ INTEGER;
+BEGIN
+    SELECT session_date, start_time, end_time INTO start_date_, start_time_, end_time_
+        FROM Sessions
+        WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
+    IF (start_date_ + start_time_) < NOW() THEN
+        RAISE NOTICE 
+            'Session already started, cannot update instructor, skipping...';
+    ELSE
+        IF NOT EXISTS (SELECT * FROM get_available_instructors(_course_id, start_date_, start_date_) WHERE eid = _new_instructor_id) THEN
+            RAISE NOTICE 
+                'TEST New instructor specified is not available for the session, cannot update instructor, skipping...';
+        ELSE /*Instructor have available times, check if times match session*/
+            instructor_available_ := TRUE;
+            t1_ := EXTRACT(HOURS FROM start_time_);
+            t2_ := EXTRACT(HOURS FROM end_time_) - 1;
+            session_interval_ := ARRAY(SELECT GENERATE_SERIES(t1_, t2_));
+            SELECT available_hours INTO available_hours_
+            FROM get_available_instructors(_course_id, start_date_, start_date_)
+            WHERE eid = _new_instructor_id AND start_date_ = day;
+            RAISE NOTICE 'Session_interval: %', session_interval_;
+
+            FOREACH num_ IN ARRAY session_interval_ LOOP
+                /*If any hour in session_interval is not in available hours, set instructor_available to false*/
+                IF NOT num_ = ANY(available_hours_) THEN
+                    RAISE NOTICE '% is not within available hours', num_;
+                    instructor_available_ = FALSE;
+                END IF;
+            END LOOP;
+            IF NOT instructor_available_ THEN
+                RAISE NOTICE 
+                'New instructor specified is not available for the session, cannot update instructor, skipping...';
+            ELSE
+                UPDATE Sessions
+                SET eid = _new_instructor_id
+                WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
+            END IF;
+        END IF;
+    END IF;
 END;
 $$
 LANGUAGE PLPGSQL;

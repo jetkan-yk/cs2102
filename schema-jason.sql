@@ -47,7 +47,8 @@ CREATE TABLE Part_time_Employees (
     eid             INTEGER PRIMARY KEY REFERENCES Employees
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    num_work_hours  INTEGER,
+    num_work_hours  INTEGER CONSTRAINT non_negative
+                            CHECK (num_work_hours >= 0),
     hourly_rate     INTEGER
 );
 --
@@ -56,7 +57,8 @@ CREATE TABLE Full_time_Employees (
     eid             INTEGER PRIMARY KEY REFERENCES Employees
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    num_work_days   INTEGER,
+    num_work_days   INTEGER CONSTRAINT non_negative
+                            CHECK (num_work_days >= 0),
     monthly_salary  INTEGER
 );
 
@@ -66,7 +68,8 @@ CREATE TABLE Instructors (
     eid             INTEGER PRIMARY KEY REFERENCES Employees
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    num_teach_hours INTEGER,
+    num_teach_hours INTEGER CONSTRAINT non_negative
+                            CHECK (num_teach_hours >= 0),
     course_areas    TEXT ARRAY
 );
 
