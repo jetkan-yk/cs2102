@@ -67,6 +67,32 @@ LANGUAGE PLPGSQL;
 
 /* -------------- Sessions Triggers -------------- */
 
+/* Update work hours or work days when instructor is assigned to a session */
+CREATE OR REPLACE FUNCTION update_work_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    session_duration_ INTEGER;
+BEGIN
+    session_duration_ := EXTRACT(HOURS FROM NEW.end_time) - EXTRACT(HOURS FROM NEW.start_time);
+    IF NEW.eid IN (SELECT eid FROM Full_time_Employees) THEN
+        UPDATE Full_time_Employees
+        SET num_work_days = num_work_days + 1
+        WHERE eid = NEW.eid;
+    ELSE
+        UPDATE Part_time_Employees
+        SET num_work_hours = num_work_hours + session_duration_
+        WHERE eid = NEW.eid;
+    END IF;
+    RETURN NEW;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER update_work_func
+AFTER INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION update_work_func();
+
 /* Assigns session_id which starts from 1 for each Offerings */
 CREATE OR REPLACE FUNCTION set_session_id_func()
     RETURNS TRIGGER AS

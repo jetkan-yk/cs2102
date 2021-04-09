@@ -1,7 +1,3 @@
-DROP FUNCTION IF EXISTS add_employee(text,text,text,text,date,text,integer,text[]);
-DROP FUNCTION IF EXISTS find_instructors(integer,date,time without time zone);
-DROP FUNCTION IF EXISTS get_available_instructors(integer,date,date);
-
 DROP TRIGGER IF EXISTS add_manage_area ON Manages;
 DROP TRIGGER IF EXISTS add_specialize_area ON Specializes;
 DROP TRIGGER IF EXISTS add_handle_area ON Handles;

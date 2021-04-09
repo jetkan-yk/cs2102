@@ -1,7 +1,5 @@
-DROP TABLE IF EXISTS Administrators,
-Course_areas,
+DROP TABLE IF EXISTS Course_areas,
 Courses,
-Instructors,
 Offerings,
 Rooms,
 Sessions CASCADE;
