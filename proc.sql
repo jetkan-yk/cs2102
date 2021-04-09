@@ -1336,7 +1336,7 @@ DECLARE
     is_before_reg_deadline CONSTANT BOOLEAN :=
         check_is_before_reg_deadline(_course_id, _offering_id);
 BEGIN
-    IF can_signup_course AND is_before_reg_deadline THEN -- TODO: migrate to triggers
+    IF can_signup_course AND is_before_reg_deadline THEN
         CASE _payment_method
             WHEN 'payment' THEN
                   IF add_registers(_cust_id, _course_id, _offering_id, _session_id) IS NOT NULL
