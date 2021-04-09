@@ -15,8 +15,20 @@
 13. phone number max limit 15 chars, cc_num max 19 chars
 14. discuss design decision: use before insert triggers or in-routine logic
     to apply restrictions, e.g. check whether a customer is allowed to register
-    a certain session
+    a certain session.
+        method 1: use helper function and PERFORM e.g. add_course_offering
+        method 2: use triggers
 15. might misunderstood how session works (atomic or weekly recurring events?)
 16. how to print result for functions that have multiple return types?
 17. interesting: output for register_session
 18. proc file organization
+19. triggers depending routines: 
+    check_rid_func() -> find_rooms()
+20. need rework: update_start_end_dates, update_seating_capacity for delete case
+21. get_latest_cc_number() and get_all_cc_numbers() to prevent signing up 2 sessions of
+    the same courses by exploiting the change cc_number loophole
+22. strictly routine based restrictions: update_room, add_redeems
+    strictly trigger based restrictions: add_session
+    flexible: remove_session
+23. SELECT R.*
+24.
