@@ -79,7 +79,7 @@ VALUES (
   );
 
 INSERT INTO Rooms (rid, location, seating_capacity)
-VALUES (1, '1F-01', 20),
+VALUES (1, '1F-01', 1),
   (2, '1F-02', 10),
   (3, '1F-03', 15),
   (4, '1F-04', 25),

@@ -197,7 +197,7 @@ $$
 LANGUAGE PLPGSQL;
 
 /* Checks whether the Session's room is available */
-CREATE OR REPLACE FUNCTION check_rid_func()
+CREATE OR REPLACE FUNCTION check_rid_available_func()
     RETURNS TRIGGER AS
 $$
 BEGIN
@@ -216,29 +216,58 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER check_rid
-BEFORE INSERT OR UPDATE ON Sessions
-FOR EACH ROW EXECUTE FUNCTION check_rid_func();
+CREATE TRIGGER check_rid_available
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION check_rid_available_func();
 
-/* Checks whether Session has already started before DELETE */
-CREATE OR REPLACE FUNCTION delete_session_check_date_func()
+CREATE TRIGGER check_new_rid_available_func
+BEFORE UPDATE ON Sessions
+FOR EACH ROW WHEN (OLD.rid <> NEW.rid) EXECUTE FUNCTION check_rid_available_func();
+
+/* Checks whether the Session's new room_capacity >= num_signups */
+CREATE OR REPLACE FUNCTION check_new_room_cap_func()
     RETURNS TRIGGER AS
 $$
+DECLARE
+    new_room_capacity_ CONSTANT INTEGER :=
+        (SELECT seating_capacity FROM Rooms WHERE rid = NEW.rid);
+    num_signups_ CONSTANT INTEGER :=
+        count_signups(NEW.course_id, NEW.offering_id, NEW.session_id);
 BEGIN
-      IF (OLD.session_date + OLD.start_time) < NOW()
-    THEN RAISE NOTICE
-            'Cannot delete Sessions that has already started (% %)',
-             date_, time_;
+      IF new_room_capacity_ >= num_signups_
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE
+            'New room capacity (%) < current number of Registers + Redeems (%)',
+             new_room_capacity_, num_signups_;
          RETURN NULL;
-    ELSE RETURN OLD;
      END IF;
 END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE TRIGGER delete_session_check_date
-BEFORE DELETE ON Sessions
-FOR EACH ROW EXECUTE FUNCTION delete_session_check_date_func();
+CREATE TRIGGER check_new_room_cap
+BEFORE UPDATE ON Sessions
+FOR EACH ROW WHEN (OLD.rid <> NEW.rid) EXECUTE FUNCTION check_new_room_cap_func();
+
+/* Checks whether Session has already started before UPDATE/DELETE */
+CREATE OR REPLACE FUNCTION modify_session_check_date_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+      IF NOW() < (OLD.session_date + OLD.start_time)
+    THEN RETURN NEW;
+    ELSE RAISE NOTICE
+            'Cannot UPDATE/DELETE Sessions that has already started (% %)',
+             OLD.session_date, OLD.start_time;
+         RETURN NULL;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER modify_session_check_date
+BEFORE UPDATE OR DELETE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION modify_session_check_date_func();
 
 /* Checks whether Session has at least 1 Register/Redeem before DELETE */
 CREATE OR REPLACE FUNCTION delete_session_check_has_signup_func()
@@ -1249,15 +1278,16 @@ LANGUAGE PLPGSQL;
 
 /* 20. cancel_registration
     This routine is used when a customer requests to cancel a registered/redeemed course session.
-    RETURNS: a TEXT status */
+    RETURNS: a TEXT status
 CREATE OR REPLACE FUNCTION cancel_registration(
     _cust_id INTEGER,
     _course_id INTEGER,
     _offering_id INTEGER)
     RETURNS TEXT AS
 $$
+-- TODO: Create view for cancellation
 $$
-LANGUAGE SQL;
+LANGUAGE SQL; */
 
 /* --------------- Registers Routines --------------- */
 
@@ -1306,7 +1336,7 @@ DECLARE
     is_before_reg_deadline CONSTANT BOOLEAN :=
         check_is_before_reg_deadline(_course_id, _offering_id);
 BEGIN
-    IF can_signup_course AND is_before_reg_deadline THEN
+    IF can_signup_course AND is_before_reg_deadline THEN -- TODO: migrate to triggers
         CASE _payment_method
             WHEN 'payment' THEN
                   IF add_registers(_cust_id, _course_id, _offering_id, _session_id) IS NOT NULL
@@ -1341,39 +1371,12 @@ CREATE OR REPLACE FUNCTION update_room(
     _rid INTEGER)
     RETURNS Sessions AS
 $$
-DECLARE
-    date_ DATE;
-    time_ TIME;
-    num_reg_ CONSTANT INTEGER :=
-        (SELECT count(*) FROM Registers
-          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
-    room_cap_ CONSTANT INTEGER :=
-        (SELECT seating_capacity FROM Rooms WHERE rid = _rid);
-    result_ Sessions;
-BEGIN
-    SELECT session_date, start_time
-      INTO date_, time_
-      FROM Sessions
-     WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
-
-      IF (date_ + time_) < NOW() THEN
-         RAISE NOTICE
-            'Session has already started (% %)',
-             date_, time_;
-   ELSIF num_reg_ > room_cap_ THEN
-         RAISE NOTICE
-            'Session number of registrations (%) > room capacity (%)',
-             num_reg_, room_cap_;
-    ELSE UPDATE Sessions
-            SET rid = _rid
-          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)
-         RETURNING * INTO result_;
-     END IF;
-
-    RETURN result_;
-END;
+    UPDATE Sessions
+       SET rid = _rid
+     WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id)
+    RETURNING *;
 $$
-LANGUAGE PLPGSQL;
+LANGUAGE SQL;
 
 /* 23. remove_session
     This routine is used to remove a course session.
