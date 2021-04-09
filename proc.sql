@@ -423,16 +423,11 @@ CREATE OR REPLACE FUNCTION add_redeems(
     RETURNS Redeems AS
 $$
 DECLARE
-    buys_ts_ TIMESTAMP;
-    num_remain_redeem_ INTEGER;
+    buys_ts_ CONSTANT TIMESTAMP := (SELECT buys_ts FROM get_active_buys(_cust_id));
     result_ Redeems;
 BEGIN
-    SELECT buys_ts, num_remain_redeem
-      INTO buys_ts_, num_remain_redeem_
-      FROM get_active_buys(_cust_id);
-
       IF buys_ts_ IS NULL
-    THEN RAISE NOTICE 'No redeemable package'; -- TODO: migrate to trigger
+    THEN RAISE NOTICE 'No redeemable package';
     ELSE INSERT INTO Redeems
              (buys_ts, course_id, offering_id, session_id) VALUES
              (buys_ts_, _course_id, _offering_id, _session_id)
