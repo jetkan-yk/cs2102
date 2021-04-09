@@ -332,6 +332,21 @@ CREATE TRIGGER update_seating_capacity
 AFTER INSERT OR UPDATE OR DELETE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION update_seating_capacity_func();
 
+/* Removes the Session's parent Offering if it has no more Session */
+CREATE OR REPLACE FUNCTION remove_empty_offerings_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    PERFORM remove_if_no_session(OLD.course_id, OLD.offering_id);
+    RETURN NULL;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+CREATE TRIGGER remove_empty_offerings
+AFTER DELETE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION remove_empty_offerings_func();
+
 /* Checks that a Customer Registers/Redeems only 1 Session of the same Course */
 CREATE OR REPLACE FUNCTION check_can_signup_course(
     _cust_id INTEGER,
