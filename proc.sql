@@ -489,7 +489,7 @@ CREATE OR REPLACE FUNCTION get_registers(
     RETURNS SETOF Registers AS
 $$
     SELECT R.*
-      FROM Registers R NATURAL JOIN Owns
+      FROM Registers R LEFT JOIN Owns USING (cc_number)
      WHERE cust_id = _cust_id;
 $$
 LANGUAGE SQL;
@@ -548,7 +548,9 @@ CREATE OR REPLACE FUNCTION get_redeems(
     RETURNS SETOF Redeems AS
 $$
     SELECT R.*
-      FROM Redeems R NATURAL JOIN Buys NATURAL JOIN Owns
+      FROM Redeems R
+               LEFT JOIN Buys USING (buys_ts)
+               LEFT JOIN Owns USING (cc_number)
      WHERE cust_id = _cust_id;
 $$
 LANGUAGE SQL;
@@ -638,7 +640,7 @@ CREATE OR REPLACE FUNCTION get_redeemable_buys(
     RETURNS Buys AS
 $$
     SELECT B.*
-      FROM Buys B NATURAL JOIN Owns
+      FROM Buys B LEFT JOIN Owns USING (cc_number)
      WHERE cust_id = _cust_id
            AND num_remain_redeem > 0;
 $$
@@ -653,10 +655,10 @@ $$
                (SELECT buys_ts FROM get_redeems(_cust_id)
                  WHERE check_is_session_refundable(course_id, offering_id, session_id))
     SELECT B.*
-      FROM Buys B NATURAL JOIN Owns
+      FROM Buys B LEFT JOIN Owns USING (cc_number)
      WHERE cust_id = _cust_id
-           AND num_remain_redeem > 0
-               OR buys_ts IN (SELECT buys_ts FROM partially_active_buys_ts);
+           AND (num_remain_redeem > 0
+                OR buys_ts IN (SELECT buys_ts FROM partially_active_buys_ts));
 $$
 LANGUAGE SQL;
 
@@ -765,7 +767,7 @@ BEGIN
       FROM Rooms R1
      WHERE R1.rid NOT IN (
            SELECT R2.rid
-             FROM Sessions S NATURAL JOIN Rooms R2
+             FROM Sessions S LEFT JOIN Rooms R2 ON (S.rid = R2.rid)
             WHERE session_date = _date
                   AND (_start_time BETWEEN S.start_time AND (S.end_time - one_hour_)
                       OR end_time_ BETWEEN (S.start_time + one_hour_) AND S.end_time));
@@ -970,9 +972,9 @@ BEGIN
                       session_date,
                       start_time
                  FROM get_redeems(_cust_id)
-                          NATURAL JOIN Buys -- package_id
-                          NATURAL JOIN Sessions -- session_date, start_time
-                          NATURAL JOIN Courses -- title
+                          LEFT JOIN Buys USING (buys_ts)
+                          LEFT JOIN Sessions USING (course_id, offering_id, session_id)
+                          LEFT JOIN Courses USING (course_id)
                 WHERE package_id = result1_.package_id
                 ORDER BY session_date, start_time)
     SELECT JSONB_AGG(
