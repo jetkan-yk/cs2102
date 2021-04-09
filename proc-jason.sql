@@ -1,5 +1,6 @@
 DROP FUNCTION IF EXISTS add_employee(text,text,text,text,date,text,integer,text[]);
 DROP FUNCTION IF EXISTS find_instructors(integer,date,time without time zone);
+DROP FUNCTION IF EXISTS get_available_instructors(integer,date,date);
 
 DROP TRIGGER IF EXISTS add_manage_area ON Manages;
 DROP TRIGGER IF EXISTS add_specialize_area ON Specializes;
@@ -7,78 +8,7 @@ DROP TRIGGER IF EXISTS add_handle_area ON Handles;
 DROP TRIGGER IF EXISTS add_employee_type ON Employees;
 
 DROP TYPE IF EXISTS found_instructors;
--- /* With depart date */
--- INSERT INTO Employees (
---   ename,
---   phone_number,
---   home_address,
---   email_address,
---   join_date,
---   depart_date,
---   category,
---   salary,
---   course_area_set
--- )
--- VALUES ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','2022-04-02','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}'),
--- ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','2022-03-27','Instructor',2240,'{Computer Security}'),
--- ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','2021-01-25','Administrator',1427,'{}'),
--- ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','2020-11-27','Instructor',1255,'{Life Sciences, Physics, Bioinformatics}'),
--- ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','2022-04-02','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}'),
--- ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','2022-03-27','Instructor',2240,'{Computer Security}'),
--- ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','2021-01-25','Administrator',1427,'{}'),
--- ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','2020-11-27','Instructor',1255,'{Life Sciences, Physics, Bioinformatics}');
-
--- /* Without depart date */
--- INSERT INTO Employees (
---   ename,
---   phone_number,
---   home_address,
---   email_address,
---   join_date,
---   category,
---   salary,
---   course_area_set
--- )
--- VALUES ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}'),
--- ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Instructor',2240,'{Computer Security}'),
--- ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','Administrator',1427,'{}'),
--- ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','Instructor',1255,'{Life Sciences, Physics, Bioinformatics}'),
--- ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','Manager',2327,'{Artificial Intelligence, Computer Graphics and Games}'),
--- ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Instructor',2240,'{Computer Security}'),
--- ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','Administrator',1427,'{}'),
--- ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','Instructor',1255,'{Life Sciences, Physics, Bioinformatics}');
-
-/* Without depart date */
--- INSERT INTO Employees (
---   ename,
---   phone_number,
---   home_address,
---   email_address,
---   join_date,
---   category,
---   salary
--- )
--- VALUES
--- ('Nathaniel Mckenzie', '1-792-176-8701', 'P.O. Box 436, 6023 Malesuada Rd.', 'erat.volutpat@hendreritidante.com', '2019-08-19', 'Manager', 2327);
--- ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Instructor',2240),
--- ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','Administrator',1427),
--- ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','Instructor',1255),
--- ('Nathaniel Mckenzie','1-792-176-8701','P.O. Box 436, 6023 Malesuada Rd.','erat.volutpat@hendreritidante.com','2019-08-19','Manager',2327),
--- ('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Instructor',2240),
--- ('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','Administrator',1427),
--- ('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','Instructor',1255);
-
--- INSERT INTO Full_time_Employees (
---     eid,
---     monthly_salary
--- )
--- VALUES (1, 2327);
-
--- INSERT INTO Managers (
---     eid,
---     area_name
--- )
--- VALUES (1, 'Artificial Intelligence');
+DROP TYPE IF EXISTS available_instructors;
 
 /* --------------- Employees Triggers --------------- */
 
@@ -173,8 +103,8 @@ BEGIN
                     VALUES (next_eid_, area_name_);
                 END LOOP;
             ELSE
-                INSERT INTO Instructors (eid, course_areas)
-                VALUES (next_eid_, _course_area_set);
+                INSERT INTO Instructors (eid, num_teach_hours, course_areas)
+                VALUES (next_eid_, 0, _course_area_set);
                 FOREACH area_name_ IN ARRAY _course_area_set LOOP
                     INSERT INTO Specializes (eid, area_name)
                     VALUES (next_eid_, area_name_);
@@ -261,14 +191,14 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/*TODO: trigger add hour/day when session/offering is assigned to Employees*/
 
-/* 6. remove_employee
-    This routine is used to update an employee’s departed date a non-null value.
-    RETURNS: the Employee detail after successful DELETE */
-/*Instructor can be assigne to a course session if
-1. Instructor should specialize in the course area that course belongs to - done
-2. Instructor can teach at most 1 course session in an hour - done
-3. There must be an hour of break for Instructor between sessions - done
+/* 6. find_instructors
+    This routine is used to find all the instructors who could be assigned to teach a course session. */
+/*Function designates that Instructor can be assigned to a course session if
+1. Instructor should specialize in the course area that course belongs to
+2. Instructor can teach at most 1 course session in an hour
+3. There must be an hour of break for Instructor between sessions
 4. Part-time Instructor's total number of hour taught this month < 30*/
 
 CREATE TYPE found_instructors AS (
@@ -298,7 +228,6 @@ BEGIN
     WHERE eid IN (SELECT eid
                   FROM Specializes
                   WHERE area_name = course_area_)
-    /* Availability */
     AND eid NOT IN (SELECT eid 
                     FROM Sessions
                     WHERE session_date = _session_date 
@@ -309,6 +238,56 @@ BEGIN
     AND eid NOT IN (SELECT eid
                     FROM Employees
                     WHERE depart_date IS NULL OR depart_date > _session_date);
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+/* 7. get_available_instructors
+    This routine is used to retrieve the availability information of instructors who could be assigned to teach a specified course. */
+CREATE OR REPLACE FUNCTION get_available_instructors(
+    _course_id INTEGER,
+    _start_date DATE,
+    _end_date DATE)
+RETURNS TABLE (eid INTEGER,
+    ename TEXT,
+    total_teaching_hours INTEGER,
+    day DATE,
+    available_hours INTEGER ARRAY) AS
+$$
+DECLARE
+    eid_ INTEGER;
+    total_hour_ INTEGER ARRAY;
+    lunch_hour_ INTEGER ARRAY;
+    busy_hour_ INTEGER ARRAY;
+    t1_ INTEGER;
+    t2_ INTEGER;
+BEGIN
+    /*for each instructor*/
+    FOR eid_ IN (SELECT I.eid FROM Instructors I) LOOP
+        RAISE NOTICE 'Instructor %', eid_;
+        eid := eid_;
+        total_teaching_hours := (SELECT num_teach_hours 
+                                FROM Instructors I 
+                                WHERE I.eid = eid_);
+
+        ename := (SELECT E.ename FROM Employees E WHERE E.eid = eid_);
+        FOR day IN (SELECT GENERATE_SERIES(_start_date, _end_date, '1 day')) LOOP
+            total_hour_ := ARRAY(SELECT GENERATE_SERIES(9, 17)); -- initialize free hour [9, 17]
+            lunch_hour_ := ARRAY(SELECT GENERATE_SERIES(12, 13)); -- lunch breaks
+            available_hours := total_hour_ - lunch_hour_; -- remove lunch breaks
+            FOR t1_, t2_ IN
+                (SELECT EXTRACT(HOURS FROM start_time) - 1,
+                        EXTRACT(HOURS FROM end_time)
+                    FROM Sessions S
+                    WHERE S.session_date = day
+                        AND S.eid = eid_) LOOP
+                busy_hour_ := ARRAY(SELECT GENERATE_SERIES(t1_, t2_)); -- busy hours
+                available_hours := available_hours - busy_hour_; -- remove busy hours
+            END LOOP;
+            RETURN NEXT;
+        END LOOP;
+    END LOOP;
 END;
 $$
 LANGUAGE PLPGSQL;
