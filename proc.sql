@@ -781,7 +781,10 @@ LANGUAGE PLPGSQL;
 CREATE OR REPLACE FUNCTION get_available_rooms(
     _start_date DATE,
     _end_date DATE)
-    RETURNS TABLE (rid INTEGER, room_capacity INTEGER, day DATE, hour INTEGER ARRAY) AS
+    RETURNS TABLE (rid INTEGER,
+                   room_capacity INTEGER,
+                   day DATE,
+                   hour INTEGER ARRAY) AS
 $$
 DECLARE
     rid_ INTEGER;
@@ -1012,6 +1015,46 @@ LANGUAGE SQL;
 
 /* --------------- Buys Routines --------------- */
 
+/* --------------- Registers Routines --------------- */
+
+/* 18. get_my_registrations
+    This routine is used when a customer requests to view his/her active course registrations.
+    RETURNS: a table of RECORD for each active Registers/Redeems */
+CREATE OR REPLACE FUNCTION get_my_registrations(
+    _cust_id INTEGER)
+    RETURNS TABLE (course_name TEXT,
+                   course_fees INTEGER,
+                   session_date DATE,
+                   start_hour TIME,
+                   session_duration INTEGER,
+                   instructor_name TEXT) AS
+$$
+    WITH signed_up_sessions AS (
+        SELECT course_id, offering_id, session_id
+          FROM get_registers(_cust_id)
+        UNION
+        SELECT course_id, offering_id, session_id
+          FROM get_redeems(_cust_id)
+    )
+    SELECT title AS course_name,
+           fees AS course_fees,
+           session_date,
+           start_time AS start_hour,
+           duration AS session_duration,
+           'Bob' AS instructor_name
+  -- TODO: name AS instructor_name
+      FROM signed_up_sessions
+               LEFT JOIN Sessions S USING (course_id, offering_id, session_id)
+               LEFT JOIN Offerings USING (course_id, offering_id)
+               LEFT JOIN Courses USING (course_id)
+      -- TODO: LEFT JOIN Employees E ON (E.eid = S.eid)
+     WHERE NOW() < session_date
+     ORDER BY session_date, start_time;
+$$
+LANGUAGE SQL;
+
+/* --------------- Registers Routines --------------- */
+
 /* --------------- Sessions Routines --------------- */
 
 /* 16. get_available_course_sessions
@@ -1029,14 +1072,14 @@ $$
     SELECT session_date,
            start_time AS start_hour,
            'Bob' AS instructor_name,
- /* TODO:  (SELECT name FROM Employees E
-             WHERE E.eid = eid) AS instructor_name, */
+  -- TODO: name AS instructor_name
            (SELECT seating_capacity FROM Rooms R WHERE R.rid = S.rid) -
                count_sessions_signup(course_id, offering_id, session_id)
                AS num_remain_seats
       FROM Sessions S
               LEFT JOIN Offerings USING (course_id, offering_id)
               LEFT JOIN Courses USING (course_id)
+     -- TODO: LEFT JOIN Employees E ON (E.eid = S.eid)
      WHERE NOW() < reg_deadline
      ORDER BY session_date, start_time;
 $$
