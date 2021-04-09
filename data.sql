@@ -254,3 +254,5 @@ SELECT * FROM register_session(4, 9, 2317, 1, 'redeem');
 SELECT * FROM buy_course_package(4, 10);
 SELECT * FROM get_available_course_packages();
 SELECT * FROM get_my_course_package(4);
+SELECT * FROM update_credit_card(4, '123', 123, '2022-05-07');
+SELECT * FROM buy_course_package(4, 10);
