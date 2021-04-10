@@ -9,6 +9,38 @@ DROP TYPE IF EXISTS available_instructors CASCADE;
 
 /* --------------- Employees Triggers --------------- */
 
+/*Trigger to add to Manages or Specializes relation table whenever there is insert to Managers or Instructors tables*/
+CREATE OR REPLACE FUNCTION add_employee_course_relation_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    area_name_ TEXT;
+BEGIN
+    RAISE NOTICE 'TG_TABLE_NAME IS: %', TG_TABLE_NAME;
+    IF TG_TABLE_NAME = 'Instructors' THEN
+        FOREACH area_name_ IN ARRAY NEW.course_areas LOOP
+            INSERT INTO Specializes (eid, area_name)
+            VALUES (NEW.eid, area_name_);
+        END LOOP;
+    ELSE
+        FOREACH area_name_ IN ARRAY NEW.course_areas LOOP
+            INSERT INTO Manages (eid, area_name)
+            VALUES (NEW.eid, area_name_);
+        END LOOP;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER add_employee_course_relation
+BEFORE INSERT ON Managers
+FOR EACH ROW EXECUTE FUNCTION add_employee_course_relation_func();
+
+CREATE TRIGGER add_employee_course_relation
+BEFORE INSERT ON Instructors
+FOR EACH ROW EXECUTE FUNCTION add_employee_course_relation_func();
+
+/*Trigger to add new course area to Course_area table whenever a new Employee*/
 CREATE OR REPLACE FUNCTION add_course_area_func()
     RETURNS TRIGGER AS
 $$
@@ -29,11 +61,7 @@ CREATE TRIGGER add_specialize_area
 BEFORE INSERT ON Specializes
 FOR EACH ROW EXECUTE FUNCTION add_course_area_func();
 
-CREATE TRIGGER add_handle_area
-BEFORE INSERT ON Handles
-FOR EACH ROW EXECUTE FUNCTION add_course_area_func();
-
-
+/*Trigger to add employee to Full_time Employee or Part_time_Employee table whenever they are added to Employee*/
 CREATE OR REPLACE FUNCTION add_employee_type_func()
     RETURNS TRIGGER AS
 $$
@@ -41,17 +69,11 @@ DECLARE
     trimmed_category_ TEXT;
 BEGIN
     IF NEW.category = 'Manager' OR NEW.category = 'Administrator' OR NEW.category = 'Full-time Instructor' THEN
-        INSERT INTO Full_time_Employees (eid, num_work_days, monthly_salary)
-        VALUES (NEW.eid, 0, NEW.salary);
+        INSERT INTO Full_time_Employees (eid, monthly_salary)
+        VALUES (NEW.eid, NEW.salary);
     ELSE
         INSERT INTO Part_time_Employees (eid, num_work_hours, hourly_rate)
         VALUES (NEW.eid, 0, NEW.salary);
-    END IF;
-    IF NEW.category = 'Full-time Instructor' OR NEW.category = 'Part-time Instructor' THEN
-        trimmed_category_ := 'Instructor';
-        UPDATE Employees
-        SET category = trimmed_category_
-        WHERE eid = NEW.eid;
     END IF;
     RETURN NEW;
 END;
@@ -60,13 +82,13 @@ $$ LANGUAGE PLPGSQL;
 CREATE TRIGGER add_employee_type
 AFTER INSERT ON Employees
 FOR EACH ROW EXECUTE FUNCTION add_employee_type_func();
-
+/* --------------- Employees Triggers --------------- */
 
 /* --------------- Employees Routines --------------- */
 
 /* 1. add_employee
-    This routine is used to add a new employee.*/
-
+    This routine is used to add a new employee.
+    Course area is non-empty -> Administrator must have empty course area, while Manager and Instructor must have non-empty course area*/
 CREATE OR REPLACE FUNCTION add_employee(
     _ename TEXT,
     _phone_number TEXT,
@@ -76,42 +98,46 @@ CREATE OR REPLACE FUNCTION add_employee(
     _category TEXT,
     _salary INTEGER,
     _course_area_set TEXT ARRAY)
-    RETURNS VOID AS
+    RETURNS Employees AS
 $$
 DECLARE
     next_eid_ INTEGER;
+    trimmed_category_ TEXT;
     area_name_ TEXT;
+    result_ Employees;
 BEGIN
     SELECT COUNT(*) + 1 FROM Employees INTO next_eid_;
+
+    IF _category = 'Full-time Instructor' OR _category = 'Part-time Instructor' THEN
+        trimmed_category_ := 'Instructor';
+    ELSE
+        trimmed_category_ := _category;
+    END IF;
+    
+    /*Course area is non-empty*/
     IF array_length(_course_area_set, 1) >= 1 THEN
+        /*Invalid if category is Administrator*/
         IF _category = 'Administrator' THEN
             RAISE NOTICE
                 'Cannot add employee of type Administrator because course area set should not be specified for Administrators, skipping...';
+        /*If category is Manager or Instructor, then add to Manager or Instructor table*/
         ELSIF _category = 'Manager' OR _category = 'Full-time Instructor' OR _category = 'Part-time Instructor' THEN
             INSERT INTO Employees
                 (ename, phone_number, home_address, email_address, join_date, category, salary)
                 VALUES
-                (_ename, _phone_number, _home_address, _email_address, _join_date, _category, _salary);
+                (_ename, _phone_number, _home_address, _email_address, _join_date, trimmed_category_, _salary)
+                RETURNING * INTO result_;
             IF _category = 'Manager' THEN
                 INSERT INTO Managers (eid, course_areas)
                 VALUES (next_eid_, _course_area_set);
-                FOREACH area_name_ IN ARRAY _course_area_set LOOP
-                    INSERT INTO Manages (eid, area_name)
-                    VALUES (next_eid_, area_name_);
-                END LOOP;
             ELSE
                 INSERT INTO Instructors (eid, num_teach_hours, course_areas)
                 VALUES (next_eid_, 0, _course_area_set);
-                FOREACH area_name_ IN ARRAY _course_area_set LOOP
-                    INSERT INTO Specializes (eid, area_name)
-                    VALUES (next_eid_, area_name_);
-                END LOOP;
             END IF;
         ELSE
-            RAISE NOTICE
-            'Cannot add employee because employee category is invalid, skipping...';
+            RAISE NOTICE 'Cannot add employee because employee category is invalid, skipping...';
         END IF;
-    ELSE
+    ELSE  /*Course area is empty*/
         IF _category = 'Manager' OR _category = 'Full-time Instructor' OR _category = 'Part-time Instructor' THEN
             RAISE NOTICE
                 'Cannot add employee of type % because course area set specified is empty or invalid, skipping...', _category;
@@ -119,20 +145,21 @@ BEGIN
             INSERT INTO Employees
                 (ename, phone_number, home_address, email_address, join_date, category, salary)
                 VALUES
-                (_ename, _phone_number, _home_address, _email_address, _join_date, _category, _salary);
+                (_ename, _phone_number, _home_address, _email_address, _join_date, trimmed_category_, _salary)
+                RETURNING * INTO result_;
             INSERT INTO Administrators (eid)
                 VALUES(next_eid_);
         ELSE
-            RAISE NOTICE
-            'Cannot add employee because employee category is invalid, skipping...';
+            RAISE NOTICE 'Cannot add employee because employee category is invalid, skipping...';
         END IF;
     END IF;
+    RETURN result_;
 END;
 $$
 LANGUAGE PLPGSQL;
 
-
-/* 2. remove_employee
+/* 
+2. remove_employee
     This routine is used to update an employee’s departed date a non-null value.
     RETURNS: the Employee detail after successful DELETE */
 CREATE OR REPLACE FUNCTION remove_employee(
@@ -147,7 +174,8 @@ BEGIN
     SELECT category INTO employee_type_
         FROM Employees
         WHERE eid = _eid;
-    IF employee_type_ = 'Manager' THEN
+    CASE employee_type_
+    WHEN 'Manager' THEN
         IF _eid IN (SELECT eid FROM Managers WHERE array_length(course_areas, 1) >= 1) THEN
             RAISE NOTICE
                 'Cannot remove employee, as employee is a manager managing some area';
@@ -157,7 +185,7 @@ BEGIN
             WHERE eid = _eid
             RETURNING * INTO result_;
         END IF;
-    ELSIF employee_type_ = 'Administrator' THEN
+    WHEN 'Administrator' THEN
         IF _eid IN (SELECT a1.eid
             FROM Offerings o1, Administrators a1
             WHERE o1.reg_deadline > _depart_date) THEN
@@ -169,7 +197,7 @@ BEGIN
             WHERE eid = _eid
             RETURNING * INTO result_;
         END IF;
-    ELSIF employee_type_ = 'Instructor' THEN
+    WHEN 'Instructor' THEN
         IF _eid IN (SELECT i1.eid
             FROM Sessions s1, Instructors i1
             WHERE s1.session_date > _depart_date) THEN
@@ -181,70 +209,12 @@ BEGIN
             WHERE eid = _eid
             RETURNING * INTO result_;
         END IF;
-    END IF;
+    END CASE;
 
     RETURN result_;
 END;
 $$
 LANGUAGE PLPGSQL;
-
-/* 
-2. remove_employee
-    This routine is used to update an employee’s departed date a non-null value.
-    RETURNS: the Employee detail after successful DELETE */
--- CREATE OR REPLACE FUNCTION remove_employee(
---     _eid INTEGER,
---     _depart_date DATE)
---     RETURNS Employees AS
--- $$
--- DECLARE
---     employee_type_ TEXT;
---     result_ Employees;
--- BEGIN
---     SELECT category INTO employee_type_
---         FROM Employees
---         WHERE eid = _eid;
---     CASE employee_type_
---     WHEN 'Manager' THEN
---         IF _eid IN (SELECT eid FROM Managers WHERE array_length(course_areas, 1) >= 1) THEN
---             RAISE NOTICE
---                 'Cannot remove employee, as employee is a manager managing some area';
---         ELSE
---             UPDATE Employees
---             SET depart_date = _depart_date
---             WHERE eid = _eid
---             RETURNING * INTO result_;
---         END IF;
---     WHEN 'Administrator' THEN
---         IF _eid IN (SELECT a1.eid
---             FROM Offerings o1, Administrators a1
---             WHERE o1.reg_deadline > _depart_date) THEN
---             RAISE NOTICE
---                 'Cannot remove employee, as employee is an administrator handling a course offering where its registration deadline is after employee depart date';
---         ELSE
---             UPDATE Employees
---             SET depart_date = _depart_date
---             WHERE eid = _eid
---             RETURNING * INTO result_;
---         END IF;
---     WHEN 'Instructor' THEN
---         IF _eid IN (SELECT i1.eid
---             FROM Sessions s1, Instructors i1
---             WHERE s1.session_date > _depart_date) THEN
---             RAISE NOTICE
---                 'Cannot remove employee, as employee is an instructor who is teaching some course session that starts after employee depart date';
---         ELSE
---             UPDATE Employees
---             SET depart_date = _depart_date
---             WHERE eid = _eid
---             RETURNING * INTO result_;
---         END IF;
---     END
-
---     RETURN result_;
--- END;
--- $$
--- LANGUAGE PLPGSQL;
 
 
 /*TODO: trigger add work hour/day when session/offering is assigned to Employees*/
@@ -509,7 +479,8 @@ LANGUAGE PLPGSQL;
 --             WHERE FTE.eid = _eid;
 
 --             SELECT INTO e_join_date_ E.join_date FROM Employees E WHERE E.eid = eid_;
---             IF ((last_day_of_month_ - e_join_date_ + 1) < num_of_days_in_month_)
+--             IF ((last_day_of_month_ - e_join_date_ + 1) < num_of_days_in_month_) THEN
+--                 num_work_days := last_day_of_month_ - e_join_date_ + 1;
 --             E.depart_date = NULL THEN
 --                 num_work_days := num_of_days_in_month_;
 --                 salary_amount_paid := monthly_salary;
