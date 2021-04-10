@@ -4,9 +4,6 @@ DROP TRIGGER IF EXISTS add_handle_area ON Handles;
 DROP TRIGGER IF EXISTS add_employee_type ON Employees;
 DROP TRIGGER IF EXISTS update_teaching_hours ON Sessions;
 
-DROP TYPE IF EXISTS found_instructors CASCADE;
-DROP TYPE IF EXISTS available_instructors CASCADE;
-
 /* --------------- Employees Triggers --------------- */
 
 /*Trigger to add to Manages or Specializes relation table whenever there is insert to Managers or Instructors tables*/
@@ -16,8 +13,7 @@ $$
 DECLARE
     area_name_ TEXT;
 BEGIN
-    RAISE NOTICE 'TG_TABLE_NAME IS: %', TG_TABLE_NAME;
-    IF TG_TABLE_NAME = 'Instructors' THEN
+    IF TG_TABLE_NAME = 'instructors' THEN
         FOREACH area_name_ IN ARRAY NEW.course_areas LOOP
             INSERT INTO Specializes (eid, area_name)
             VALUES (NEW.eid, area_name_);
@@ -75,6 +71,14 @@ BEGIN
         INSERT INTO Part_time_Employees (eid, num_work_hours, hourly_rate)
         VALUES (NEW.eid, 0, NEW.salary);
     END IF;
+
+    IF NEW.category = 'Full-time Instructor' OR NEW.category = 'Part-time Instructor' THEN
+        trimmed_category_ := 'Instructor';
+        UPDATE Employees
+        SET category = trimmed_category_
+        WHERE eid = NEW.eid;
+    END IF;
+    
     RETURN NEW;
 END;
 $$ LANGUAGE PLPGSQL;
@@ -125,7 +129,7 @@ BEGIN
             INSERT INTO Employees
                 (ename, phone_number, home_address, email_address, join_date, category, salary)
                 VALUES
-                (_ename, _phone_number, _home_address, _email_address, _join_date, trimmed_category_, _salary)
+                (_ename, _phone_number, _home_address, _email_address, _join_date, _category, _salary)
                 RETURNING * INTO result_;
             IF _category = 'Manager' THEN
                 INSERT INTO Managers (eid, course_areas)
@@ -145,7 +149,7 @@ BEGIN
             INSERT INTO Employees
                 (ename, phone_number, home_address, email_address, join_date, category, salary)
                 VALUES
-                (_ename, _phone_number, _home_address, _email_address, _join_date, trimmed_category_, _salary)
+                (_ename, _phone_number, _home_address, _email_address, _join_date, _category, _salary)
                 RETURNING * INTO result_;
             INSERT INTO Administrators (eid)
                 VALUES(next_eid_);
@@ -153,6 +157,7 @@ BEGIN
             RAISE NOTICE 'Cannot add employee because employee category is invalid, skipping...';
         END IF;
     END IF;
+    -- UPDATE result_ SET category = trimmed_category_;
     RETURN result_;
 END;
 $$
@@ -171,27 +176,33 @@ DECLARE
     employee_type_ TEXT;
     result_ Employees;
 BEGIN
+
+    IF _eid NOT IN (SELECT E.eid FROM Employees E) THEN
+        RAISE NOTICE
+            'Employee not found, skipping...';
+        RETURN NULL;
+    END IF;
+
     SELECT E.category INTO employee_type_
         FROM Employees E
         WHERE E.eid = _eid;
-    CASE employee_type_
-        WHEN 'Manager' AND _eid IN (SELECT eid FROM Manages) THEN
-            RAISE NOTICE
-                'Cannot remove employee, as employee is a manager managing some area';
-        WHEN 'Administrator' AND _eid IN
-            (SELECT A.eid FROM Offerings O, Administrators A WHERE O.reg_deadline > _depart_date) THEN
-            RAISE NOTICE
-                'Cannot remove employee, as employee is an administrator handling a course offering with a registration deadline that is after employee depart date';
-        WHEN 'Instructor' AND _eid IN 
-            (SELECT I.eid FROM Sessions S, Instructors I WHERE S.session_date > _depart_date) THEN
-            RAISE NOTICE
-                'Cannot remove employee, as employee is an instructor who is teaching some course session that starts after employee depart date';
-        ELSE
-            UPDATE Employees
-                SET depart_date = _depart_date
-                WHERE eid = _eid
-                RETURNING * INTO result_;
-    END CASE;
+    IF employee_type_ = 'Manager' AND _eid IN (SELECT eid FROM Manages) THEN
+        RAISE NOTICE
+            'Cannot remove employee, as employee is a manager managing some area';
+    ELSIF employee_type_ = 'Administrator' AND _eid IN
+        (SELECT A.eid FROM Offerings O, Administrators A WHERE O.reg_deadline > _depart_date) THEN
+        RAISE NOTICE
+            'Cannot remove employee, as employee is an administrator handling a course offering with a registration deadline that is after employee depart date';
+    ELSIF employee_type_ = 'Instructor' AND _eid IN 
+        (SELECT I.eid FROM Sessions S, Instructors I WHERE S.session_date > _depart_date) THEN
+        RAISE NOTICE
+            'Cannot remove employee, as employee is an instructor who is teaching some course session that starts after employee depart date';
+    ELSE
+        UPDATE Employees
+        SET depart_date = _depart_date
+        WHERE eid = _eid
+        RETURNING * INTO result_;
+    END IF;
     RETURN result_;
 END;
 $$
@@ -211,7 +222,7 @@ LANGUAGE PLPGSQL;
 2. Instructor can teach at most 1 course session in an hour
 3. There must be an hour of break for Instructor between sessions
 4. Part-time Instructor's total number of hour taught this month < 30*/
-
+DROP TYPE IF EXISTS found_instructors CASCADE;
 CREATE TYPE found_instructors AS (
     eid INTEGER,
     ename TEXT
@@ -220,35 +231,40 @@ CREATE TYPE found_instructors AS (
 CREATE OR REPLACE FUNCTION find_instructors(
     _course_id INTEGER,
     _session_date DATE,
-    _session_start_hour TIME)
+    _session_start_hour TIME,
+    _session_end_hour TIME)
 RETURNS SETOF found_instructors AS
 $$
 DECLARE
     course_area_ TEXT;
     one_hour_ INTERVAL;
-    found_instructors_ found_instructors;
 BEGIN
     one_hour_ := '01:00';
+
     SELECT area_name INTO course_area_
     FROM Courses C WHERE C.course_id = _course_id;
 
-    RAISE NOTICE 'Course area is %', course_area_;
-
-    SELECT eid, ename INTO found_instructors_
+    SELECT eid, ename
     FROM Employees
     WHERE eid IN (SELECT eid
                   FROM Specializes
                   WHERE area_name = course_area_)
+    AND eid IN (SELECT eid
+                    FROM Employees
+                    WHERE depart_date IS NULL OR depart_date > _session_date)
     AND eid NOT IN (SELECT eid 
                     FROM Sessions
                     WHERE session_date = _session_date 
-                        AND (_session_start_hour BETWEEN start_time - one_hour_ AND end_time + one_hour_))
+                    AND (
+                    (_session_start_hour BETWEEN start_time - one_hour_ AND end_time + one_hour_) 
+                    OR (_session_end_hour BETWEEN start_time - one_hour_ AND end_time + one_hour_) 
+                    OR (_session_start_hour < start_time AND _session_end_hour > end_time)))
     AND eid NOT IN (SELECT eid
                     FROM Part_time_Employees
                     WHERE num_work_hours >= 30)
-    AND eid NOT IN (SELECT eid
-                    FROM Employees
-                    WHERE depart_date IS NULL OR depart_date > _session_date);
+    AND (_session_start_hour BETWEEN '09:00' AND '11:00' 
+        OR  _session_start_hour BETWEEN '14:00' AND '17:00')
+    AND _session_end_hour < '18:00';
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -319,37 +335,35 @@ $$
 DECLARE
     session_duration_ INTEGER;
 BEGIN
-    IF NEW.eid IS DISTINCT FROM OLD.eid THEN
-        session_duration_ := EXTRACT(HOURS FROM NEW.end_time) - EXTRACT(HOURS FROM NEW.start_time);
+    SELECT INTO session_duration_ FROM Courses C WHERE C.course_id = NEW.course_id;
 
-        UPDATE Instructors
-        SET num_teach_hours = num_teach_hours + session_duration_
+    UPDATE Instructors
+    SET num_teach_hours = num_teach_hours + session_duration_
+    WHERE eid = NEW.eid;
+
+    UPDATE Instructors
+    SET num_teach_hours = num_teach_hours - session_duration_
+    WHERE eid = OLD.eid;
+
+    IF NEW.eid IN (SELECT eid FROM Part_time_Employees) THEN
+        UPDATE Part_time_Employees
+        SET num_work_hours = num_work_hours + session_duration_
         WHERE eid = NEW.eid;
-
-        UPDATE Instructors
-        SET num_teach_hours = num_teach_hours - session_duration_
-        WHERE eid = OLD.eid;
-
-        IF NEW.eid IN (SELECT eid FROM Part_time_Employees) THEN
-            UPDATE Part_time_Employees
-            SET num_work_hours = num_work_hours + session_duration_
-            WHERE eid = NEW.eid;
-        END IF;
-
-        IF OLD.eid IN (SELECT eid FROM Part_time_Employees) THEN
-            UPDATE Part_time_Employees
-            SET num_work_hours = num_work_hours - session_duration_
-            WHERE eid = OLD.eid;
-        END IF;
-
     END IF;
+
+    IF OLD.eid IN (SELECT eid FROM Part_time_Employees) THEN
+        UPDATE Part_time_Employees
+        SET num_work_hours = num_work_hours - session_duration_
+        WHERE eid = OLD.eid;
+    END IF;
+
     RETURN NULL;
 END;
 $$ LANGUAGE PLPGSQL;
 
 CREATE TRIGGER update_teaching_hours
 AFTER UPDATE ON Sessions
-FOR EACH ROW EXECUTE FUNCTION update_teaching_hours_func();
+FOR EACH ROW WHEN (NEW.eid IS DISTINCT FROM OLD.eid) EXECUTE FUNCTION update_teaching_hours_func();
 
 /* 21. update_instructors
     This routine is used when a customer requests to change a registered course session to another session.
@@ -414,74 +428,105 @@ $$
 LANGUAGE PLPGSQL;
 
 
+CREATE OR REPLACE FUNCTION pay_salary_helper()
+RETURNS TABLE (
+    eid INTEGER,
+    ename TEXT,
+    e_status TEXT,
+    num_work_days INTEGER,
+    num_work_hours INTEGER,
+    monthly_salary INTEGER,
+    hourly_rate INTEGER,
+    salary_amount_paid INTEGER
+) AS
+$$
+DECLARE
+    first_day_of_month_ DATE;
+    last_day_of_month_ DATE;
+    num_of_days_in_month_ INTEGER;
+    e_join_date_ DATE;
+    e_depart_date_ DATE;
+    eid_ INTEGER;
+BEGIN
+    SELECT INTO last_day_of_month_ (DATE_TRUNC('month', NOW()::DATE) + INTERVAL '1 month' - INTERVAL '1 day')::DATE;
+
+    SELECT INTO first_day_of_month_ (DATE_TRUNC('month', NOW()::DATE))::DATE;
+
+    num_of_days_in_month_ = last_day_of_month_ - first_day_of_month_ + 1;
+
+    /*Loop through employees that have not departed or just departed this month*/
+    FOR eid_ IN (SELECT E.eid FROM Employees E WHERE E.eid NOT IN 
+            (SELECT E2.eid FROM Employees E2 WHERE E2.depart_date IS NOT NULL AND E2.depart_date < first_day_of_month_))  LOOP
+        eid := eid_;
+        SELECT E.ename INTO ename FROM Employees E where E.eid = eid_;
+
+        IF eid_ IN (SELECT FTE.eid FROM Full_time_Employees FTE) THEN
+            e_status := 'Full-time';
+            num_work_hours := NULL;
+            hourly_rate := NULL;
+
+            SELECT FTE.monthly_salary INTO monthly_salary
+            FROM Full_time_Employees FTE
+            WHERE FTE.eid = eid_;
+
+            SELECT E.join_date, E.depart_date INTO e_join_date_, e_depart_date_ FROM Employees E WHERE E.eid = eid_;
+
+            IF (e_join_date_ < first_day_of_month_) AND (e_depart_date_ IS NULL OR e_depart_date_ > last_day_of_month_) THEN
+                num_work_days := num_of_days_in_month_;
+            ELSIF (e_join_date_ < first_day_of_month_) AND (e_depart_date_ < last_day_of_month_) THEN
+                num_work_days := e_depart_date - first_day_of_month_ + 1;
+            ELSIF (e_join_date_ > first_day_of_month_) AND (e_depart_date_ IS NULL OR e_depart_date_ > last_day_of_month_) THEN
+                num_work_days := last_day_of_month_ - e_join_date_ + 1;
+            ELSIF (e_join_date_ > first_day_of_month_) AND (e_depart_date_ < last_day_of_month_) THEN
+                num_work_days := e_depart_date - e_join_date_ + 1;
+            ELSE
+                RAISE NOTICE 'Unhandled case!';
+            END IF;
+
+            salary_amount_paid := (num_work_days / num_of_days_in_month_) * monthly_salary;
+
+        ELSE
+
+            e_status := 'Part-time';
+            num_work_days := NULL;
+            monthly_salary := NULL;
+
+            SELECT PTE.num_work_hours, PTE.hourly_rate INTO num_work_hours, hourly_rate
+            FROM Part_time_Employees PTE
+            WHERE PTE.eid = eid_;
+
+            salary_amount_paid := num_work_days * hourly_rate;
+        END IF;
+        
+        INSERT INTO Salary_payment_records (eid, ename, e_status, num_work_days, num_work_hours, monthly_salary, hourly_rate, salary_amount, payment_date)
+        VALUES (eid, ename, e_status, num_work_days, num_work_hours, monthly_salary, hourly_rate, salary_amount_paid, NOW()::DATE);
+
+        RETURN NEXT;
+    END LOOP;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+DROP TYPE IF EXISTS salary_information CASCADE;
+CREATE TYPE salary_information AS (
+    eid INTEGER,
+    ename TEXT,
+    e_status TEXT,
+    num_work_days INTEGER,
+    num_work_hours INTEGER,
+    monthly_salary INTEGER,
+    hourly_rate INTEGER,
+    salary_amount_paid INTEGER
+);
+
 /* 26. pay_salary
     This routine is used at the end of the month to pay salaries to employees.
     */
--- CREATE OR REPLACE FUNCTION pay_salary()
--- RETURNS RETURNS TABLE (
---     eid             INTEGER,
---     ename           TEXT,
---     e_status        TEXT,
---     num_work_days   INTEGER,
---     num_work_hours  INTEGER,
---     monthly_salary  INTEGER,
---     hourly_rate     INTEGER,
---     salary_amount   INTEGER,
---     payment_date    DATE
--- ) AS
--- $$
--- DECLARE
---     first_day_of_month_ DATE;
---     last_day_of_month_ DATE;
---     num_of_days_in_month_ INTEGER;
---     e_join_date_ DATE;
---     eid_ INTEGER;
--- BEGIN
---     SELECT INTO last_day_of_month_ (DATE_TRUNC('month', NOW()::DATE) + INTERVAL '1 month' - INTERVAL '1 day')::DATE;
-
---     SELECT INTO first_day_of_month_ (DATE_TRUNC('month', NOW()::DATE))::DATE;
-
---     num_of_days_in_month_ = last_day_of_month_ - first_day_of_month_ + 1;
-
---     /*Loop through employees that have not departed or just departed this month*/
---     FOR eid_ IN (SELECT E.eid 
---                 FROM Employees E
---                 WHERE E.depart_date = NULL 
---                 OR EXTRACT(MONTH FROM E.depart_date) = 
---                 EXTRACT(MONTH FROM NOW()))  LOOP
---         eid := _eid;
---         IF eid_ IN (SELECT eid FROM Full_time_Employees) THEN
---             e_status := 'Full-time';
---             num_work_hours := NULL;
---             hourly_rate := NULL;
-
---             SELECT FTE.monthly_salary INTO monthly_salary
---             FROM Full_time_Employees FTE
---             WHERE FTE.eid = _eid;
-
---             SELECT INTO e_join_date_ E.join_date FROM Employees E WHERE E.eid = eid_;
---             IF ((last_day_of_month_ - e_join_date_ + 1) < num_of_days_in_month_) THEN
---                 num_work_days := last_day_of_month_ - e_join_date_ + 1;
---             E.depart_date = NULL THEN
---                 num_work_days := num_of_days_in_month_;
---                 salary_amount_paid := monthly_salary;
---             ELSE
-
---         ELSIF
---             e_status := 'Part-time';
---             num_work_days := NULL;
---             monthly_salary := NULL;
-
---             SELECT PTE.num_work_hours, PTE.hourly_rate INTO num_work_hours, hourly_rate
---             FROM Part_time_Employees PTE
---             WHERE PTE.eid = _eid;
-
---             salary_amount_paid := num_work_days * hourly_rate;
---         END IF;
-
---         RETURN NEXT;
---         payment_date := NOW();
---     END LOOP;
--- END;
--- $$
--- LANGUAGE PLPGSQL;
+CREATE OR REPLACE FUNCTION pay_salary()
+RETURNS SETOF salary_information AS
+$$
+BEGIN
+    SELECT * FROM pay_salary_helper() ORDER BY eid;
+END;
+$$
+LANGUAGE PLPGSQL;
