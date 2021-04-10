@@ -13,7 +13,56 @@ Packages,
 Redeems,
 Registers,
 Rooms,
+Employees,
+Salary_payment_records,
+Instructors,
+Part_time_Employees,
+Part_time_Instructors,
+Full_time_Employees,
+Full_time_Instructors,
+Managers,
+Administrators,
+Manages,
+Specializes,
 Sessions CASCADE;
+
+CREATE TABLE Employees (
+    eid             SERIAL,
+    ename           TEXT    NOT NULL,
+    phone_number    TEXT    NOT NULL,
+    home_address    TEXT    NOT NULL,
+    email_address   TEXT    NOT NULL,
+    join_date       DATE    NOT NULL,
+    depart_date     DATE    CONSTRAINT valid_depart_date 
+                            CHECK (depart_date > join_date),
+    category        TEXT,
+    salary          INTEGER,  /*Can be either hourly or monthly*/
+    PRIMARY KEY (eid)
+);
+
+CREATE TABLE Instructors (
+    eid             INTEGER PRIMARY KEY REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    num_teach_hours INTEGER CONSTRAINT non_negative
+                            CHECK (num_teach_hours >= 0),
+    course_areas    TEXT ARRAY
+);
+
+/*Full_time_Employee*/
+CREATE TABLE Managers (
+    eid             INTEGER PRIMARY KEY REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    course_areas    TEXT ARRAY
+);
+
+/*Full_time_Employee*/
+CREATE TABLE Administrators (
+    eid         INTEGER PRIMARY KEY REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 CREATE TABLE Course_areas (
     area_name TEXT,
@@ -37,12 +86,6 @@ CREATE TABLE Courses (
 
     PRIMARY KEY (course_id),
     FOREIGN KEY (area_name) REFERENCES Course_areas
-);
-
-CREATE TABLE Administrators (
-    eid INTEGER,
-
-    PRIMARY KEY (eid)
 );
 
 /* eid is the administrator id */
@@ -80,12 +123,6 @@ CREATE TABLE Rooms (
                           CHECK (seating_capacity >= 0),
 
     PRIMARY KEY (rid)
-);
-
-CREATE TABLE Instructors (
-    eid INTEGER,
-
-    PRIMARY KEY (eid)
 );
 
 /* Sessions can take lunch break, e.g. 4 hour session from 11am to 5pm */
@@ -208,4 +245,55 @@ CREATE TABLE Redeems (
     FOREIGN KEY (buys_ts)                            REFERENCES Buys,
     FOREIGN KEY (course_id, offering_id, session_id) REFERENCES Sessions
         ON DELETE CASCADE
+);
+
+CREATE TABLE Salary_payment_records (
+    eid             INTEGER,
+    ename           TEXT,
+    e_status        TEXT,
+    num_work_days   INTEGER,
+    num_work_hours  INTEGER,
+    monthly_salary  INTEGER,
+    hourly_rate     INTEGER,
+    salary_amount   INTEGER,
+    payment_date    DATE,
+    PRIMARY KEY (eid, payment_date),
+    FOREIGN KEY (eid) REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+/*Employee ISA Part-time Employee/Full-time Employees - An Employee HAS to be either a Full-time Employee or Part-time Employee, but not both*/
+/*ISA Part-time Instructor - A Part-time Employee HAS to be a Part-time Instructor*/
+CREATE TABLE Part_time_Employees (
+    eid             INTEGER PRIMARY KEY REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    num_work_hours  INTEGER CONSTRAINT non_negative
+                            CHECK (num_work_hours >= 0),
+    hourly_rate     INTEGER
+);
+--
+-- /*ISA Full-time Instructor/Manager/Administrator - A Full-time Employee HAS to be either a Full-time Instructor, an Administrator or a Manager*/
+CREATE TABLE Full_time_Employees (
+    eid             INTEGER PRIMARY KEY REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    monthly_salary  INTEGER
+);
+
+/*Each manager manages 0 or more course areas*/
+CREATE TABLE Manages (
+    eid             INTEGER,  /*manager id*/
+    area_name       TEXT,
+    PRIMARY KEY (area_name, eid),
+    FOREIGN KEY (area_name) REFERENCES Course_areas
+);
+
+/*Each instructor specializes in a set of 1 or more course areas*/
+CREATE TABLE Specializes (
+    eid             INTEGER,  /*instructor id*/
+    area_name       TEXT,
+    PRIMARY KEY (area_name, eid),
+    FOREIGN KEY (area_name) REFERENCES Course_areas
 );
