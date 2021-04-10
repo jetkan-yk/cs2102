@@ -24,7 +24,8 @@ SELECT session_date, start_time, end_time, rid
  ORDER BY session_date, start_time, end_time;
 
 /* to test add_customer routine */
-SELECT * FROM add_customer('John', 'Lake Garden', 'abcdef@gmail.com', '90717243', '587624359845', 543, '2023-03-05');
+SELECT * FROM add_customer('John', 'Lake Garden', '90717243', 'abcdef@gmail.com', '587624359845', 543, '2023-03-05');
+/*SELECT * FROM get_latest_cc_number(11);*/
 
 /* to test update_credit_card routine */
 SELECT * FROM update_credit_card(1, '123454321', 321, '2025-01-01');
