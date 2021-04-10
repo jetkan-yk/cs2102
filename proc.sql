@@ -887,16 +887,23 @@ CREATE OR REPLACE FUNCTION add_customer(
     _expiry_date DATE)
     RETURNS Customers AS
 $$
+DECLARE _cust_id INTEGER;
+BEGIN
     INSERT INTO Credit_cards
         (cc_number, cvv, expiry_date) VALUES
         (_cc_number, _cvv, _expiry_date);
 
     INSERT INTO Customers
         (name, address, email, phone) VALUES
-        (_name, _address, _email, _phone)
-    RETURNING *;
+        (_name, _address, _email, _phone);
+    RETURN cust_id AS _cust_id;
+
+    INSERT INTO Owns
+        (cc_number, cust_id) VALUES
+        (_cc_number, _cust_id);
+END;
 $$
-LANGUAGE SQL;
+LANGUAGE PLPGSQL;
 
 /* --------------- Customer Routines --------------- */
 
