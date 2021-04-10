@@ -4,8 +4,8 @@ DROP TRIGGER IF EXISTS add_handle_area ON Handles;
 DROP TRIGGER IF EXISTS add_employee_type ON Employees;
 DROP TRIGGER IF EXISTS update_teaching_hours ON Sessions;
 
-DROP TYPE IF EXISTS found_instructors;
-DROP TYPE IF EXISTS available_instructors;
+DROP TYPE IF EXISTS found_instructors CASCADE;
+DROP TYPE IF EXISTS available_instructors CASCADE;
 
 /* --------------- Employees Triggers --------------- */
 
@@ -188,6 +188,65 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/* 
+2. remove_employee
+    This routine is used to update an employee’s departed date a non-null value.
+    RETURNS: the Employee detail after successful DELETE */
+-- CREATE OR REPLACE FUNCTION remove_employee(
+--     _eid INTEGER,
+--     _depart_date DATE)
+--     RETURNS Employees AS
+-- $$
+-- DECLARE
+--     employee_type_ TEXT;
+--     result_ Employees;
+-- BEGIN
+--     SELECT category INTO employee_type_
+--         FROM Employees
+--         WHERE eid = _eid;
+--     CASE employee_type_
+--     WHEN 'Manager' THEN
+--         IF _eid IN (SELECT eid FROM Managers WHERE array_length(course_areas, 1) >= 1) THEN
+--             RAISE NOTICE
+--                 'Cannot remove employee, as employee is a manager managing some area';
+--         ELSE
+--             UPDATE Employees
+--             SET depart_date = _depart_date
+--             WHERE eid = _eid
+--             RETURNING * INTO result_;
+--         END IF;
+--     WHEN 'Administrator' THEN
+--         IF _eid IN (SELECT a1.eid
+--             FROM Offerings o1, Administrators a1
+--             WHERE o1.reg_deadline > _depart_date) THEN
+--             RAISE NOTICE
+--                 'Cannot remove employee, as employee is an administrator handling a course offering where its registration deadline is after employee depart date';
+--         ELSE
+--             UPDATE Employees
+--             SET depart_date = _depart_date
+--             WHERE eid = _eid
+--             RETURNING * INTO result_;
+--         END IF;
+--     WHEN 'Instructor' THEN
+--         IF _eid IN (SELECT i1.eid
+--             FROM Sessions s1, Instructors i1
+--             WHERE s1.session_date > _depart_date) THEN
+--             RAISE NOTICE
+--                 'Cannot remove employee, as employee is an instructor who is teaching some course session that starts after employee depart date';
+--         ELSE
+--             UPDATE Employees
+--             SET depart_date = _depart_date
+--             WHERE eid = _eid
+--             RETURNING * INTO result_;
+--         END IF;
+--     END
+
+--     RETURN result_;
+-- END;
+-- $$
+-- LANGUAGE PLPGSQL;
+
+
 /*TODO: trigger add work hour/day when session/offering is assigned to Employees*/
 /*TODO: trigger add teaching_hour when session is assigned to Instructor*/
 
@@ -320,21 +379,13 @@ BEGIN
         SET num_teach_hours = num_teach_hours - session_duration_
         WHERE eid = OLD.eid;
 
-        IF NEW.eid IN (SELECT eid FROM Full_time_Employees) THEN
-            UPDATE Full_time_Employees
-            SET num_work_days = num_work_days + 1
-            WHERE eid = NEW.eid;
-        ELSE
+        IF NEW.eid IN (SELECT eid FROM Part_time_Employees) THEN
             UPDATE Part_time_Employees
             SET num_work_hours = num_work_hours + session_duration_
             WHERE eid = NEW.eid;
         END IF;
 
-        IF OLD.eid IN (SELECT eid FROM Full_time_Employees) THEN
-            UPDATE Full_time_Employees
-            SET num_work_days = num_work_days - 1
-            WHERE eid = OLD.eid;
-        ELSE
+        IF OLD.eid IN (SELECT eid FROM Part_time_Employees) THEN
             UPDATE Part_time_Employees
             SET num_work_hours = num_work_hours - session_duration_
             WHERE eid = OLD.eid;
@@ -410,3 +461,75 @@ BEGIN
 END;
 $$
 LANGUAGE PLPGSQL;
+
+
+/* 26. pay_salary
+    This routine is used at the end of the month to pay salaries to employees.
+    */
+-- CREATE OR REPLACE FUNCTION pay_salary()
+-- RETURNS RETURNS TABLE (
+--     eid             INTEGER,
+--     ename           TEXT,
+--     e_status        TEXT,
+--     num_work_days   INTEGER,
+--     num_work_hours  INTEGER,
+--     monthly_salary  INTEGER,
+--     hourly_rate     INTEGER,
+--     salary_amount   INTEGER,
+--     payment_date    DATE
+-- ) AS
+-- $$
+-- DECLARE
+--     first_day_of_month_ DATE;
+--     last_day_of_month_ DATE;
+--     num_of_days_in_month_ INTEGER;
+--     e_join_date_ DATE;
+--     eid_ INTEGER;
+-- BEGIN
+--     SELECT INTO last_day_of_month_ (DATE_TRUNC('month', NOW()::DATE) + INTERVAL '1 month' - INTERVAL '1 day')::DATE;
+
+--     SELECT INTO first_day_of_month_ (DATE_TRUNC('month', NOW()::DATE))::DATE;
+
+--     num_of_days_in_month_ = last_day_of_month_ - first_day_of_month_ + 1;
+
+--     /*Loop through employees that have not departed or just departed this month*/
+--     FOR eid_ IN (SELECT E.eid 
+--                 FROM Employees E
+--                 WHERE E.depart_date = NULL 
+--                 OR EXTRACT(MONTH FROM E.depart_date) = 
+--                 EXTRACT(MONTH FROM NOW()))  LOOP
+--         eid := _eid;
+--         IF eid_ IN (SELECT eid FROM Full_time_Employees) THEN
+--             e_status := 'Full-time';
+--             num_work_hours := NULL;
+--             hourly_rate := NULL;
+
+--             SELECT FTE.monthly_salary INTO monthly_salary
+--             FROM Full_time_Employees FTE
+--             WHERE FTE.eid = _eid;
+
+--             SELECT INTO e_join_date_ E.join_date FROM Employees E WHERE E.eid = eid_;
+--             IF ((last_day_of_month_ - e_join_date_ + 1) < num_of_days_in_month_)
+--             E.depart_date = NULL THEN
+--                 num_work_days := num_of_days_in_month_;
+--                 salary_amount_paid := monthly_salary;
+--             ELSE
+
+--         ELSIF
+--             e_status := 'Part-time';
+--             num_work_days := NULL;
+--             monthly_salary := NULL;
+
+--             SELECT PTE.num_work_hours, PTE.hourly_rate INTO num_work_hours, hourly_rate
+--             FROM Part_time_Employees PTE
+--             WHERE PTE.eid = _eid;
+
+--             salary_amount_paid := num_work_days * hourly_rate;
+--         END IF;
+
+--         RETURN NEXT;
+--         payment_date := NOW();
+--     END LOOP;
+-- END;
+-- $$
+-- LANGUAGE PLPGSQL;

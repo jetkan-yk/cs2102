@@ -1415,6 +1415,7 @@ LANGUAGE SQL;
 /* 17. register_session
     This routine is used when a customer requests to register for a session in a course offering.
     RETURNS: a TEXT status  */
+DROP FUNCTION register_session(integer,integer,integer,integer,text);
 CREATE OR REPLACE FUNCTION register_session(
     _cust_id INTEGER,
     _course_id INTEGER,

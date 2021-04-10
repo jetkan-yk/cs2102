@@ -1,5 +1,6 @@
-DROP TABLE IF EXISTS Pay_slips,
+DROP TABLE IF EXISTS
 Employees,
+Salary_payment_records,
 Instructors,
 Part_time_Employees,
 Part_time_Instructors,
@@ -28,18 +29,21 @@ CREATE TABLE Employees (
     PRIMARY KEY (eid)
 );
 
-/*Weak entity -> dependent on Employees*/
--- CREATE TABLE Pay_slips (
---     eid             INTEGER,
---     num_work_hours  INTEGER,
---     num_work_days   INTEGER,
---     amount          INTEGER,
---     payment_date    DATE,
---     PRIMARY KEY (eid, payment_date),
---     FOREIGN KEY (eid) REFERENCES Employees
---         ON DELETE CASCADE
---         ON UPDATE CASCADE
--- );
+CREATE TABLE Salary_payment_records (
+    eid             INTEGER,
+    ename           TEXT,
+    e_status        TEXT,
+    num_work_days   INTEGER,
+    num_work_hours  INTEGER,
+    monthly_salary  INTEGER,
+    hourly_rate     INTEGER,
+    salary_amount   INTEGER,
+    payment_date    DATE,
+    PRIMARY KEY (eid, payment_date),
+    FOREIGN KEY (eid) REFERENCES Employees
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 /*Employee ISA Part-time Employee/Full-time Employees - An Employee HAS to be either a Full-time Employee or Part-time Employee, but not both*/
 /*ISA Part-time Instructor - A Part-time Employee HAS to be a Part-time Instructor*/
@@ -57,8 +61,6 @@ CREATE TABLE Full_time_Employees (
     eid             INTEGER PRIMARY KEY REFERENCES Employees
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    num_work_days   INTEGER CONSTRAINT non_negative
-                            CHECK (num_work_days >= 0),
     monthly_salary  INTEGER
 );
 
