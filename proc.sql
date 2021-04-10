@@ -75,11 +75,7 @@ DECLARE
     session_duration_ INTEGER;
 BEGIN
     session_duration_ := EXTRACT(HOURS FROM NEW.end_time) - EXTRACT(HOURS FROM NEW.start_time);
-    IF NEW.eid IN (SELECT eid FROM Full_time_Employees) THEN
-        UPDATE Full_time_Employees
-        SET num_work_days = num_work_days + 1
-        WHERE eid = NEW.eid;
-    ELSE
+    IF NEW.eid IN (SELECT eid FROM Part_time_Employees) THEN
         UPDATE Part_time_Employees
         SET num_work_hours = num_work_hours + session_duration_
         WHERE eid = NEW.eid;
