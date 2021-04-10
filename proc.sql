@@ -428,9 +428,9 @@ DECLARE
 BEGIN
       IF NOW() < (reg_deadline_ + one_day_)
     THEN RETURN TRUE;
-    ELSE /* RAISE NOTICE
+    ELSE RAISE NOTICE
             'Registration deadline % for Session of Offering (%, %) has elapsed',
-             reg_deadline_ + one_day_, _course_id, _offering_id; */
+             reg_deadline_ + one_day_, _course_id, _offering_id;
          RETURN FALSE;
      END IF;
 END;
@@ -455,9 +455,9 @@ BEGIN
 
       IF NOW() < (session_date_ + start_time_)
     THEN RETURN TRUE;
-    ELSE /* RAISE NOTICE
+    ELSE RAISE NOTICE
             'Cancellable period % for Session (%, %, %) has elapsed',
-             session_date_ + start_time_, _course_id, _offering_id, _session_id; */
+             session_date_ + start_time_, _course_id, _offering_id, _session_id;
          RETURN FALSE;
      END IF;
 END;
@@ -479,10 +479,7 @@ DECLARE
 BEGIN
       IF (NOW() + seven_days_) <= session_date_
     THEN RETURN TRUE;
-    ELSE /* RAISE NOTICE
-            'Refundable date % for Session (%, %, %) has elapsed',
-             session_date_ - seven_days_, _course_id, _offering_id, _session_id; */
-         RETURN FALSE;
+    ELSE RETURN FALSE;
      END IF;
 END;
 $$
@@ -653,33 +650,27 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-/* This function deletes the Session of a Registers entry.
-    RETURNS: the View of the cancelled Registers after successful DELETE */
+/* This function deletes the Session of a Registers entry. */
 CREATE OR REPLACE FUNCTION delete_registers_session(
     _cust_id INTEGER,
     _course_id INTEGER,
     _offering_id INTEGER,
-    _new_session_id INTEGER)
+    _session_id INTEGER)
     RETURNS Registers AS
 $$
 DECLARE
-    update_reg_ts_ CONSTANT TIMESTAMP :=
+    delete_reg_ts_ CONSTANT TIMESTAMP :=
         (SELECT registers_ts FROM get_registers(_cust_id)
-          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
     result_ Registers;
 BEGIN
-/* TODO THIS AND delete_redeems_session
-      IF update_reg_ts_ IS NULL
-    THEN RAISE NOTICE
-             'Previous registration record for Customer % Course (%, %) not found',
-              _cust_id, _course_id, _offering_id;
-    ELSE UPDATE Registers
-            SET session_id = _new_session_id
-          WHERE registers_ts = update_reg_ts_
+      IF check_is_session_cancellable(_course_id, _offering_id, _session_id)
+    THEN DELETE FROM Registers
+          WHERE registers_ts = delete_reg_ts_
          RETURNING * INTO result_;
      END IF;
 
-    RETURN result_; */
+    RETURN result_;
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -784,6 +775,31 @@ BEGIN
     ELSE UPDATE Redeems
             SET session_id = _new_session_id
           WHERE redeems_ts = update_red_ts_
+         RETURNING * INTO result_;
+     END IF;
+
+    RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* This function deletes the Session of a Redeems entry. */
+CREATE OR REPLACE FUNCTION delete_redeems_session(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS Redeems AS
+$$
+DECLARE
+    delete_red_ts_ CONSTANT TIMESTAMP :=
+        (SELECT redeems_ts FROM get_redeems(_cust_id)
+          WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
+    result_ Redeems;
+BEGIN
+      IF check_is_session_cancellable(_course_id, _offering_id, _session_id)
+    THEN DELETE FROM Redeems
+          WHERE redeems_ts = delete_red_ts_
          RETURNING * INTO result_;
      END IF;
 
@@ -1356,7 +1372,6 @@ CREATE OR REPLACE FUNCTION cancel_registration(
     RETURNS TEXT AS
 $$
 DECLARE
--- TODO: Create view for cancellation
     regist_ses_id_ CONSTANT INTEGER :=
         (SELECT session_id FROM get_registers(_cust_id)
           WHERE (course_id, offering_id) = (_course_id, _offering_id));
