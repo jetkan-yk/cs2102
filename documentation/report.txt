@@ -37,3 +37,6 @@
 26. Possible to merge registers, redeems into signups as both have similar operations
 27. overloading function: count_signups, count_remain_seats
 28. multiple triggers referencing same function (check_rid, check_update_rid)
+
+reg -> regist
+red -> redeem

@@ -67,32 +67,6 @@ LANGUAGE PLPGSQL;
 
 /* -------------- Sessions Triggers -------------- */
 
-/* Update work hours or work days when instructor is assigned to a session */
-CREATE OR REPLACE FUNCTION update_work_func()
-    RETURNS TRIGGER AS
-$$
-DECLARE
-    session_duration_ INTEGER;
-BEGIN
-    session_duration_ := EXTRACT(HOURS FROM NEW.end_time) - EXTRACT(HOURS FROM NEW.start_time);
-    IF NEW.eid IN (SELECT eid FROM Full_time_Employees) THEN
-        UPDATE Full_time_Employees
-        SET num_work_days = num_work_days + 1
-        WHERE eid = NEW.eid;
-    ELSE
-        UPDATE Part_time_Employees
-        SET num_work_hours = num_work_hours + session_duration_
-        WHERE eid = NEW.eid;
-    END IF;
-    RETURN NEW;
-END;
-$$
-LANGUAGE PLPGSQL;
-
-CREATE TRIGGER update_work_func
-AFTER INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION update_work_func();
-
 /* Assigns session_id which starts from 1 for each Offerings */
 CREATE OR REPLACE FUNCTION set_session_id_func()
     RETURNS TRIGGER AS
@@ -248,7 +222,7 @@ FOR EACH ROW EXECUTE FUNCTION check_rid_available_func();
 
 CREATE TRIGGER check_new_rid_available_func
 BEFORE UPDATE ON Sessions
-FOR EACH ROW WHEN (OLD.rid <> NEW.rid) EXECUTE FUNCTION check_rid_available_func();
+FOR EACH ROW WHEN (OLD.rid IS DISTINCT FROM NEW.rid) EXECUTE FUNCTION check_rid_available_func();
 
 /* Checks whether the Session's new room_capacity >= num_signups */
 CREATE OR REPLACE FUNCTION check_new_room_cap_func()
@@ -273,7 +247,7 @@ LANGUAGE PLPGSQL;
 
 CREATE TRIGGER check_new_room_cap
 BEFORE UPDATE ON Sessions
-FOR EACH ROW WHEN (OLD.rid <> NEW.rid) EXECUTE FUNCTION check_new_room_cap_func();
+FOR EACH ROW WHEN (OLD.rid IS DISTINCT FROM NEW.rid) EXECUTE FUNCTION check_new_room_cap_func();
 
 /* Checks whether Session has already started before UPDATE/DELETE */
 CREATE OR REPLACE FUNCTION modify_session_check_date_func()
@@ -454,9 +428,36 @@ DECLARE
 BEGIN
       IF NOW() < (reg_deadline_ + one_day_)
     THEN RETURN TRUE;
-    ELSE RAISE NOTICE
-            'Session must be registered before Offering (%, %) registration deadline %',
-             _course_id, _offering_id, reg_deadline_ + one_day_;
+    ELSE /* RAISE NOTICE
+            'Registration deadline % for Session of Offering (%, %) has elapsed',
+             reg_deadline_ + one_day_, _course_id, _offering_id; */
+         RETURN FALSE;
+     END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* Checks whether a Session is cancellable, i.e. now  <= session_ts */
+CREATE OR REPLACE FUNCTION check_is_session_cancellable(
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _session_id INTEGER)
+    RETURNS BOOLEAN AS
+$$
+DECLARE
+    session_date_ DATE;
+    start_time_ TIME;
+BEGIN
+    SELECT session_date, start_time
+      INTO session_date_, start_time_
+      FROM Sessions
+     WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
+
+      IF NOW() < (session_date_ + start_time_)
+    THEN RETURN TRUE;
+    ELSE /* RAISE NOTICE
+            'Cancellable period % for Session (%, %, %) has elapsed',
+             session_date_ + start_time_, _course_id, _offering_id, _session_id; */
          RETURN FALSE;
      END IF;
 END;
@@ -478,7 +479,10 @@ DECLARE
 BEGIN
       IF (NOW() + seven_days_) <= session_date_
     THEN RETURN TRUE;
-    ELSE RETURN FALSE;
+    ELSE /* RAISE NOTICE
+            'Refundable date % for Session (%, %, %) has elapsed',
+             session_date_ - seven_days_, _course_id, _offering_id, _session_id; */
+         RETURN FALSE;
      END IF;
 END;
 $$
@@ -645,6 +649,37 @@ BEGIN
      END IF;
 
     RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/* This function deletes the Session of a Registers entry.
+    RETURNS: the View of the cancelled Registers after successful DELETE */
+CREATE OR REPLACE FUNCTION delete_registers_session(
+    _cust_id INTEGER,
+    _course_id INTEGER,
+    _offering_id INTEGER,
+    _new_session_id INTEGER)
+    RETURNS Registers AS
+$$
+DECLARE
+    update_reg_ts_ CONSTANT TIMESTAMP :=
+        (SELECT registers_ts FROM get_registers(_cust_id)
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+    result_ Registers;
+BEGIN
+/* TODO THIS AND delete_redeems_session
+      IF update_reg_ts_ IS NULL
+    THEN RAISE NOTICE
+             'Previous registration record for Customer % Course (%, %) not found',
+              _cust_id, _course_id, _offering_id;
+    ELSE UPDATE Registers
+            SET session_id = _new_session_id
+          WHERE registers_ts = update_reg_ts_
+         RETURNING * INTO result_;
+     END IF;
+
+    RETURN result_; */
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -872,7 +907,7 @@ LANGUAGE SQL;
 
 /* ============== START OF ROUTINES ============== */
 
-/* --------------- Customer Routines --------------- */
+/* --------------- Customers Routines --------------- */
 
 /* 3. add_customer
     This routine is used to add a new customer.
@@ -898,9 +933,9 @@ $$
 $$
 LANGUAGE SQL;
 
-/* --------------- Customer Routines --------------- */
+/* --------------- Customers Routines --------------- */
 
-/* --------------- Credit Card Routines --------------- */
+/* --------------- Credit Cards Routines --------------- */
 
 /* 4. update_credit_card
     This routine is used when a customer requests to change his/her credit card details.
@@ -923,7 +958,7 @@ $$
 $$
 LANGUAGE SQL;
 
-/* --------------- Credit Card Routines --------------- */
+/* --------------- Credit Cards Routines --------------- */
 
 /* --------------- Courses Routines --------------- */
 
@@ -1255,7 +1290,7 @@ $$
                LEFT JOIN Offerings USING (course_id, offering_id)
                LEFT JOIN Courses USING (course_id)
       -- TODO: LEFT JOIN Employees E ON (E.eid = S.eid)
-     WHERE NOW() < session_date
+     WHERE NOW() < session_date + start_time
      ORDER BY session_date, start_time;
 $$
 LANGUAGE SQL;
@@ -1272,19 +1307,21 @@ CREATE OR REPLACE FUNCTION update_course_session(
     RETURNS TEXT AS
 $$
 DECLARE
-    is_registered CONSTANT BOOLEAN :=
-        _course_id IN (SELECT course_id FROM get_registers(_cust_id));
-    is_redeemed CONSTANT BOOLEAN :=
-        _course_id IN (SELECT course_id FROM get_redeems(_cust_id));
+    is_registered_ CONSTANT BOOLEAN :=
+        (_course_id, _offering_id) IN
+            (SELECT course_id, offering_id FROM get_registers(_cust_id));
+    is_redeemed_ CONSTANT BOOLEAN :=
+        (_course_id, _offering_id) IN
+            (SELECT course_id, offering_id FROM get_redeems(_cust_id));
 BEGIN
     CASE
-        WHEN is_registered THEN
+        WHEN is_registered_ THEN
               IF update_registers_session(
                      _cust_id, _course_id, _offering_id, _new_session_id) IS NOT NULL
             THEN RETURN FORMAT('Registration successful for Customer %s Session (%s, %s, %s)',
                                 _cust_id, _course_id, _offering_id, _new_session_id);
              END IF;
-        WHEN is_redeemed THEN
+        WHEN is_redeemed_ THEN
               IF update_redeems_session(
                      _cust_id, _course_id, _offering_id, _new_session_id) IS NOT NULL
             THEN RETURN FORMAT('Redemption successful for Customer %s Session (%s, %s, %s)',
@@ -1304,16 +1341,46 @@ LANGUAGE PLPGSQL;
 
 /* 20. cancel_registration
     This routine is used when a customer requests to cancel a registered/redeemed course session.
-    RETURNS: a TEXT status
+    RETURNS: a TEXT status */
 CREATE OR REPLACE FUNCTION cancel_registration(
     _cust_id INTEGER,
     _course_id INTEGER,
     _offering_id INTEGER)
     RETURNS TEXT AS
 $$
+DECLARE
 -- TODO: Create view for cancellation
+    regist_ses_id_ CONSTANT INTEGER :=
+        (SELECT session_id FROM get_registers(_cust_id)
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+    redeem_ses_id_ CONSTANT INTEGER :=
+        (SELECT session_id FROM get_redeems(_cust_id)
+          WHERE (course_id, offering_id) = (_course_id, _offering_id));
+BEGIN
+    CASE
+        WHEN regist_ses_id_ IS NOT NULL THEN
+              IF delete_registers_session(
+                     _cust_id, _course_id, _offering_id, regist_ses_id_) IS NOT NULL
+            THEN RETURN FORMAT('Cancellation successful for Customer %s Session (%s, %s, %s)',
+                                _cust_id, _course_id, _offering_id, regist_ses_id_);
+             END IF;
+        WHEN redeem_ses_id_ IS NOT NULL THEN
+              IF delete_redeems_session(
+                     _cust_id, _course_id, _offering_id, redeem_ses_id_) IS NOT NULL
+            THEN RETURN FORMAT('Cancellation successful for Customer %s Session (%s, %s, %s)',
+                                _cust_id, _course_id, _offering_id, redeem_ses_id_);
+             END IF;
+        ELSE
+            RAISE NOTICE
+                'Record for Customer % Course (%, %) not found',
+                 _cust_id, _course_id, _offering_id;
+    END CASE;
+
+    RETURN FORMAT('Operation rejected for Customer %s Offering (%s, %s)',
+                   _cust_id, _course_id, _offering_id);
+END;
 $$
-LANGUAGE SQL; */
+LANGUAGE PLPGSQL;
 
 /* --------------- Registers Routines --------------- */
 
@@ -1427,24 +1494,24 @@ CREATE OR REPLACE FUNCTION remove_session_v2(
     RETURNS Sessions AS
 $$
 DECLARE
-    date_ DATE;
-    time_ TIME;
+    session_date_ DATE;
+    start_time_ TIME;
     num_reg_ CONSTANT INTEGER :=
         (SELECT count(*) FROM Registers
           WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id));
     result_ Sessions;
 BEGIN
     SELECT session_date, start_time
-      INTO date_, time_
+      INTO session_date_, start_time_
       FROM Sessions
      WHERE (course_id, offering_id, session_id) = (_course_id, _offering_id, _session_id);
 
-      IF (date_ + time_) < NOW() THEN
-         RAISE NOTICE
+      IF (session_date_ + start_time_) < NOW()
+    THEN RAISE NOTICE
             'Session has already started (% %)',
-             date_, time_;
-   ELSIF num_reg_ > 0 THEN
-         RAISE NOTICE
+             session_date_, start_time_;
+   ELSIF num_reg_ > 0
+    THEN RAISE NOTICE
             'Number of registrations (%) > 0',
              num_reg_;
     ELSE DELETE FROM Sessions
