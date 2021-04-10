@@ -1,6 +1,5 @@
 Not Implemented:
 
-pay_salary                      - jason
 promote_courses                 - jet
 top_packages                    - jet
 popular_courses                 - jet
@@ -33,3 +32,4 @@ get_available_course_sessions   - jet
 get_my_registrations            - jet
 update_course_session           - jet
 cancel_registration             - jet
+pay_salary                      - jason

@@ -1655,6 +1655,7 @@ FOR EACH ROW EXECUTE FUNCTION add_employee_type_func();
 
 /* 1. add_employee
     This routine is used to add a new employee.
+
     Course area is non-empty -> Administrator must have empty course area, while Manager and Instructor must have non-empty course area*/
 CREATE OR REPLACE FUNCTION add_employee(
     _ename TEXT,
@@ -1771,6 +1772,26 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+/*Removes manages relation and empties course_areas for the specified manager*/
+CREATE OR REPLACE FUNCTION stop_managing(eid_ INTEGER)
+RETURNS Managers AS
+$$
+DECLARE
+    result_ Managers;
+BEGIN
+    IF eid_ NOT IN (SELECT eid FROM Managers) THEN
+        RAISE NOTICE 'Manager with specified eid % is not found, skipping...', eid_;
+    ELSE
+        DELETE FROM Manages WHERE eid = eid_;
+        UPDATE Managers
+        SET course_areas = '{}'
+        WHERE eid = eid_
+        RETURNING * INTO result_;
+    END IF;
+    RETURN result_;
+END;
+$$
+LANGUAGE PLPGSQL;
 
 /*TODO: trigger add work hour/day when session/offering is assigned to Employees*/
 /*TODO: trigger add teaching_hour when session is assigned to Instructor*/
@@ -2082,10 +2103,10 @@ CREATE TYPE salary_information AS (
     salary_amount_paid INTEGER
 );
 
-/* 26. pay_salary
-    This routine is used at the end of the month to pay salaries to employees.
+/* 26. view_summary_report
+    This routine is used to view a monthly summary report of the company’s sales and expenses for a specified number of months.
     */
-CREATE OR REPLACE FUNCTION pay_salary()
+CREATE OR REPLACE FUNCTION view_summary_report()
 RETURNS SETOF salary_information AS
 $$
 BEGIN
