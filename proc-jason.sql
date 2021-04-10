@@ -171,46 +171,27 @@ DECLARE
     employee_type_ TEXT;
     result_ Employees;
 BEGIN
-    SELECT category INTO employee_type_
-        FROM Employees
-        WHERE eid = _eid;
+    SELECT E.category INTO employee_type_
+        FROM Employees E
+        WHERE E.eid = _eid;
     CASE employee_type_
-    WHEN 'Manager' THEN
-        IF _eid IN (SELECT eid FROM Managers WHERE array_length(course_areas, 1) >= 1) THEN
+        WHEN 'Manager' AND _eid IN (SELECT eid FROM Manages) THEN
             RAISE NOTICE
                 'Cannot remove employee, as employee is a manager managing some area';
-        ELSE
-            UPDATE Employees
-            SET depart_date = _depart_date
-            WHERE eid = _eid
-            RETURNING * INTO result_;
-        END IF;
-    WHEN 'Administrator' THEN
-        IF _eid IN (SELECT a1.eid
-            FROM Offerings o1, Administrators a1
-            WHERE o1.reg_deadline > _depart_date) THEN
+        WHEN 'Administrator' AND _eid IN
+            (SELECT A.eid FROM Offerings O, Administrators A WHERE O.reg_deadline > _depart_date) THEN
             RAISE NOTICE
-                'Cannot remove employee, as employee is an administrator handling a course offering where its registration deadline is after employee depart date';
-        ELSE
-            UPDATE Employees
-            SET depart_date = _depart_date
-            WHERE eid = _eid
-            RETURNING * INTO result_;
-        END IF;
-    WHEN 'Instructor' THEN
-        IF _eid IN (SELECT i1.eid
-            FROM Sessions s1, Instructors i1
-            WHERE s1.session_date > _depart_date) THEN
+                'Cannot remove employee, as employee is an administrator handling a course offering with a registration deadline that is after employee depart date';
+        WHEN 'Instructor' AND _eid IN 
+            (SELECT I.eid FROM Sessions S, Instructors I WHERE S.session_date > _depart_date) THEN
             RAISE NOTICE
                 'Cannot remove employee, as employee is an instructor who is teaching some course session that starts after employee depart date';
         ELSE
             UPDATE Employees
-            SET depart_date = _depart_date
-            WHERE eid = _eid
-            RETURNING * INTO result_;
-        END IF;
+                SET depart_date = _depart_date
+                WHERE eid = _eid
+                RETURNING * INTO result_;
     END CASE;
-
     RETURN result_;
 END;
 $$
