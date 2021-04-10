@@ -1,11 +1,5 @@
 Not Implemented:
 
-get_my_course_package           - jet
-get_available_course_offerings  - jet
-get_available_course_sessions   - jet
-get_my_registrations            - jet
-update_course_session           - jet
-cancel_registration             - jet
 pay_salary                      - jason
 promote_courses                 - jet
 top_packages                    - jet
@@ -33,3 +27,9 @@ get_available_course_packages   - jet
 find_instructors                - jason
 get_available_instructors       - jason
 update_instructor               - jason
+get_my_course_package           - jet
+get_available_course_offerings  - jet
+get_available_course_sessions   - jet
+get_my_registrations            - jet
+update_course_session           - jet
+cancel_registration             - jet
