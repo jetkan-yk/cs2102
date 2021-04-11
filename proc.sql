@@ -2,6 +2,125 @@ CREATE EXTENSION IF NOT EXISTS "intarray";
 
 /* ============== START OF TRIGGERS ============== */
 
+/* -------------- Employees Triggers -------------- */
+CREATE OR REPLACE FUNCTION update_teaching_hours_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    session_duration_ INTEGER;
+BEGIN
+    SELECT INTO session_duration_ FROM Courses C WHERE C.course_id = NEW.course_id;
+
+    UPDATE Instructors
+    SET num_teach_hours = num_teach_hours + session_duration_
+    WHERE eid = NEW.eid;
+
+    UPDATE Instructors
+    SET num_teach_hours = num_teach_hours - session_duration_
+    WHERE eid = OLD.eid;
+
+    IF NEW.eid IN (SELECT eid FROM Part_time_Employees) THEN
+        UPDATE Part_time_Employees
+        SET num_work_hours = num_work_hours + session_duration_
+        WHERE eid = NEW.eid;
+    END IF;
+
+    IF OLD.eid IN (SELECT eid FROM Part_time_Employees) THEN
+        UPDATE Part_time_Employees
+        SET num_work_hours = num_work_hours - session_duration_
+        WHERE eid = OLD.eid;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER update_teaching_hours
+AFTER UPDATE ON Sessions
+FOR EACH ROW WHEN (NEW.eid IS DISTINCT FROM OLD.eid) EXECUTE FUNCTION update_teaching_hours_func();
+
+/*Trigger to add to Manages or Specializes relation table whenever there is insert to Managers or Instructors tables*/
+CREATE OR REPLACE FUNCTION add_employee_course_relation_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    area_name_ TEXT;
+BEGIN
+    IF TG_TABLE_NAME = 'instructors' THEN
+        FOREACH area_name_ IN ARRAY NEW.course_areas LOOP
+            INSERT INTO Specializes (eid, area_name)
+            VALUES (NEW.eid, area_name_);
+        END LOOP;
+    ELSE
+        FOREACH area_name_ IN ARRAY NEW.course_areas LOOP
+            INSERT INTO Manages (eid, area_name)
+            VALUES (NEW.eid, area_name_);
+        END LOOP;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER add_employee_course_relation
+BEFORE INSERT ON Managers
+FOR EACH ROW EXECUTE FUNCTION add_employee_course_relation_func();
+
+CREATE TRIGGER add_employee_course_relation
+BEFORE INSERT ON Instructors
+FOR EACH ROW EXECUTE FUNCTION add_employee_course_relation_func();
+
+/*Trigger to add new course area to Course_area table whenever a new Employee*/
+CREATE OR REPLACE FUNCTION add_course_area_func()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    IF NEW.area_name NOT IN (SELECT * FROM Course_areas) THEN
+        INSERT INTO Course_areas (area_name)
+        VALUES (NEW.area_name);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER add_manage_area
+BEFORE INSERT ON Manages
+FOR EACH ROW EXECUTE FUNCTION add_course_area_func();
+
+CREATE TRIGGER add_specialize_area
+BEFORE INSERT ON Specializes
+FOR EACH ROW EXECUTE FUNCTION add_course_area_func();
+
+/*Trigger to add employee to Full_time Employee or Part_time_Employee table whenever they are added to Employee*/
+CREATE OR REPLACE FUNCTION add_employee_type_func()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    trimmed_category_ TEXT;
+BEGIN
+    IF NEW.category = 'Manager' OR NEW.category = 'Administrator' OR NEW.category = 'Full-time Instructor' THEN
+        INSERT INTO Full_time_Employees (eid, monthly_salary)
+        VALUES (NEW.eid, NEW.salary);
+    ELSE
+        INSERT INTO Part_time_Employees (eid, num_work_hours, hourly_rate)
+        VALUES (NEW.eid, 0, NEW.salary);
+    END IF;
+
+    IF NEW.category = 'Full-time Instructor' OR NEW.category = 'Part-time Instructor' THEN
+        trimmed_category_ := 'Instructor';
+        UPDATE Employees
+        SET category = trimmed_category_
+        WHERE eid = NEW.eid;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER add_employee_type
+AFTER INSERT ON Employees
+FOR EACH ROW EXECUTE FUNCTION add_employee_type_func();
+/* --------------- Employees Triggers --------------- */
+
 /* -------------- Offerings Triggers -------------- */
 
 /* Removes Offering if total seating capacity < target number of registrations */
@@ -1571,90 +1690,6 @@ LANGUAGE SQL;
 
 /* --------------- Sessions Routines --------------- */
 
-/* --------------- Employees Triggers --------------- */
-
-/*Trigger to add to Manages or Specializes relation table whenever there is insert to Managers or Instructors tables*/
-CREATE OR REPLACE FUNCTION add_employee_course_relation_func()
-    RETURNS TRIGGER AS
-$$
-DECLARE
-    area_name_ TEXT;
-BEGIN
-    IF TG_TABLE_NAME = 'instructors' THEN
-        FOREACH area_name_ IN ARRAY NEW.course_areas LOOP
-            INSERT INTO Specializes (eid, area_name)
-            VALUES (NEW.eid, area_name_);
-        END LOOP;
-    ELSE
-        FOREACH area_name_ IN ARRAY NEW.course_areas LOOP
-            INSERT INTO Manages (eid, area_name)
-            VALUES (NEW.eid, area_name_);
-        END LOOP;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE PLPGSQL;
-
-CREATE TRIGGER add_employee_course_relation
-BEFORE INSERT ON Managers
-FOR EACH ROW EXECUTE FUNCTION add_employee_course_relation_func();
-
-CREATE TRIGGER add_employee_course_relation
-BEFORE INSERT ON Instructors
-FOR EACH ROW EXECUTE FUNCTION add_employee_course_relation_func();
-
-/*Trigger to add new course area to Course_area table whenever a new Employee*/
-CREATE OR REPLACE FUNCTION add_course_area_func()
-    RETURNS TRIGGER AS
-$$
-BEGIN
-    IF NEW.area_name NOT IN (SELECT * FROM Course_areas) THEN
-        INSERT INTO Course_areas (area_name)
-        VALUES (NEW.area_name);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE PLPGSQL;
-
-CREATE TRIGGER add_manage_area
-BEFORE INSERT ON Manages
-FOR EACH ROW EXECUTE FUNCTION add_course_area_func();
-
-CREATE TRIGGER add_specialize_area
-BEFORE INSERT ON Specializes
-FOR EACH ROW EXECUTE FUNCTION add_course_area_func();
-
-/*Trigger to add employee to Full_time Employee or Part_time_Employee table whenever they are added to Employee*/
-CREATE OR REPLACE FUNCTION add_employee_type_func()
-    RETURNS TRIGGER AS
-$$
-DECLARE
-    trimmed_category_ TEXT;
-BEGIN
-    IF NEW.category = 'Manager' OR NEW.category = 'Administrator' OR NEW.category = 'Full-time Instructor' THEN
-        INSERT INTO Full_time_Employees (eid, monthly_salary)
-        VALUES (NEW.eid, NEW.salary);
-    ELSE
-        INSERT INTO Part_time_Employees (eid, num_work_hours, hourly_rate)
-        VALUES (NEW.eid, 0, NEW.salary);
-    END IF;
-
-    IF NEW.category = 'Full-time Instructor' OR NEW.category = 'Part-time Instructor' THEN
-        trimmed_category_ := 'Instructor';
-        UPDATE Employees
-        SET category = trimmed_category_
-        WHERE eid = NEW.eid;
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE PLPGSQL;
-
-CREATE TRIGGER add_employee_type
-AFTER INSERT ON Employees
-FOR EACH ROW EXECUTE FUNCTION add_employee_type_func();
-/* --------------- Employees Triggers --------------- */
-
 /* --------------- Employees Routines --------------- */
 
 /* 1. add_employee
@@ -1913,42 +1948,6 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-
-CREATE OR REPLACE FUNCTION update_teaching_hours_func()
-    RETURNS TRIGGER AS
-$$
-DECLARE
-    session_duration_ INTEGER;
-BEGIN
-    SELECT INTO session_duration_ FROM Courses C WHERE C.course_id = NEW.course_id;
-
-    UPDATE Instructors
-    SET num_teach_hours = num_teach_hours + session_duration_
-    WHERE eid = NEW.eid;
-
-    UPDATE Instructors
-    SET num_teach_hours = num_teach_hours - session_duration_
-    WHERE eid = OLD.eid;
-
-    IF NEW.eid IN (SELECT eid FROM Part_time_Employees) THEN
-        UPDATE Part_time_Employees
-        SET num_work_hours = num_work_hours + session_duration_
-        WHERE eid = NEW.eid;
-    END IF;
-
-    IF OLD.eid IN (SELECT eid FROM Part_time_Employees) THEN
-        UPDATE Part_time_Employees
-        SET num_work_hours = num_work_hours - session_duration_
-        WHERE eid = OLD.eid;
-    END IF;
-
-    RETURN NULL;
-END;
-$$ LANGUAGE PLPGSQL;
-
-CREATE TRIGGER update_teaching_hours
-AFTER UPDATE ON Sessions
-FOR EACH ROW WHEN (NEW.eid IS DISTINCT FROM OLD.eid) EXECUTE FUNCTION update_teaching_hours_func();
 
 /* 21. update_instructors
     This routine is used when a customer requests to change a registered course session to another session.
