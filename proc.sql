@@ -1806,18 +1806,15 @@ LANGUAGE PLPGSQL;
 2. Instructor can teach at most 1 course session in an hour
 3. There must be an hour of break for Instructor between sessions
 4. Part-time Instructor's total number of hour taught this month < 30*/
-DROP TYPE IF EXISTS found_instructors CASCADE;
-CREATE TYPE found_instructors AS (
-    eid INTEGER,
-    ename TEXT
-);
-
 CREATE OR REPLACE FUNCTION find_instructors(
     _course_id INTEGER,
     _session_date DATE,
     _session_start_hour TIME,
     _session_end_hour TIME)
-RETURNS SETOF found_instructors AS
+RETURNS TABLE(
+    eid INTEGER,
+    ename TEXT
+) AS
 $$
 DECLARE
     course_area_ TEXT;
@@ -1828,23 +1825,23 @@ BEGIN
     SELECT area_name INTO course_area_
     FROM Courses C WHERE C.course_id = _course_id;
 
-    SELECT eid, ename
-    FROM Employees
-    WHERE eid IN (SELECT eid
-                  FROM Specializes
+    RETURN QUERY SELECT E.eid, E.ename
+    FROM Employees E
+    WHERE E.eid IN (SELECT S1.eid
+                  FROM Specializes S1
                   WHERE area_name = course_area_)
-    AND eid IN (SELECT eid
-                    FROM Employees
-                    WHERE depart_date IS NULL OR depart_date > _session_date)
-    AND eid NOT IN (SELECT eid 
-                    FROM Sessions
-                    WHERE session_date = _session_date 
+    AND E.eid IN (SELECT E2.eid
+                    FROM Employees E2
+                    WHERE E2.depart_date IS NULL OR E2.depart_date > _session_date)
+    AND E.eid NOT IN (SELECT S2.eid 
+                    FROM Sessions S2
+                    WHERE S2.session_date = _session_date 
                     AND (
-                    (_session_start_hour BETWEEN start_time - one_hour_ AND end_time + one_hour_) 
-                    OR (_session_end_hour BETWEEN start_time - one_hour_ AND end_time + one_hour_) 
-                    OR (_session_start_hour < start_time AND _session_end_hour > end_time)))
-    AND eid NOT IN (SELECT eid
-                    FROM Part_time_Employees
+                    (_session_start_hour BETWEEN S2.start_time - one_hour_ AND S2.end_time + one_hour_) 
+                    OR (_session_end_hour BETWEEN S2.start_time - one_hour_ AND S2.end_time + one_hour_) 
+                    OR (_session_start_hour < S2.start_time AND _session_end_hour > S2.end_time)))
+    AND E.eid NOT IN (SELECT PTE.eid
+                    FROM Part_time_Employees PTE
                     WHERE num_work_hours >= 30)
     AND (_session_start_hour BETWEEN '09:00' AND '11:00' 
         OR  _session_start_hour BETWEEN '14:00' AND '17:00')
@@ -2091,8 +2088,11 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-DROP TYPE IF EXISTS salary_information CASCADE;
-CREATE TYPE salary_information AS (
+/* 26. pay_salary
+    This routine is used at the end of the month to pay salaries to employees.
+    */
+CREATE OR REPLACE FUNCTION pay_salary()
+RETURNS TABLE (
     eid INTEGER,
     ename TEXT,
     e_status TEXT,
@@ -2101,16 +2101,10 @@ CREATE TYPE salary_information AS (
     monthly_salary INTEGER,
     hourly_rate INTEGER,
     salary_amount_paid INTEGER
-);
-
-/* 26. view_summary_report
-    This routine is used to view a monthly summary report of the company’s sales and expenses for a specified number of months.
-    */
-CREATE OR REPLACE FUNCTION view_summary_report()
-RETURNS SETOF salary_information AS
+) AS
 $$
 BEGIN
-    SELECT * FROM pay_salary_helper() ORDER BY eid;
+    RETURN QUERY SELECT * FROM pay_salary_helper() ORDER BY eid;
 END;
 $$
 LANGUAGE PLPGSQL;
