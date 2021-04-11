@@ -89,29 +89,42 @@ VALUES (1, '1F-01', 1),
   (9, '3F-01', 100),
   (10, '3F-02', 100);
 
-INSERT INTO Administrators (eid)
-VALUES (1),
-  (2),
-  (3),
-  (4),
-  (5),
-  (6),
-  (7),
-  (8),
-  (9),
-  (10);
+/*populating Instructors table*/
+SELECT * FROM add_employee('Wayne Tyson','1-348-754-1532','638-8711 Rhoncus Street','malesuada@interdumfeugiat.edu','2019-05-22','Full-time Instructor',2240, '{Computer Security}');
+SELECT * FROM add_employee('Sade Ward','1-620-194-8585','P.O. Box 153, 7641 Nonummy Road','rutrum.justo.Praesent@justo.co.uk','2020-02-03','Part-time Instructor',15,'{Life Sciences, Physics, Bioinformatics}');
+SELECT * FROM add_employee('Alex Robertson', '1-632-176-4321', 'P.O. Box 643, 6023 Jurong Rd.', 'borat.tapat@hentidante.com', '2019-08-19', 'Part-time Instructor', 21, '{Computer Security}');
+SELECT * FROM add_employee('Alan Turing','1-785-754-1532', '3599 Glory Road', '0maglasang_ang@mracc.it', '2019-12-13','Full-time Instructor', 2500, '{Database Systems', 'Statistics}');
+SELECT * FROM add_employee('Bea Miller','1-765-434-6532', '805 Deer Haven Drive', 'feggyptr7@kittiza.com', '2019-08-15', 'Full-time Instructor', 2300, '{Life Siences, Chemistry, Bioinformatics}');
+SELECT * FROM add_employee('Chris Trent','1-286-194-9725', '4602 Thompson Street', 'ztonielbevad@colevillecapital.com', '2020-09-23', 'Full-time Instructor', 2400,'{Artificial Intlligence, Computer Graphics and Games}');
+SELECT * FROM add_employee('Vin Diesel','1-532-276-4921', '2090 Echo Lane', 'wkamal.mofek@wikuiz.com', '2019-04-08', 'Full-time Instructor', 2500, '{Software Engineering, Computer Security}');
+SELECT * FROM add_employee('Sal Morales','1-275-439-1582', '4121 Pinnickinick Street', 'hdjnayem@wingkobabat.buzz', '2020-02-06', 'Part-time Instructor', 17, '{Database Systems, Bioinformatics}');
+SELECT * FROM add_employee('Millie Bobby','1-874-104-4325', '152 Berkley Street', 'nabdul.suhaib@packiu.com', '2020-03-01', 'Part-time Instructor', 16, '{Physics, Statistics}');
+SELECT * FROM add_employee('Helen Huff','1-775-354-1597', '2388 Scheuvront Drive', 'qabdoun.bob.70@kentel.buzz', '2019-08-24', 'Part-time Instructor', 18,'{Chemistry, Bioinformatics}');
 
-INSERT INTO Instructors (eid)
-VALUES (1),
-  (2),
-  (3),
-  (4),
-  (5),
-  (6),
-  (7),
-  (8),
-  (9),
-  (10);
+/*populating Administrators table*/
+SELECT * FROM add_employee('Wendy Howe','1-338-439-7887','P.O. Box 736, 6389 Laoreet, Av.','tincidunt.congue.turpis@nuncullamcorpereu.net','2019-07-08','Administrator',1427,'{}');
+SELECT * FROM add_employee('Brandie Jessup', '351-265-909-9769', '959 Hintze Junction', 'bjessup0@freewebs.com', '2020-03-26','Administrator',1500,'{}');
+SELECT * FROM add_employee('Charmion Hamner', '381-974-669-4743', '32 Victoria Place', 'chamner1@pbs.org', '2020-09-12', 'Administrator',1600,'{}');
+SELECT * FROM add_employee('Glynda Ghilks', '375-912-254-0382', '786 Northridge Road', 'gghilks2@addthis.com', '2019-06-28', 'Administrator',1460,'{}');
+SELECT * FROM add_employee('Loralee Measham', '86-516-257-6835', '941 Hazelcrest Pass', 'lmeasham3@odnoklassniki.ru', '2021-03-13', 'Administrator',2000,'{}');
+SELECT * FROM add_employee('Urban Poulden', '63-301-911-0539', '98511 Kropf Crossing', 'upoulden4@reuters.com', '2020-10-05', 'Administrator',2100,'{}');
+SELECT * FROM add_employee('Trstram Pettinger', '86-253-712-8946', '6 Fremont Circle', 'tpettinger5@sitemeter.com', '2020-07-20', 'Administrator',2110,'{}');
+SELECT * FROM add_employee('Kathleen Cowlard', '48-402-717-8604', '2 Charing Cross Place', 'kcowlard6@bizjournals.com', '2019-03-02', 'Administrator',1907,'{}');
+SELECT * FROM add_employee('Caren Byway', '62-533-902-5847', '47992 Trailsway Crossing', 'cbyway7@g.co', '2019-02-15', 'Administrator',1900,'{}');
+SELECT * FROM add_employee('Cesaro Kerford', '595-914-133-8749', '837 Comanche Terrace', 'ckerford8@hhs.gov', '2020-04-17', 'Administrator',1950,'{}');
+
+/*populating Managers table*/
+SELECT * FROM add_employee('Nathaniel Mckenzie', '1-792-176-8701', 'P.O. Box 436, 6023 Malesuada Rd.', 'erat.volutpat@hendreritidante.com', '2019-08-19', 'Manager', 2327, '{Artificial Intelligence, Computer Graphics and Games}');
+SELECT * FROM add_employee('Xerxes Surphliss', '48-701-913-0605', '956 Dennis Trail', 'xsurphliss9@cbc.ca', '2019-04-14', 'Manager', 2000, '{Computer Security}');
+SELECT * FROM add_employee('Wallie Bengall', '358-996-7363', '5 Burrows Lane', 'wbengall0@patch.com', '2020-04-17', 'Manager', 2100, '{Software Engineering}');
+SELECT * FROM add_employee('Evangelia Cromwell', '208-999-7172', '654 Melby Junction', 'ecromwell1@springer.com', '2021-01-14', 'Manager', 2200, '{Physics}');
+SELECT * FROM add_employee('Lonnie Meddings', '504-582-8379', '018 Leroy Junction', 'lmeddings2@mozilla.org', '2019-07-11', 'Manager', 2110, '{Chemistry}');
+SELECT * FROM add_employee('Elvyn Alejandri', '168-789-6828', '45172 Swallow Drive', 'ealejandri4@bbb.org', '2019-07-28', 'Manager', 2310, '{}');
+SELECT * FROM add_employee('Valentine Fitzharris', '878-530-6931', '56 Jana Drive', 'vfitzharris5@nbcnews.com', '2019-05-24', 'Manager', 2000, '{Database Systems}');
+SELECT * FROM add_employee('Freddy Doorbar', '619-455-0759', '94589 Bellgrove Lane', 'fdoorbar6@businessweek.com', '2019-09-02', 'Manager', 2240, '{Statistics}');
+SELECT * FROM add_employee('Efren Olivera', '841-169-4580', '1 Goodland Center', 'eolivera7@cpanel.net', '2020-05-29', 'Manager', 2341, '{Life Sciences}');
+SELECT * FROM add_employee('Francene Havenhand', '764-742-2909', '205 Stoughton Street', 'fhavenhand8@army.mil', '2019-11-13', 'Manager', 2100, '{Bioinformatics}');
+
 
 INSERT INTO Offerings (
     course_id,
