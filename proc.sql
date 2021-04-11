@@ -938,20 +938,24 @@ CREATE OR REPLACE FUNCTION add_customer(
     _expiry_date DATE)
     RETURNS Customers AS
 $$
-DECLARE _cust_id INTEGER;
+DECLARE 
+    result_ Customers;
+    next_cid_ INTEGER;
 BEGIN
-    INSERT INTO Credit_cards
-        (cc_number, cvv, expiry_date) VALUES
-        (_cc_number, _cvv, _expiry_date);
 
-    INSERT INTO Customers
-        (name, address, email, phone) VALUES
-        (_name, _address, _email, _phone);
-    RETURN cust_id AS _cust_id;
+    SELECT COUNT(*) + 1 FROM Customers INTO next_cid_;
 
-    INSERT INTO Owns
-        (cc_number, cust_id) VALUES
-        (_cc_number, _cust_id);
+    INSERT INTO Credit_cards (cc_number, cvv, expiry_date) 
+    VALUES (_cc_number, _cvv, _expiry_date);
+    
+    INSERT INTO Customers (name, address, email, phone) 
+    VALUES (_name, _address, _email, _phone)
+    RETURNING * INTO result_;
+
+    INSERT INTO Owns (cc_number, cust_id) 
+    VALUES (_cc_number, next_cid_);
+
+    RETURN result_;
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -2105,6 +2109,77 @@ RETURNS TABLE (
 $$
 BEGIN
     RETURN QUERY SELECT * FROM pay_salary_helper() ORDER BY eid;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+/*-------------------------------- End of Employee Routines ------------------------*/
+
+/*-------------------------------- Report Routines ------------------------*/
+
+/* 26. view_summary_report
+    This routine is used at the end of the month to pay salaries to employees.
+    */
+CREATE OR REPLACE FUNCTION view_summary_report(n INTEGER)
+RETURNS TABLE (
+    month_year TEXT,
+    salary_paid INTEGER,
+    packages_sold INTEGER,
+    reg_fees INTEGER,
+    refunded_reg_fees INTEGER,
+    course_reg_via_package INTEGER
+) AS
+$$
+DECLARE
+    interval_ INTERVAL;
+    current_date_ DATE;
+    date_ DATE;
+    f RECORD;
+BEGIN
+    interval_ := '1 mon';
+    SELECT INTO current_date_ NOW()::DATE;
+    FOR counter IN 0..n-1 LOOP
+        date_ := current_date_ - interval_ * counter;
+        RAISE NOTICE 'date: %', date_;
+        month_year := TO_CHAR(date_, 'YYYY-MM');
+
+        SELECT SUM(SR.salary_amount) INTO salary_paid
+        FROM Salary_payment_records SR
+        GROUP BY payment_date
+        HAVING (EXTRACT(MONTH FROM payment_date) = EXTRACT(MONTH FROM date_)
+            AND EXTRACT(YEAR FROM payment_date) = EXTRACT(YEAR FROM date_));
+        IF salary_paid IS NULL THEN
+            salary_paid := 0;
+        END IF;
+        
+        SELECT COUNT(*) INTO packages_sold
+        FROM Buys B
+        WHERE (EXTRACT(MONTH FROM B.buys_ts) = EXTRACT(MONTH FROM date_)
+            AND EXTRACT(YEAR FROM B.buys_ts) = EXTRACT(YEAR FROM date_));
+
+        reg_fees := 0;
+        FOR f IN SELECT * FROM Buys
+                            WHERE (EXTRACT(MONTH FROM buys_ts) = EXTRACT(MONTH FROM date_)
+                            AND EXTRACT(YEAR FROM buys_ts) = EXTRACT(YEAR FROM date_)) LOOP
+
+            SELECT P.price + reg_fees INTO reg_fees FROM Packages P WHERE P.package_id = f.package_id;
+        END LOOP;
+
+        SELECT SUM(C.refund_amt) INTO refunded_reg_fees
+        FROM Cancels C
+        WHERE (EXTRACT(MONTH FROM C.cancel_ts) = EXTRACT(MONTH FROM date_)
+            AND EXTRACT(YEAR FROM C.cancel_ts) = EXTRACT(YEAR FROM date_));
+        IF refunded_reg_fees IS NULL THEN
+            refunded_reg_fees := 0;
+        END IF;
+
+        SELECT COUNT(*) INTO course_reg_via_package
+        FROM Redeems R
+        WHERE (EXTRACT(MONTH FROM R.redeems_ts) = EXTRACT(MONTH FROM date_)
+            AND EXTRACT(YEAR FROM R.redeems_ts) = EXTRACT(YEAR FROM date_));
+
+        RETURN NEXT;
+    END LOOP;
 END;
 $$
 LANGUAGE PLPGSQL;

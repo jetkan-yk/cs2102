@@ -28,13 +28,13 @@ Sessions CASCADE;
 
 CREATE TABLE Employees (
     eid             SERIAL,
-    ename           TEXT    NOT NULL,
-    phone_number    TEXT    NOT NULL,
-    home_address    TEXT    NOT NULL,
-    email_address   TEXT    NOT NULL,
-    join_date       DATE    NOT NULL,
-    depart_date     DATE    CONSTRAINT valid_depart_date 
-                            CHECK (depart_date > join_date),
+    ename           TEXT            NOT NULL,
+    phone_number    VARCHAR (15)    NOT NULL,
+    home_address    TEXT            NOT NULL,
+    email_address   TEXT            NOT NULL,
+    join_date       DATE            NOT NULL,
+    depart_date     DATE            CONSTRAINT valid_depart_date 
+                                    CHECK (depart_date > join_date),
     category        TEXT,
     salary          INTEGER,  /*Can be either hourly or monthly*/
     PRIMARY KEY (eid)
