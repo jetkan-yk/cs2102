@@ -10,7 +10,6 @@ VALUES ('Artificial Intelligence'),
   ('Chemistry'),
   ('Bioinformatics');
 
-
 INSERT INTO Courses (
     title,
     description,
@@ -189,40 +188,17 @@ VALUES
   (10, 6585, '2021-08-27', '15:00', 9),
   (10, 6585, '2021-09-13', '17:00', 1);
 
-INSERT INTO Customers (
-    name,
-    address,
-    email,
-    phone
-)
-VALUES
-  ('Angie Carlson', 'Ap #915-3742 Ipsum Avenue', 'nisi@sapienAenean.edu', '168505070535'),
-  ('Bernard Pate', '530-193 Sapien. Road', 'scelerisque@pedeCumsociis.com', '161503114694'),
-  ('Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', 'vel.turpis.Aliquam@acturpisegestas.edu', '161109242626'),
-  ('Martha Guy', '2841 Ultrices. Road', 'mollis.Phasellus.libero@hymenaeosMaurisut.org', '165402181753'),
-  ('Levi Avery', '4394 Adipiscing Av.', 'est.ac@Donecest.com', '163611272794'),
-  ('Holly Day', 'Ap #214-8751 Nec Ave', 'diam@rutrumurnanec.net', '161503286989'),
-  ('Uma Weeks', 'P.O. Box 793, 1381 Sit Road', 'imperdiet@egetnisi.co.uk', '160807202395'),
-  ('Indira Mckee', '9415 Orci Rd.', 'felis.Nulla.tempor@arcuimperdiet.edu', '169706125912'),
-  ('Hall Savage', '903-4888 Proin Ave', 'in.felis.Nulla@Sed.net', '168304019113'),
-  ('Faith Graves', 'P.O. Box 146, 6550 Gravida St.', 'porta.elit@Crasvulputatevelit.ca', '169002058742');
+SELECT * FROM add_customer('Angie Carlson', 'Ap #915-3742 Ipsum Avenue', '168505070535', 'nisi@sapienAenean.edu', '5102460096023660', 504, '2025-04-12');
+SELECT * FROM add_customer('Bernard Pate', '530-193 Sapien. Road', '161503114694', 'scelerisque@pedeCumsociis.com', '5224798415993862', 927, '2023-09-11');
+SELECT * FROM add_customer('Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', '161109242626', 'vel.turpis.Aliquam@acturpisegestas.edu', '5240081289296120', 334, '2023-06-02');
+SELECT * FROM add_customer('Martha Guy', '2841 Ultrices. Road', '165402181753', 'mollis.Phasellus.libero@hymenaeosMaurisut.org', '5274960913947548', 424, '2022-02-23');
+SELECT * FROM add_customer('Levi Avery', '4394 Adipiscing Av.', '163611272794', 'est.ac@Donecest.com', '5303568634289291', 279, '2021-11-08');
+SELECT * FROM add_customer('Holly Day', 'Ap #214-8751 Nec Ave', '161503286989', 'diam@rutrumurnanec.net', '5372742683829820', 492, '2022-04-25');
+SELECT * FROM add_customer('Uma Weeks', 'P.O. Box 793, 1381 Sit Road', '160807202395', 'imperdiet@egetnisi.co.uk', '5459805165907962', 552, '2024-03-05');
+SELECT * FROM add_customer('Indira Mckee', '9415 Orci Rd.', '169706125912', 'felis.Nulla.tempor@arcuimperdiet.edu', '5464354259731163', 254, '2022-07-14');
+SELECT * FROM add_customer('Hall Savage', '903-4888 Proin Ave', '168304019113', 'in.felis.Nulla@Sed.net', '5527288101232605', 523, '2025-02-21');
+SELECT * FROM add_customer('Faith Graves', 'P.O. Box 146, 6550 Gravida St.', '169002058742', 'porta.elit@Crasvulputatevelit.ca', '5309012313326128', 264, '2022-07-07');
 
-INSERT INTO Credit_cards (
-    cc_number,
-    CVV,
-    expiry_date
-)
-VALUES
-  ('5102460096023660', 504, '2025-04-12'),
-  ('5224798415993862', 927, '2023-09-11'),
-  ('5240081289296120', 334, '2023-06-02'),
-  ('5274960913947548', 424, '2022-02-23'),
-  ('5303568634289291', 279, '2021-11-08'),
-  ('5372742683829820', 492, '2022-04-25'),
-  ('5459805165907962', 552, '2024-03-05'),
-  ('5464354259731163', 254, '2022-07-14'),
-  ('5527288101232605', 523, '2025-02-21'),
-  ('5309012313326128', 264, '2022-07-07');
 
 INSERT INTO Packages (
     name,
@@ -242,6 +218,7 @@ VALUES
   ('Proficient 2', 5, 500, '2021-02-02', '2022-03-02'),
   ('Expert 1', 6, 600, '2021-01-01', '2021-02-01'),
   ('Expert 2', 2, 600, '2021-04-02', '2021-05-08');
+
 
 SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
 SELECT * FROM update_credit_card(4, '12345678987', 123, '2022-05-06');
