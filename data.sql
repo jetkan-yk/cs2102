@@ -212,7 +212,7 @@ SELECT * FROM add_course_package('Proficient 2', 5, 500, '2021-02-02', '2022-03-
 SELECT * FROM add_course_package('Expert 1', 6, 600, '2021-01-01', '2021-02-01');
 SELECT * FROM add_course_package('Expert 2', 6, 600, '2021-04-02', '2021-05-08');
 
-
+/* test cases*/
 SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
 SELECT * FROM update_credit_card(4, '12345678987', 123, '2022-05-06');
 SELECT * FROM buy_course_package(4, 10);
