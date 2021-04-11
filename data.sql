@@ -188,6 +188,7 @@ VALUES
   (10, 6585, '2021-08-27', '15:00', 9),
   (10, 6585, '2021-09-13', '17:00', 1);
 
+/*populating Customers, Credit_cards and Owns tables*/
 SELECT * FROM add_customer('Angie Carlson', 'Ap #915-3742 Ipsum Avenue', '168505070535', 'nisi@sapienAenean.edu', '5102460096023660', 504, '2025-04-12');
 SELECT * FROM add_customer('Bernard Pate', '530-193 Sapien. Road', '161503114694', 'scelerisque@pedeCumsociis.com', '5224798415993862', 927, '2023-09-11');
 SELECT * FROM add_customer('Ariana Spencer', 'Ap #871-1904 Lobortis Avenue', '161109242626', 'vel.turpis.Aliquam@acturpisegestas.edu', '5240081289296120', 334, '2023-06-02');
@@ -199,25 +200,17 @@ SELECT * FROM add_customer('Indira Mckee', '9415 Orci Rd.', '169706125912', 'fel
 SELECT * FROM add_customer('Hall Savage', '903-4888 Proin Ave', '168304019113', 'in.felis.Nulla@Sed.net', '5527288101232605', 523, '2025-02-21');
 SELECT * FROM add_customer('Faith Graves', 'P.O. Box 146, 6550 Gravida St.', '169002058742', 'porta.elit@Crasvulputatevelit.ca', '5309012313326128', 264, '2022-07-07');
 
-
-INSERT INTO Packages (
-    name,
-    num_free_reg,
-    price,
-    sale_start_date,
-    sale_end_date
-)
-VALUES
-  ('Beginner 1', 2, 200, '2021-01-01', '2021-02-01'),
-  ('Beginner 2', 2, 200, '2021-02-02', '2022-03-02'),
-  ('Familiar 1', 3, 300, '2021-01-01', '2021-02-01'),
-  ('Familiar 2', 3, 300, '2021-02-02', '2022-03-02'),
-  ('Adept 1', 4, 400, '2021-01-01', '2021-02-01'),
-  ('Adept 2', 4, 400, '2021-02-02', '2022-03-02'),
-  ('Proficient 1', 5, 500, '2021-01-01', '2021-02-01'),
-  ('Proficient 2', 5, 500, '2021-02-02', '2022-03-02'),
-  ('Expert 1', 6, 600, '2021-01-01', '2021-02-01'),
-  ('Expert 2', 2, 600, '2021-04-02', '2021-05-08');
+/*poplating Package table*/
+SELECT * FROM add_course_package('Beginner 1', 2, 200, '2021-01-01', '2021-02-01');
+SELECT * FROM add_course_package('Beginner 2', 2, 200, '2021-02-02', '2022-03-02');
+SELECT * FROM add_course_package('Familiar 1', 3, 300, '2021-01-01', '2021-02-01');
+SELECT * FROM add_course_package('Familiar 2', 3, 300, '2021-02-02', '2022-03-02');
+SELECT * FROM add_course_package('Adept 1', 4, 400, '2021-01-01', '2021-02-01');
+SELECT * FROM add_course_package('Adept 2', 4, 400, '2021-02-02', '2022-03-02');
+SELECT * FROM add_course_package('Proficient 1', 5, 500, '2021-01-01', '2021-02-01');
+SELECT * FROM add_course_package('Proficient 2', 5, 500, '2021-02-02', '2022-03-02');
+SELECT * FROM add_course_package('Expert 1', 6, 600, '2021-01-01', '2021-02-01');
+SELECT * FROM add_course_package('Expert 2', 6, 600, '2021-04-02', '2021-05-08');
 
 
 SELECT * FROM update_credit_card(4, '123456789', 000, '2022-05-05');
